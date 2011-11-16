@@ -1,0 +1,19 @@
+
+task :test do
+  tests = ["daemon", "stats", "cluster", "logger", "node", "cli"]
+  tests.each do |test|
+    sh "ruby #{test}_test.rb"
+  end
+end
+
+task :clean do
+ sh "rm -rf work/test*"
+ sh "rm -f *~"
+ sh "rm -f /tmp/flare[id].*.conf"
+end
+
+task :killall do
+ sh "killall /usr/local/bin/flarei"
+ sh "killall /usr/local/bin/flared"
+end
+
