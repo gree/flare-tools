@@ -1,0 +1,26 @@
+= Tutorial
+
+* under construction
+
+In this document, you can find how to manage a flare cluster with flare-tools.
+
+== Installing flare-tools
+
+Flare-tools isn't published to rubyforge.org, so please pull the code from the repository
+and type "rake install_gem" in your shell.
+
+ $ sudo gem install hoe newgem rdoc
+ $ git clone ...
+ $ cd flare-tools
+ $ rake rake install_gem
+
+== Setting up your index server.
+
+First of all, you should setup an index server to create a flare cluster.
+You can find debian packages at http://labs.gree.jp/Top/OpenSource/Flare/Download.html .
+
+=== for debian users
+
+ $ sudo dpkg -i flare_1.0.x-x_i386.deb
+ $ 
+

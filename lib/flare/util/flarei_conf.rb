@@ -3,9 +3,11 @@
 # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
 # License::   NOTYET
 
+require 'flare/util/conf'
+
 module Flare
   module Util
-    class FlareiConf
+    class FlareiConf < Flare::Util::Conf
       DefaultConf = {
         'data-dir' => "/tmp",
         'log-facility' => "local0",
@@ -21,26 +23,6 @@ module Flare
         @config = DefaultConf.merge(config)
       end
 
-      def to_s
-        conf = ""
-        @config.each do |k,v|
-          conf += "#{k} = #{v}\n"
-        end
-        conf
-      end
-      
-      def server_name
-        @config['server-name']
-      end
-
-      def server_port
-        @config['server-port']
-      end
-
-      def hostname_port
-        "#{server_name}:#{server_port}"
-      end
-      
     end
   end
 end

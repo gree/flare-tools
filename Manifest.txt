@@ -3,6 +3,7 @@ Manifest.txt
 PostInstall.txt
 README.txt
 Rakefile
+Tutorial.txt
 bin/flare-admin
 bin/flare-stats
 lib/flare/net/connection.rb

@@ -7,11 +7,17 @@ require 'timeout'
 require 'singleton'
 require 'thread'
 
+require 'flare/util/flarei_conf'
+require 'flare/util/flared_conf'
+
 module Flare
   module Test
     class Daemon
       include Singleton
   
+      Flarei = "/usr/local/bin/flarei"
+      Flared = "/usr/local/bin/flared"
+      
       def initialize
         @flared = []
         @flarei = []
@@ -56,74 +62,41 @@ module Flare
         port
       end
 
-      Flarei = "/usr/local/bin/flarei"
-      FlareiConf = {
-        'data-dir' => "/tmp",
-        'log-facility' => "local0",
-        'max-connection' => 256,
-        'monitor-threshold' => 3,
-        'monitor-interval' => 1,
-        'server-name' => "localhost",
-        'server-port' => 12120,
-        'thread-pool-size' => 8,
-      }
-      
       def invoke_flarei(name, config)
-        config = FlareiConf.merge(config)
-        serverport = config['server-port']
-        conf = "/tmp/flarei.#{name}.#{serverport}.conf"
+        config = Flare::Util::FlareiConf.new(config)
+        conf = "/tmp/flarei.#{name}.#{config.server_port}.conf"
         open(conf, "w") do |f|
-          config.each do |k,v|
-            f.puts("#{k} = #{v}")
-          end
+          f.puts config.to_s
         end
         pid = fork
         if pid.nil?
-          deleteall(config['data-dir'])
-          Dir.mkdir(config['data-dir'])
+          deleteall(config.data_dir)
+          Dir.mkdir(config.data_dir)
           exec Flarei, "-f", conf
           exit 1
         else
           @flarei << pid
-          @tempfiles << config['data-dir']
+          @tempfiles << config.data_dir
           @tempfiles << conf
         end
         pid
       end
 
-      Flared = "/usr/local/bin/flared"
-      FlaredConf = {
-        'data-dir' => "/tmp",
-        'index-server-name' => "localhost",
-        'index-server-port' => "12120",
-        'log-facility' => "local1",
-        'max-connection' => "256",
-        'mutex-slot' => "32",
-        'proxy-concurrency' => "2",
-        'server-name' => "localhost",
-        'server-port' => "12121",
-        'storage-type' => "tch",
-        'thread-pool-size' => "16",
-      }
-
       def invoke_flared(name, config)
-        config = FlaredConf.merge(config)
-        serverport = config['server-port']
-        conf = "/tmp/flared.#{name}.#{serverport}.conf"
+        config = Flare::Util::FlaredConf.new(config)
+        conf = "/tmp/flared.#{name}.#{config.server_port}.conf"
         open(conf, "w") do |f|
-          config.each do |k,v|
-            f.puts("#{k} = #{v}")
-          end
+          f.puts config.to_s
         end
         pid = fork
         if pid.nil?
-          deleteall(config['data-dir'])
-          Dir.mkdir(config['data-dir'])
+          deleteall(config.data_dir)
+          Dir.mkdir(config.data_dir)
           exec Flared, "-f", conf
           exit 1
         else
           @flared << pid
-          @tempfiles << config['data-dir']
+          @tempfiles << config.data_dir
           @tempfiles << conf
         end
         pid

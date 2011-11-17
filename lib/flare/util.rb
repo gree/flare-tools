@@ -12,6 +12,7 @@ module Flare
     autoload :Result, 'flare/util/result'
     autoload :FlaredConf, 'flare/util/flared_conf'
     autoload :FlareiConf, 'flare/util/flarei_conf'
+    autoload :Conf, 'flare/util/conf'
     autoload :FileSystem, 'flare/util/filesystem'
   end
 end
