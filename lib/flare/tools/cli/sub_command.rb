@@ -55,6 +55,7 @@ module Flare
         
         def initialize
           @interruptible = false
+          @interrupted = false
         end
 
         def interruptible(&block)
@@ -68,7 +69,12 @@ module Flare
           @interruptible
         end
 
+        def interrupted?
+          @interrupted
+        end
+
         def interrupt
+          @interrupted = true
           if interruptible?
             info "INTERRUPTED"
             exit 1 

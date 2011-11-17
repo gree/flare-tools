@@ -90,6 +90,10 @@ module Flare
         return nil if partition(p).nil?
         partition(p).inject([]) {|r,i| if i[1]['role'] == RoleSlave then r << i[0] else r end}
       end
+      
+      def node_list
+        @nodes.keys
+      end
 
       def node_stat(hostname_port)
         @nodes[hostname_port]
