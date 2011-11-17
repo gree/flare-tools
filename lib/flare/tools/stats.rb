@@ -81,6 +81,7 @@ module Flare
       end
 
       def close()
+        quit
         @conn.close
       end
 
@@ -132,6 +133,10 @@ module Flare
       end
 
       defcmd :ping, 'ping' do |resp|
+        true if resp
+      end
+
+      defcmd :quit, 'quit' do |resp|
         true
       end
 
