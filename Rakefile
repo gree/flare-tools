@@ -15,16 +15,17 @@ require 'flare/tools'
 
 Hoe.plugin :newgem
 
-$hoe = Hoe.spec 'flare-tools' do
+Hoe.spec 'flare-tools' do
   self.version = Flare::Tools::VERSION
   self.developer 'kikehara', 'kiyoshi.ikehara@gree.co.jp'
   self.url = 'http://github.com/kgws/flare-tools'
   self.summary = "Management Tools for Flare"
   self.post_install_message = 'PostInstall.txt'
   self.description = "Flare-tools is a collection of tools for Flare KVS."
-  self.readme_file = "README.rdoc"
+  self.readme_file = "README.txt"
   self.extra_deps         = [
   ]
+  self.rubyforge_name = 'flare-tools'  
 end
 
 require 'newgem/tasks'
