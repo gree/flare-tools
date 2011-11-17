@@ -17,9 +17,11 @@ class NodeTest < Test::Unit::TestCase
     @flare_cluster.prepare_master_and_slaves(@node_servers)
   end
   
+  def test_dummy
+  end
+
   def test_one_million_entry
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000000)
-  end
-  
+  end if ENV['FLARE_TOOLS_STRESS_TEST']
 end
 

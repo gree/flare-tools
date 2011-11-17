@@ -1,8 +1,18 @@
 
+task :default => [:test]
+
+tests = ["daemon", "stats", "cluster", "logger", "node", "cli"]
+envargs = "-u FLARE_INDEX_SERVER -u FLARE_INDEX_SERVER_PORT"
+
 task :test do
-  tests = ["daemon", "stats", "cluster", "logger", "node", "cli"]
   tests.each do |test|
-    sh "ruby #{test}_test.rb"
+    sh "env #{envargs} ruby #{test}_test.rb"
+  end
+end
+
+task :stress do
+  tests.each do |test|
+    sh "env #{envargs} FLARE_TOOLS_STRESS_TEST=yes ruby #{test}_test.rb"
   end
 end
 
@@ -13,7 +23,7 @@ task :clean do
 end
 
 task :killall do
- sh "killall /usr/local/bin/flarei"
- sh "killall /usr/local/bin/flared"
+ sh "pkill /usr/local/bin/flarei"
+ sh "pkill /usr/local/bin/flared"
 end
 

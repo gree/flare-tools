@@ -33,8 +33,16 @@ Dir['tasks/**/*.rake'].each { |t| load t }
 
 task :default => [:spec, :features]
 
-task :readme_to_text do
+task :manual do
   h = RDoc::Markup::ToAnsi.new
-  rdoc = File.read("README.rdoc")
+  rdoc = File.read("README.txt")
   puts h.convert(rdoc)
+end
+
+task :test do
+  sh "(cd test && rake)"
+end
+
+task :stress_test do
+  sh "(cd test && rake stress)"
 end

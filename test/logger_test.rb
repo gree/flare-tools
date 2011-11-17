@@ -8,7 +8,8 @@ require 'flare/util/logger.rb'
 
 class LoggerTest < Test::Unit::TestCase
   include Flare::Util::Logging
-  def test
+  
+  def test_call1
     info "info"
     warn "warm"
     error "error"

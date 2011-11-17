@@ -4,14 +4,17 @@
 # License::   NOTYET
 
 module Flare
+  #
+  # flare-tools module.
+  #
   module Tools
+    # the version number of flare-tools
     VERSION = '0.2.0'
     autoload :Common,      'flare/tools/common'
     autoload :Cluster,     'flare/tools/cluster'
     autoload :Stats,       'flare/tools/stats'
     autoload :Node,        'flare/tools/node'
     autoload :IndexServer, 'flare/tools/index_server'
+    autoload :Cli,         'flare/tools/cli'
   end
 end
-
-require 'flare/tools/cli'

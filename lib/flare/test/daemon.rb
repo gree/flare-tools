@@ -15,7 +15,7 @@ module Flare
       def initialize
         @flared = []
         @flarei = []
-        @port = 20000 #+rand(10000)
+        @port = 20000+rand(10000)
         @port_mutex = Mutex.new
         @tempfiles = []
         Kernel.at_exit {
