@@ -4,9 +4,10 @@
 # License::   NOTYET
 
 require 'optparse'
-require 'flare/util/logger'
+require 'flare/util/logging'
 require 'flare/util/constant'
 require 'flare/tools/cli'
+
 require 'flare/util/command_line'
 
 include Flare::Util::Logging

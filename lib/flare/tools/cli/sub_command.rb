@@ -3,7 +3,6 @@
 # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
 # License::   NOTYET
 
-require 'flare/util/logger'
 require 'flare/util/logging'
 
 module Flare

@@ -1,6 +1,8 @@
 # -*- coding: utf-8; -*-
 
-require 'flare/util/logger'
+require 'rubygems'
+require 'log4r'
+require 'log4r/configurator'
 
 module Flare
   module Util
@@ -12,9 +14,31 @@ module Flare
     # == Description
     # Logging is a mix-in module for logging.
     module Logging
-      @@logger = Flare::Util::Logger.new
-
-      def self.set_logger(logger)
+      @@logger = nil
+      @@formatter = Log4r::PatternFormatter.new(
+                                                :pattern => "%d %C[%l]: %M",
+                                                :date_format => "%Y/%m/%d %H:%M:%S"
+                                                )
+      def self.set_logger(logger = nil)
+        if logger.nil?
+          outputter = Log4r::StdoutOutputter.new(
+                                                 "console",
+                                                 :formatter => @@formatter
+                                                 )
+          logger = Log4r::Logger.new($0)
+          logger.level = Log4r::INFO
+          logger.add(outputter)
+        elsif logger.instance_of?(String)
+          outputter = Log4r::FileOutputter.new(
+                                               "file",
+                                               :filename => logger,
+                                               :trunc => false,
+                                               :formatter => @@formatter
+                                               )
+          logger = Log4r::Logger.new($0)
+          logger.level = Log4r::INFO
+          logger.add(outputter)
+        end
         @@logger = logger
       end
       
@@ -23,29 +47,48 @@ module Flare
       end
 
       def info(msg)
-        log Logger::Info, msg
+        Logging.set_logger if @@logger.nil?
+        @@logger.info(msg)
       end
 
       def warn(msg)
-        log Logger::Warn, msg
+        Logging.set_logger if @@logger.nil?
+        @@logger.warn(msg)
       end
 
       def trace(msg)
-        log Logger::Trace, msg
+        Logging.set_logger if @@logger.nil?
+        @@logger.debug(msg)
       end
 
       def error(msg)
-        log Logger::Error, msg
+        Logging.set_logger if @@logger.nil?
+        @@logger.error(msg)
+      end
+
+      def fatal(msg)
+        Logging.set_logger if @@logger.nil?
+        @@logger.fatal(msg)
       end
 
       def debug(msg)
-        log Logger::Debug, msg
+        Logging.set_logger if @@logger.nil?
+        @@logger.debug(msg)
       end
 
-      def log(type, msg)
-        @@logger.log type, msg
+      # This hides Kernel's puts()
+      def puts(*args)
+        if @@logger.nil? || 
+            @@logger.instance_of?(Log4r::StdoutOutputter) ||
+            @@logger.instance_of?(Log4r::StderrOutputter)
+          return Kernel.puts *args
+        end
+        for msg in args
+          info(msg)
+        end
+        nil
       end
-      
+
     end
   end
 end

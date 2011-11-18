@@ -1,12 +1,17 @@
 # -*- coding: utf-8; -*-
-# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
-# Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
-# License::   NOTYET
 
 module Flare
   module Util
-    module FileSystem
 
+    # Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
+    # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
+    # License::   NOTYET
+    # 
+    # == Description
+    # 
+    module FileSystem
+      
+      # Delete all the contents in a directory.
       def delete_all(file_or_directory)
         return unless FileTest.exist?(file_or_directory)
         if FileTest.directory?(file_or_directory)

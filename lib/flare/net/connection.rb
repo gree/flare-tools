@@ -6,7 +6,7 @@
 require 'timeout'
 require 'socket'
 require 'flare/util'
-require 'flare/util/logger'
+require 'flare/util/logging'
 require 'flare/util/result'
 
 module Flare

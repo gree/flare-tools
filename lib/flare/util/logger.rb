@@ -16,8 +16,7 @@ module Flare
       Error = :error
       Debug = :debug
 
-      def initialize
-        
+      def initialize(output = nil)
       end
 
       def log(type, msg)

@@ -5,7 +5,7 @@
 
 require 'timeout'
 require 'flare/net/connection'
-require 'flare/util/logger'
+require 'flare/util/logging'
 require 'flare/util/constant'
 
 module Flare

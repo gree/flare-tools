@@ -21,10 +21,9 @@ Hoe.spec 'flare-tools' do
   self.url = 'http://github.com/kgws/flare-tools'
   self.summary = "Management Tools for Flare"
   self.post_install_message = 'PostInstall.txt'
-  self.description = "Flare-tools is a collection of tools for Flare KVS."
+  self.description = "Flare-tools is a collection of tools for Flare distributed key-value store."
   self.readme_file = "README.txt"
-  self.extra_deps         = [
-  ]
+  self.extra_deps = [['log4r', '>= 1.1.4']]
   self.rubyforge_name = 'flare-tools'  
 end
 

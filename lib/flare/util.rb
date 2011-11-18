@@ -23,7 +23,6 @@ module Flare
   module Util
     autoload :Constant, 'flare/util/constant'
     autoload :Conversion, 'flare/util/conversion'
-    autoload :Logger, 'flare/util/logger'
     autoload :Logging, 'flare/util/logging'
     autoload :Result, 'flare/util/result'
     autoload :Conf, 'flare/util/conf'
