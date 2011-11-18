@@ -45,3 +45,7 @@ end
 task :stress_test do
   sh "(cd test && rake stress)"
 end
+
+task :clean do
+  sh "(cd test && rake clean)"
+end

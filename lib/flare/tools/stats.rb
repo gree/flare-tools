@@ -16,16 +16,10 @@ module Flare
 
       def self.open(host, port, tout = DefaultTimeout, &block)
         stats = self.new(host, port, tout)
-        if block
-          ret = block.call(stats)
-          stats.close
-          ret
-        else
-          stats
-        end
-      rescue => e
-        stats.close if defined?(stats) && !stats.nil?
-        raise e
+        return stats if block.nil?
+        return block.call(stats)
+      ensure
+        stats.close unless stats.nil? # this might raise IOError
       end
 
       def initialize(host, port, tout)
@@ -34,13 +28,13 @@ module Flare
           @conn = Flare::Net::Connection.new(host, port)
         end
       rescue Errno::ECONNREFUSED
-        # warn "Connection refused. server=[#{@conn}]"
+        debug "Connection refused. server=[#{@conn}]"
         raise
       rescue TimeoutError
-        # warn "Connection timeout. server=[#{@conn}]"
+        debug "Connection timeout. server=[#{@conn}]"
         raise
       rescue SocketError
-        # warn "Connection error. server=[#{host}:#{port}]"
+        debug "Connection error. server=[#{host}:#{port}]"
         raise
       end
 
@@ -53,6 +47,7 @@ module Flare
       end
 
       def request(cmd, *args)
+        @conn.reconnect if @conn.closed?
         debug "Enter the command server. server=[#{@conn}] command=[#{cmd} #{args.join(' ')}]"
         response = nil
         timeout(@tout) do

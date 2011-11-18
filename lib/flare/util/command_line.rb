@@ -68,6 +68,6 @@ option do |opt|
   opt.on('-h',        '--help',     "shows this message") {puts opt.help; exit 1}
   opt.on('-d',        '--debug',    "enables debug mode") {$DEBUG = true}
   opt.on("-w",        '--warn',     "turns on warnings") {$-w = true}
-  opt.on(             '--log-file=[LOGFILE]', "outputs log to a file") {|v| Logging.set_logger(v)}
+  opt.on(             '--log-file=[LOGFILE]', "outputs log to LOGFILE") {|v| Logging.set_logger(v)}
 end
 

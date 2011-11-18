@@ -28,16 +28,19 @@ class LoggerTest < Test::Unit::TestCase
   end
 
   def test_file1
+    logfile = "work/logger_test_file1.log"
     assert_nothing_raised do
-      Flare::Util::Logging.set_logger("logger_test_file1.log")
+      Flare::Util::Logging.set_logger(logfile)
+    end
+    assert_nothing_raised do
       info "info"
       warn "warm"
       error "error"
       debug "debug"
       fatal "fatal"
     end
+    assert_equal(true, File.exist?(logfile))
+    File.delete logfile if File.exist?(logfile)
   end
   
 end
-
-

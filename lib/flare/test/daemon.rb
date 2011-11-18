@@ -38,9 +38,11 @@ module Flare
               Process.kill :TERM, pid
               Process.waitpid pid
             end
+          rescue Errno::ESRCH
+            STDERR.print "?"
           rescue TimeoutError => e
-              Process.kill :KILL, pid
-              Process.waitpid pid
+            Process.kill :KILL, pid
+            Process.waitpid pid
           end
         end
         STDERR.print "\n"

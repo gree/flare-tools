@@ -26,22 +26,41 @@ class CliTest < Test::Unit::TestCase
     }
   end
 
-  def instantiate!(cls, args)
+  def instantiate(cls, args)
     opt = OptionParser.new
     subc = cls.new
     subc.setup(opt)
     opt.parse!(args)
     subc
   end
-  
-  def list(*args)
-    subc = instantiate!(Flare::Tools::Cli::List, args)
-    subc.execute(@config.merge({:command => 'list'}))
+
+  def ping(*args)
+    subc = instantiate(Flare::Tools::Cli::Ping, args)
+    subc.execute(@config.merge({:command => 'ping'}), *args)
   end
 
+  def test_ping_without_daemon
+    @node_servers.each {|n| n.terminate}
+    sleep 1
+    for node in @node_servers.map{|n| "#{n.hostname}:#{n.port}"}
+      assert_equal(1, ping(node))
+    end
+  end
+
+  def test_ping
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
+    for node in @node_servers.map{|n| "#{n.hostname}:#{n.port}"}
+      assert_equal(0, ping(node))
+    end
+  end
+  
+  def list(*args)
+    subc = instantiate(Flare::Tools::Cli::List, args)
+    subc.execute(@config.merge({:command => 'list'}))
+  end
+  
   def test_list
     @flare_cluster.prepare_master_and_slaves(@node_servers)
-    @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     assert_equal(0, list())
     assert_equal(0, list('--numeric-hosts'))
   end

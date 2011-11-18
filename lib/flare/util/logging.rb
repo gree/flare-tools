@@ -19,11 +19,15 @@ module Flare
                                                 :pattern => "%d %C[%l]: %M",
                                                 :date_format => "%Y/%m/%d %H:%M:%S"
                                                 )
+      @@console_formatter = Log4r::PatternFormatter.new(
+                                                        :pattern => "%M",
+                                                        :date_format => "%Y/%m/%d %H:%M:%S"
+                                                        )
       def self.set_logger(logger = nil)
         if logger.nil?
           outputter = Log4r::StdoutOutputter.new(
                                                  "console",
-                                                 :formatter => @@formatter
+                                                 :formatter => @@console_formatter
                                                  )
           logger = Log4r::Logger.new($0)
           logger.level = Log4r::INFO

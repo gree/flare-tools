@@ -27,6 +27,18 @@ module Flare
         @socket.close
       end
 
+      def closed?
+        @socket.closed?
+      end
+
+      def reconnect
+        if @socket.closed?
+          @socket = nil
+          @socket = TCPSocket.open(@host, @port)
+        end
+        @socket
+      end
+
       def send(cmd, *args)
         cmd += "\r\n" unless /\n$/ =~ cmd
         cmd += " "+args.join(" ") if args.size > 0

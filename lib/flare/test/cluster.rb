@@ -43,15 +43,15 @@ module Flare
         datadir = [@datadir, "#{name}.#{serverport}"].join('.')
 
         servername = "localhost"
-        @index_pid = daemon.invoke_flared(name, {
-                                            'index-server-name' => @indexname,
-                                            'index-server-port' => @indexport,
-                                            'server-name' => servername,
-                                            'server-port' => serverport,
-                                            'data-dir' => datadir,
-                                          })
+        pid = daemon.invoke_flared(name, {
+                                     'index-server-name' => @indexname,
+                                     'index-server-port' => @indexport,
+                                     'server-name' => servername,
+                                     'server-port' => serverport,
+                                     'data-dir' => datadir,
+                                   })
         hostname_port = "#{servername}:#{serverport}"
-        node = @nodes[hostname_port] = Node.new(hostname_port)
+        node = @nodes[hostname_port] = Node.new(hostname_port, pid)
         node
       end
 
