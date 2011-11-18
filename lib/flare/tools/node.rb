@@ -35,7 +35,9 @@ module Flare
       end
 
       defcmd :get_, 'get %s\r\n' do |resp|
-        resp
+        header, content = resp.split("\r\n", 2)
+        sig, key, f, len = header.split(" ")
+        content[0...len.to_i]
       end
 
     end

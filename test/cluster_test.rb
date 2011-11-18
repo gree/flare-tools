@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- coding: utf-8; -*-
 
-$LOAD_PATH << File.dirname(__FILE__)+"/../lib"
+$LOAD_PATH.unshift File.dirname(__FILE__)+"/../lib"
 
 require 'test/unit'
 require 'flare/tools/cluster'

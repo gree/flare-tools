@@ -33,6 +33,7 @@ lib/flare/tools/node.rb
 lib/flare/tools/stats.rb
 lib/flare/util.rb
 lib/flare/util/command_line.rb
+lib/flare/util/conf.rb
 lib/flare/util/constant.rb
 lib/flare/util/conversion.rb
 lib/flare/util/exception.rb
@@ -40,6 +41,7 @@ lib/flare/util/filesystem.rb
 lib/flare/util/flared_conf.rb
 lib/flare/util/flarei_conf.rb
 lib/flare/util/logger.rb
+lib/flare/util/logging.rb
 lib/flare/util/result.rb
 test/Rakefile
 test/cli_test.rb

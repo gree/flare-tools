@@ -1,10 +1,14 @@
 # -*- coding: utf-8; -*-
-# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
-# Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
-# License::   NOTYET
 
 module Flare
   module Util
+
+    # Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
+    # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
+    # License::   NOTYET
+    #
+    # == Description
+    # Logger is a custom logging class.
     class Logger
       Info = :info
       Warn = :warn
@@ -26,40 +30,5 @@ module Flare
       end
     end
 
-    module Logging
-      @@logger = Logger.new
-
-      def self.set_logger(logger)
-        @@logger = logger
-      end
-      
-      def self.logger
-        @@logger
-      end
-
-      def info(msg)
-        log Logger::Info, msg
-      end
-
-      def warn(msg)
-        log Logger::Warn, msg
-      end
-
-      def trace(msg)
-        log Logger::Trace, msg
-      end
-
-      def error(msg)
-        log Logger::Error, msg
-      end
-
-      def debug(msg)
-        log Logger::Debug, msg
-      end
-
-      def log(type, msg)
-        @@logger.log type, msg
-      end
-    end
   end
 end

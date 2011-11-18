@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- coding: utf-8; -*- 
 
-$LOAD_PATH << File.dirname(__FILE__)+"/../lib"
+$LOAD_PATH.unshift File.dirname(__FILE__)+"/../lib"
 
 require 'test/unit'
 require 'flare/tools'
@@ -32,12 +32,13 @@ class ProxyTest < Test::Unit::TestCase
       node = @node_servers[1]
       puts "throwing requests to #{node.hostname}:#{node.port}."
       Flare::Tools::Node.open(node.hostname, node.port, 10) do |n|
+        value = lambda {|key| return "value of "+key }
         fmt = "key%010.10d"
         (0...10).each do |i|
-          n.set(fmt % i, "All your base are belong to us.")
+          n.set(fmt % i, value.call(fmt % i))
         end
         (0...10).each do |i|
-          n.get(fmt % i)
+          assert_equal(value.call(fmt % i), n.get(fmt % i))
         end
         sleep 1
       end
