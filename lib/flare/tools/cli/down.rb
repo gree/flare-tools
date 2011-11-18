@@ -14,6 +14,7 @@ require 'flare/tools/cli/sub_command'
 module Flare
   module Tools
     module Cli
+      
       class Down < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::Constant

@@ -8,8 +8,12 @@ require 'flare/util/conversion'
 require 'flare/util/logging'
 require 'flare/tools/cli/sub_command'
 
+# 
 module Flare
   module Tools
+
+    # == Description
+    # 
     module Cli
       class Ping < SubCommand
         include Flare::Util::Conversion

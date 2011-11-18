@@ -8,6 +8,7 @@ require 'flare/tools/cluster'
 require 'flare/tools/stats'
 require 'flare/util/constant'
 
+# 
 module Flare
   module Tools
     module Common

@@ -1,11 +1,11 @@
 # -*- coding: utf-8; -*-
+# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
+# Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
+# License::   NOTYET
 
+# 
 module Flare
 
-  # Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
-  # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
-  # License::   NOTYET
-  #
   # == Description
   # Flare::Util module is a moudle that includes utility classes for basic feature of flare-tools and other utilities.
   # This module shouled be moved to a common package, but for now we distribute it with flare-tools.

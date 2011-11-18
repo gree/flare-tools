@@ -9,8 +9,12 @@ require 'flare/util'
 require 'flare/util/logging'
 require 'flare/util/result'
 
+# 
 module Flare
   module Net
+
+    # == Description
+    # 
     class Connection
       include Flare::Util::Logging
       include Flare::Util::Result

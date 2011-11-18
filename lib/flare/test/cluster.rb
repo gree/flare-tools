@@ -7,8 +7,12 @@ require 'flare/tools'
 require 'flare/test/daemon'
 require 'flare/test/node'
 
+# 
 module Flare
   module Test
+
+    # == Description
+    #
     class Cluster
       include Flare::Tools::Common
 

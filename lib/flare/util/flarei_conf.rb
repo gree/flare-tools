@@ -5,8 +5,11 @@
 
 require 'flare/util/conf'
 
+# 
 module Flare
   module Util
+
+    # 
     class FlareiConf < Flare::Util::Conf
       DefaultConf = {
         'data-dir' => "/tmp",

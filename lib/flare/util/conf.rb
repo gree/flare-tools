@@ -1,12 +1,12 @@
 # -*- coding: utf-8; -*-
+# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
+# Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
+# License::   NOTYET
 
+# 
 module Flare
   module Util
 
-    # Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
-    # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
-    # License::   NOTYET
-    #
     # == Description
     # Conf class is the abstract base class of Flare's configuration file classes.
     # You can write sub classes derived from this class as follows.

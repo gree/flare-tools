@@ -1,16 +1,16 @@
 # -*- coding: utf-8; -*-
+# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
+# Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
+# License::   NOTYET
 
 require 'rubygems'
 require 'log4r'
 require 'log4r/configurator'
 
+# 
 module Flare
   module Util
 
-    # Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
-    # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
-    # License::   NOTYET
-    #
     # == Description
     # Logging is a mix-in module for logging.
     module Logging

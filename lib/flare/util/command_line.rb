@@ -1,15 +1,15 @@
 # -*- coding: utf-8; -*-
+# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
+# Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
+# License::   NOTYET
 
 require 'optparse'
 require 'flare/util/logging'
 
+# 
 module Flare
   module Util
 
-    # Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
-    # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
-    # License::   NOTYET
-    # 
     # == Description
     # CommandLine is a mix-in module for the top level.
     # 

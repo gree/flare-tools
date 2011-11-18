@@ -7,9 +7,13 @@ require 'flare/util'
 require 'flare/tools/index_server'
 require 'flare/tools/cli/sub_command'
 
+# 
 module Flare
   module Tools
     module Cli
+
+      # == Description
+      # 
       class Deploy < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::FileSystem

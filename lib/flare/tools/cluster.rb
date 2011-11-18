@@ -5,8 +5,12 @@
 
 require 'flare/util/constant'
 
+# 
 module Flare
   module Tools
+
+    # == Description
+    # Cluster is a class that discribes a cluster information.
     class Cluster
       StateActive = 'active'
       StateDown   = 'down'

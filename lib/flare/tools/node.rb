@@ -5,8 +5,12 @@
 
 require 'flare/tools/stats'
 
+# 
 module Flare
   module Tools
+
+    # == Description
+    # 
     class Node < Stats
       
       def initialize(host, port, tout)

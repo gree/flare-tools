@@ -7,9 +7,13 @@ require 'flare/tools/index_server'
 require 'flare/util/conversion'
 require 'flare/tools/cli/sub_command'
 
+# 
 module Flare
   module Tools
     module Cli
+
+      # == Description
+      # 
       class List < SubCommand
         include Flare::Util::Conversion
 

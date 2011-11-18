@@ -8,8 +8,12 @@ require 'flare/net/connection'
 require 'flare/util/logging'
 require 'flare/util/constant'
 
+# 
 module Flare
   module Tools
+
+    # == Description
+    # 
     class Stats
       include Flare::Util::Logging
       include Flare::Util::Constant

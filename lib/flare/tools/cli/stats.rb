@@ -9,9 +9,13 @@ require 'flare/tools/cli/sub_command'
 require 'flare/tools/common'
 require 'flare/util/conversion'
 
+# 
 module Flare
   module Tools
     module Cli
+
+      # == Description
+      #
       class Stats < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::Logging

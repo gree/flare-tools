@@ -48,11 +48,10 @@ test/cli_test.rb
 test/cluster_test.rb
 test/daemon_test.rb
 test/index_server_test.rb
-test/just_require.rb
 test/logger_test.rb
 test/node_test.rb
 test/proxy_test.rb
 test/replication_test.rb
-test/result.rb
 test/stats_test.rb
+test/util_test.rb
 test/work/README

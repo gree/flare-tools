@@ -3,8 +3,10 @@
 # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
 # License::   NOTYET
 
+# 
 module Flare
   module Tools
+
     module Cli
       autoload :List,        'flare/tools/cli/list'
       autoload :Stats,       'flare/tools/cli/stats'

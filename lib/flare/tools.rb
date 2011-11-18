@@ -3,10 +3,10 @@
 # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
 # License::   NOTYET
 
+# 
 module Flare
-  #
+
   # flare-tools module.
-  #
   module Tools
     # the version number of flare-tools
     VERSION = '0.2.1'

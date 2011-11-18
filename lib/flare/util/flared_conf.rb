@@ -5,6 +5,7 @@
 
 require 'flare/util/conf'
 
+# 
 module Flare
   module Util
     class FlaredConf < Flare::Util::Conf
