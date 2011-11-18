@@ -123,6 +123,7 @@ module Flare
                 s.set_role(hostname, port, 'slave', node['balance'], node['partition']) unless config[:dry_run]
                 STDERR.puts "done."
               end
+              @force = false if interrupted?
             end
 
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})

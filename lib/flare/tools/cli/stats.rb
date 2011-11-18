@@ -37,7 +37,7 @@ module Flare
         end
   
         def interrupt
-          info "INTERRUPTED"
+          puts "INTERRUPTED"
           @cont = false
         end
 

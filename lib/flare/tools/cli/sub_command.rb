@@ -50,7 +50,7 @@ module Flare
         end
 
         def setup(opt)
-          
+          raise "setup"
         end
         
         def initialize
@@ -60,9 +60,9 @@ module Flare
 
         def interruptible(&block)
           @interruptible = true
-          ret = block.call
+          block.call
+        ensure
           @interruptible = false
-          ret
         end
 
         def interruptible?
@@ -71,6 +71,8 @@ module Flare
 
         def interrupted?
           @interrupted
+        ensure
+          @interrupted = false
         end
 
         def interrupt
@@ -82,7 +84,7 @@ module Flare
         end
         
         def execute(config, *args)
-          
+          raise "execute"
         end
       end
     end
