@@ -1,5 +1,12 @@
+
+=== 0.2.1 / 2011-11-18
+* Minor Enhancements
+  * Added --all option to the reconstruct subcommand to flush and reconstruct all 
+    the nodes in a cluster one by one.
+  * Improved the confirmation step of the reconstruct sumcommand.
+
 === 0.2.0 / 2011-11-15
 
-* 1 major enhancement:
+* Major enhancements
   * Initial release
 

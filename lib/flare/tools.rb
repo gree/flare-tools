@@ -9,7 +9,7 @@ module Flare
   #
   module Tools
     # the version number of flare-tools
-    VERSION = '0.2.0'
+    VERSION = '0.2.1'
     autoload :Common,      'flare/tools/common'
     autoload :Cluster,     'flare/tools/cluster'
     autoload :Stats,       'flare/tools/stats'
