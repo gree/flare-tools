@@ -1,10 +1,14 @@
 # -*- coding: utf-8; -*-
-# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
-# Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
-# License::   NOTYET
 
 module Flare
   module Util
+
+    # Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
+    # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
+    # License::   NOTYET
+    #
+    # == Description
+    # Result is a class for handling result code.
     module Result
       None = nil
       Ok = :OK
@@ -19,6 +23,7 @@ module Flare
       ClientError = :CLIENT_ERROR
       ServerError = :SERVER_ERROR
 
+      # Converts a result code to its string representation.
       def string_of_result(result)
         case result
         when None
@@ -30,6 +35,7 @@ module Flare
         end
       end
       
+      # Converts a string representation of a request result to its result code.
       def result_of_string(string)
         case string
         when ""

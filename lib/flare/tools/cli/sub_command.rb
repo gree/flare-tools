@@ -4,6 +4,7 @@
 # License::   NOTYET
 
 require 'flare/util/logger'
+require 'flare/util/logging'
 
 module Flare
   module Tools

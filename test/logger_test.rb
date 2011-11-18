@@ -4,7 +4,7 @@
 $LOAD_PATH.unshift File.dirname(__FILE__)+"/../lib"
 
 require 'test/unit'
-require 'flare/util/logger.rb'
+require 'flare/util/logging.rb'
 
 class LoggerTest < Test::Unit::TestCase
   include Flare::Util::Logging
