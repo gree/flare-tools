@@ -20,12 +20,7 @@ License::   NOTYET
 
 === flare-stats
 
- $ flare-stats --index-server=flare1.example.com
-   hostname:port             state   role partition balance    items conn behind hit size uptime version
-   flare1.example.com:12121 active master         0       1    10000  111      0 100   10    12d  1.0.10
-   flare2.example.com:12121 active  slave         0       1    10000  111      0 100   10    12d  1.0.10
-   flare3.example.com:12121 active master         1       1    10001  111      0 100   10    12d  1.0.10
-   flare4.example.com:12121 active  slave         1       1    10001  111      0 100   10    12d  1.0.10
+ $ flare-stats [options] [hostname:port] ...
 
 === flare-admin
 
@@ -79,10 +74,15 @@ or
 Flare-stats is a dedicated command line tool used for aquiring statistics of flare nodes.
 This tool shows a list of nodes in a flare cluster and their summarized information.
 
- $ flare-stats
+ $ flare-stats --index-server=flare1.example.com
+   hostname:port             state   role partition balance    items conn behind hit size uptime version
+   flare1.example.com:12121 active master         0       1    10000  111      0 100   10    12d  1.0.10
+   flare2.example.com:12121 active  slave         0       1    10000  111      0 100   10    12d  1.0.10
+   flare3.example.com:12121 active master         1       1    10001  111      0 100   10    12d  1.0.10
+   flare4.example.com:12121 active  slave         1       1    10001  111      0 100   10    12d  1.0.10
 
 Flare-stats is a short-cut version of stats subcommand of flare-admin.
-Please see the section of stats subcommand of flare-admin for further detail.
+Please see the stats subcommand section of flare-admin for further detail.
 
 ==== flare-stats's options
 
@@ -97,7 +97,7 @@ Please see the section of stats subcommand of flare-admin for further detail.
      -c, --count=[REPEATTIME]         repeat count
          --delimiter=[CHAR]           delimiter
 
-=== flare-admin
+=== flare-stdmin
 
 Flare-admin consists of a battery of subcommands used for maintaining a flare cluster.
 You must specify the hostname and port number of the index node by telling them as options 
@@ -125,10 +125,28 @@ bothered, you can specify --force option to skip the confirmation steps.
 
 ==== RECONSTRUCT subcommand
 
-'reconstruct' subcommand flushes the existing data and reconstruct new database 
-from another node.
+'reconstruct' subcommand flushes the existing data and reconstruct new database from 
+another node. This subcommand can be applied to both slaves and masters. 
+If you reconstruct a master, the node will be turned down and one of slave nodes will 
+take over master's role.
 
- $ flare-damin reconstruct node1:12121
+ $ flare-admin reconstruct node1:12121
+ (confirmation)
+ (construction)
+
+If you want to reconstruct all nodes in a cluster, you can specify --all option.
+
+ $ flare-admin reconstruct --all
+ (confirmation)
+ (construction)
+ ...
+
+This subcommand asks you before committing the change to make sure that you know the 
+result. If you're convinced of the effect of this subcommand and doesn't want to be
+bothered, you can specify --force option to skip the confirmation steps.
+
+ $ flare-admin reconstruct --force node1:12121
+ (construction)
 
 ==== PING subcommand
 
@@ -138,6 +156,7 @@ flare-admin exits with a status code 0 (otherwise 1). You can check the soundnes
 of a node by this subcommand in scripts.
 
  $ flare-admin ping
+ alive
 
 If you want to wait for a node to start up, you should specify --wait option and 
 the command repeatedly sends ping requests until the node is available.
@@ -163,13 +182,20 @@ After that, duplication of data starts and the progress is put on your console.
 
 'balance' subcommand sets balance parameters of nodes.
 
- $ flare-admin balance node1:12131:3
+ $ flare-admin balance node1:12131:3 node2:12131:2
+ (confirmation)
+ (setting balance)
 
 ==== LIST subcommand
 
-'list' subcommand shows a node list in a cluater.
+'list' subcommand shows a node list in a cluster. 
 
  $ flare-admin list
+ node                             partition   role  state balance
+ server1:12121                            -  proxy active       0
+
+This subcommand just refers the cluster information the index node in a cluster.
+If 'stats' subcommand fails, please check the node status by this subcommand.
 
 ==== THREADS subcommand (experimental)
 
@@ -181,9 +207,29 @@ After that, duplication of data starts and the progress is put on your console.
 
 'stats' subcommand shows the status of nodes in a cluster.
 
+ $ flare-admin stats
+ hostname:port               state   role partition balance    items conn behind hit size uptime version
+ server1:12121              active master         0       1       30   11      0  70    0     1d  1.0.14
+ server2:12121              active  slave         0       1       35   19      0  68    0     1h  1.0.14
+
+This subcommand also display qps (query per second) statistics of each node.
+
+ $ flare-admin stats --qps --count=100
+ ...
+ hostname:port               state   role partition balance    items conn behind hit size uptime version   qps qps-r qps-w
+ server1:12121              active master         0       1       30   11      0  70    0     1d  1.0.14 100.3  50.1  50.2
+ server2:12121              active  slave         0       1       35   19      0  68    0     1h  1.0.14  52.1     0  52.1
+ ...
+
 ==== INDEX subcommand (experimental)
 
 'index' subcommand generates the index file of a cluster.
+
+ $ flare-admin index
+ <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+ <!DOCTYPE boost_serialization>
+ <boost_serialization signature="serialization::archive" version="4">
+ <node_map class_id='0' tracking_level='0' version='0'> ... </node_map>
 
 ==== DOWN subcommand
 
@@ -208,11 +254,12 @@ After that, duplication of data starts and the progress is put on your console.
    Usage: flare-admin reconstruct [hostname:port] ...
          --force                      commits changes without confirmation
          --safe                       reconstructs a node safely
+         --all                        reconstructs all nodes
  [ping] ping
    Usage: flare-admin ping [hostname:port] ...
          --wait                       waits for alive
  [deploy] deploy.
-   Usage: flare-admin deploy hostname:port:balance:partition ...
+   Usage: flare-admin deploy [hostname:port:balance:partition] ...
          --proxy-concurrency=[CONC]   proxy concurrency
          --noreply-window-limit=[WINLIMIT]
                                       noreply window limit
@@ -230,7 +277,7 @@ After that, duplication of data starts and the progress is put on your console.
    Usage: flare-admin list
          --numeric-hosts              shows numerical host addresses
  [threads] show the list of threads in a flare cluster.
-   Usage: flare-admin threads
+   Usage: flare-admin threads [hostname:port]
  [stats] show the statistics of a flare cluster.
    Usage: flare-admin stats [hostname:port] ...
      -q, --qps                        show qps

@@ -19,8 +19,31 @@ and type "rake install_gem" in your shell.
 First of all, you should setup an index server to create a flare cluster.
 You can find debian packages at http://labs.gree.jp/Top/OpenSource/Flare/Download.html .
 
-=== for debian users
+=== For debian users
+
+If you use flare on debian-based distribution, you can install it using dpkg.
 
  $ sudo dpkg -i flare_1.0.x-x_i386.deb
- $ 
+ $
 
+You should edit /etc/flared.conf to specify your node name and the index server.
+In this tutorial, we assume that the index server is run on the same host where flared 
+is running.
+
+ $ vi /etc/flared.conf
+
+ ...
+ index-server-name = mynode1
+ index-server-port = 12120
+ server-name = mynode1
+ server-port = 12121
+ ...
+
+Now you can start your first flare cluster using flare's init.d script.
+
+ $ sudo /etc/init.d/flare start 
+
+== Checking server status.
+
+ $ flare-admin ping localhost
+ alive
