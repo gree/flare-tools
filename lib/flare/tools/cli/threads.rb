@@ -15,7 +15,7 @@ module Flare
 
         myname :threads
         desc   "show the list of threads in a flare cluster."
-        usage  "threads"
+        usage  "threads [hostname:port]"
   
         def setup(opt)
         end

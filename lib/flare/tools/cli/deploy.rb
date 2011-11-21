@@ -20,7 +20,7 @@ module Flare
 
         myname :deploy
         desc "deploy."
-        usage "deploy hostname:port:balance:partition ..."
+        usage "deploy [hostname:port:balance:partition] ..."
   
         def setup(opt)
           opt.on('--proxy-concurrency=[CONC]',            "proxy concurrency") {|v| @proxy_concurrency = v.to_i}

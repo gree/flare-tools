@@ -57,9 +57,8 @@ module Flare
                 return 1
               end
 
-              exec = false
-              if @force
-                exec = true
+              exec = @force
+              if exec
               elsif node['state'] == down
                 puts "#{ipaddr}:#{port} is already down."
               else

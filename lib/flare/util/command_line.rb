@@ -4,7 +4,6 @@
 # License::   NOTYET
 
 require 'optparse'
-require 'flare/util/logging'
 
 # 
 module Flare
@@ -29,7 +28,6 @@ module Flare
     #  
     # Plesase note that CommandLine includes Logging module.
     module CommandLine
-      include Flare::Util::Logging
       @@option = OptionParser.new
 
       def option(&block)
@@ -68,6 +66,5 @@ option do |opt|
   opt.on('-h',        '--help',     "shows this message") {puts opt.help; exit 1}
   opt.on('-d',        '--debug',    "enables debug mode") {$DEBUG = true}
   opt.on("-w",        '--warn',     "turns on warnings") {$-w = true}
-  opt.on(             '--log-file=[LOGFILE]', "outputs log to LOGFILE") {|v| Logging.set_logger(v)}
 end
 
