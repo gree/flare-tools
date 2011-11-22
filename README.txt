@@ -47,18 +47,18 @@ Please see the web pages about {Flare}[http://labs.gree.jp/Top/OpenSource/Flare-
 
 === SPECIFYING YOUR INDEX SERVER
 
-All the commands in flare-tools have common ways to specifying an index server.
+All the commands in flare-tools have common ways to specify an index server.
 
-If your flare index server doesn't have the defalut port (12120), you have to specify 
-the hostname (or IP address) and the port of your index node specifically. 
+If your flare index server doesn't listen to the defalut port (12120), you have to specify 
+its hostname (or IP address) and port of your index node specifically.
 
 This is done by setting options, --index-server and --index-server-port.
 (other tools can also accept these two options.)
 
  $ flare-stats --index-server=your.index.server --index-server-port=13130
 
-You can also set or FLARE_INDEX_SERVER and FLARE_INDEX_SERVER_PORT environment 
-variables. These variables dosen't override the index node specified by options.
+You can also set or FLARE_INDEX_SERVER and FLARE_INDEX_SERVER_PORT environment variables.
+These variables dosen't override the index node specified by options.
 
  $ export FLARE_INDEX_SERVER=your.index.server
  $ export FLARE_INDEX_SERVER_PORT=13130

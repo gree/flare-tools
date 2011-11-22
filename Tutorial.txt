@@ -2,36 +2,87 @@
 
 * under construction
 
-In this document, you can find how to manage a flare cluster with flare-tools.
+In this document, you can find how to manage a flare cluster using flare-tools.
+
+== Preparation
+
+Through this tutorial, we use a number of hosts to deploy flare nodes.
+
+mynode1:: a host for the index server and a node of partition 0.
+mynode2:: a host for another node of partition 0.
+mynode3:: a host for a node of partition 1.
+
+Please note that all the commands in flare-tools suppose that node names you are specifying 
+in the configuration files are able to be resolved by naming services.
+If some of your flare nodes don't have the same name listed in /etc/hosts or DNS servers,
+you have to add them to those naming services before using flare-tools.
+
+ mynode1$ sudo vi /etc/hosts
+ ...
+ 192.168.0.1   mynode1
+ 192.168.0.2   mynode2
+ ...
+
+== Installing flare
+
+=== For debian users
+
+If you're going to use flare on a debian-based distribution, you can install it using dpkg.
+
+ mynode1$ sudo dpkg -i flare_1.0.x-x_i386.deb
+ ...
+ mynode1$
+
+=== For fedora users
+
+* install stop-start-daemon RPM package.
+* install flare RPM package.
 
 == Installing flare-tools
 
-Flare-tools isn't published to rubyforge.org, so please pull the code from the repository
-and type "rake install_gem" in your shell.
+Flare-tools hasn't been published to the public gem repository yet, so please pull the 
+code from the git repository and type "rake install_gem" in your shell.
 
- $ sudo gem install hoe newgem rdoc
- $ git clone ...
- $ cd flare-tools
- $ rake rake install_gem
+ mynode1$ sudo gem install hoe newgem rdoc
+ mynode1$ git clone ...
+ mynode1$ cd flare-tools
+ mynode1$ rake rake install_gem
 
 == Setting up your index server.
 
 First of all, you should setup an index server to create a flare cluster.
 You can find debian packages at http://labs.gree.jp/Top/OpenSource/Flare/Download.html .
 
-=== For debian users
+=== STEP 1. Editing index server's configuration file
 
-If you use flare on debian-based distribution, you can install it using dpkg.
+You should edit /etc/flarei.conf to specify your index server's name.
 
- $ sudo dpkg -i flare_1.0.x-x_i386.deb
- $
+ mynode1$ vi /etc/flarei.conf
+ ...
+ server-name = mynode1
+ server-port = 12120
+ ...
 
-You should edit /etc/flared.conf to specify your node name and the index server.
+=== STEP 2. Starting an index server
+
+Now you can start your first flare cluster using flare's init.d script.
+
+ mynode1$ sudo /etc/init.d/flare start-index
+
+Please confirm that your index server is running.
+
+ mynode1$ flare-admin ping mynode1:12120
+ alive
+
+== Setting up your first node.
+
+=== STEP 1. Editing node server's configuration file
+
+You should also edit /etc/flared.conf to specify your node name and the index server.
 In this tutorial, we assume that the index server is run on the same host where flared 
 is running.
 
- $ vi /etc/flared.conf
-
+ mynode1$ vi /etc/flared.conf
  ...
  index-server-name = mynode1
  index-server-port = 12120
@@ -39,11 +90,110 @@ is running.
  server-port = 12121
  ...
 
-Now you can start your first flare cluster using flare's init.d script.
+=== STEP 2. Starting a node
 
- $ sudo /etc/init.d/flare start 
+Now you can start your first node using flare's init.d script.
 
-== Checking server status.
+ mynode1$ sudo /etc/init.d/flare start-node
 
- $ flare-admin ping localhost
+You can use list command to show the nodes that are recognized by the index server.
+
+ mynode1$ flare-admin list
+ node                             partition   role  state balance
+ mynode1:12121                            -  proxy active       0
+
+If you'd like to confirm that the node is really alive, you can use ping subcommand 
+to send ping request.
+
+ mynode1$ flare-admin ping mynode1:12121
  alive
+
+=== STEP 3. Creating a new partition
+
+At this moment, there's no partition in this cluster.
+Let's make a partition with mynode1:12121 using master subcommand.
+
+ mynode1$ flare-admin master mynode1:12121:1:0
+ making the node master (node=192.168.0.1:12121, role=proxy -> master) (y/n): y
+ 0 (role = master, state = active) [ETA: n/a sec (elapsed = 0 sec)]
+ state is ready -> stop waiting
+ node                             partition   role  state balance
+ mynode1:12121                            0 master active       1
+ mynode1$ 
+
+The arguments of master subcommand should be specified in the form of "hostname:port:balance:partition".
+
+hostname:: node's hostname (specified in flared.conf)
+port:: node's port (specified in flared.conf)
+balance:: node's balance parameter to be set
+partition:: the index number of a new partition
+
+This command does the actions shown below:
+* changes node's state from proxy to master.
+* waits for the node to be ready by checking the role and state described in the cluster information distributed by the index node.
+
+=== STEP 4. Storing data for testing
+
+The cluster now can store key-value pairs through the memcached compatible protocol, so lets store some data.
+
+Each node has no data at the time of creation. Please confirm that with flare-stats command.
+
+ mynode1$ flare-stats
+ hostname:port              state   role partition balance    items conn behind hit size uptime version
+ mynode1:12121             active master         0       1        0    2      0   -    0     1d  1.0.14
+
+You can store a key-value entry to the cluster as follows.
+
+ $ printf "set key1 0 0 6\r\nvalue1\r\nquit\r\n" |netcat mynode1 12121
+ STORED
+
+Now flare-stats reports that the node has one item.
+
+ mynode1$ flare-stats
+ hostname:port              state   role partition balance    items conn behind hit size uptime version
+ mynode1:12121             active master         0       1        0    2      0   -    0     1d  1.0.14
+
+== Creating a slave node
+
+In this section, you will find how to add a node as a slave to a partition.
+
+=== STEP 1. Storing more data to the cluster
+
+I really want you to know that adding a slave node may become a time consuming work.
+Before doing that, lets add more data to the cluster.
+
+ $ (for i in $(seq 0 9999); do printf "set key%04d 0 0 9\r\nvalue%04d\r\n" $i $i; done; echo "quit") | netcat mynode1 12121
+ ...
+ STORED
+ ...
+ $ flare-stats
+ hostname:port              state   role partition balance    items conn behind hit size uptime version
+ mynode1:12121             active master         0       1    10001    3      0   -    0     1d  1.0.14
+
+=== STEP 2. Starting the second node.
+
+Next start the second node on mynode2.
+
+ mynode2$ sudo /etc/init.d/flare start-node
+
+ mynode1$ flare-admin list
+ node                             partition   role  state balance
+ mynode2:12121                            -  proxy active       0
+ mynode1:12121                            0 master active       1
+
+=== STEP 3. 
+
+ $ flare-admin slave mynode2:12121:1:0
+ making node slave (node=mynode2:12121, role=proxy -> slave) (y/n): y
+ started constructing slave node...
+ 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 0 sec)]
+ 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 1 sec)]
+ 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 2 sec)]
+ 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 3 sec)]
+ 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 4 sec)]
+ 2360/10001 (role = slave, state = prepare) [ETA: 16 sec (elapsed = 5 sec)]
+ 10001/10001 (role = slave, state = active) [ETA: 0 sec (elapsed = 6 sec)]
+ state is active -> stop waiting
+ node                             partition   role  state balance
+ mynode2:12121                            0  slave active       1
+
