@@ -1,4 +1,10 @@
 
+=== 0.2.2 / 2011-11-24
+* Minor Enhancements
+  * Introduced log4r.
+  * Implemented a reconnection routine of Connection class.
+  * Modified cli/reconstruct.rb to get out of confirmation skip mode when Ctrl+C is pressed.
+
 === 0.2.1 / 2011-11-18
 * Minor Enhancements
   * Added --all option to the reconstruct subcommand to flush and reconstruct all 

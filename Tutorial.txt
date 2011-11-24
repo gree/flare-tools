@@ -8,9 +8,8 @@ In this document, you can find how to manage a flare cluster using flare-tools.
 
 Through this tutorial, we use a number of hosts to deploy flare nodes.
 
-mynode1:: a host for the index server and a node of partition 0.
-mynode2:: a host for another node of partition 0.
-mynode3:: a host for a node of partition 1.
+mynode1:: a host for the index server and a node of partition 0
+mynode2:: a host for another node of partition 0
 
 Please note that all the commands in flare-tools suppose that node names you are specifying 
 in the configuration files are able to be resolved by naming services.
@@ -28,6 +27,7 @@ you have to add them to those naming services before using flare-tools.
 === For debian users
 
 If you're going to use flare on a debian-based distribution, you can install it using dpkg.
+You can find debian packages at http://labs.gree.jp/Top/OpenSource/Flare/Download.html .
 
  mynode1$ sudo dpkg -i flare_1.0.x-x_i386.deb
  ...
@@ -51,7 +51,6 @@ code from the git repository and type "rake install_gem" in your shell.
 == Setting up your index server.
 
 First of all, you should setup an index server to create a flare cluster.
-You can find debian packages at http://labs.gree.jp/Top/OpenSource/Flare/Download.html .
 
 === STEP 1. Editing index server's configuration file
 
@@ -68,6 +67,7 @@ You should edit /etc/flarei.conf to specify your index server's name.
 Now you can start your first flare cluster using flare's init.d script.
 
  mynode1$ sudo /etc/init.d/flare start-index
+ ...
 
 Please confirm that your index server is running.
 
@@ -79,8 +79,6 @@ Please confirm that your index server is running.
 === STEP 1. Editing node server's configuration file
 
 You should also edit /etc/flared.conf to specify your node name and the index server.
-In this tutorial, we assume that the index server is run on the same host where flared 
-is running.
 
  mynode1$ vi /etc/flared.conf
  ...
@@ -95,8 +93,9 @@ is running.
 Now you can start your first node using flare's init.d script.
 
  mynode1$ sudo /etc/init.d/flare start-node
+ ...
 
-You can use list command to show the nodes that are recognized by the index server.
+You can use list command to show the nodes recognized by the index server.
 
  mynode1$ flare-admin list
  node                             partition   role  state balance
@@ -134,7 +133,7 @@ This command does the actions shown below:
 
 === STEP 4. Storing data for testing
 
-The cluster now can store key-value pairs through the memcached compatible protocol, so lets store some data.
+The cluster now can store key-value pairs through the memcached compatible protocol, so lets store an entry.
 
 Each node has no data at the time of creation. Please confirm that with flare-stats command.
 
@@ -151,7 +150,7 @@ Now flare-stats reports that the node has one item.
 
  mynode1$ flare-stats
  hostname:port              state   role partition balance    items conn behind hit size uptime version
- mynode1:12121             active master         0       1        0    2      0   -    0     1d  1.0.14
+ mynode1:12121             active master         0       1        1    2      0   -    0     1d  1.0.14
 
 == Creating a slave node
 
@@ -167,13 +166,19 @@ Before doing that, lets add more data to the cluster to make the situation more 
  hostname:port              state   role partition balance    items conn behind hit size uptime version
  mynode1:12121             active master         0       1   100001    2      0   -    0     1d  1.0.14
 
-This command stores about 1GB data.
+This command stores about 1GB of data.
+
+ mynode1$ ls -l /tmp/flare.hdb 
+ -rw-r--r-- 1 root root 1005328752 Nov 24 10:15 /tmp/flare.hdb
 
 === STEP 2. Starting the second node.
 
 Next, start the second node on mynode2.
 
  mynode2$ sudo /etc/init.d/flare start-node
+ ...
+
+The node mynode2 is now recognized by the index server.
 
  mynode1$ flare-admin list
  node                             partition   role  state balance
@@ -359,6 +364,5 @@ The reconstruction step is needed to restore the node.
 This time the progress might seem to be 100% at the beginning of reconstruction,
 but the target node just has invalid data. 
 Wait for a moment while data copying process is running.
-
 
 
