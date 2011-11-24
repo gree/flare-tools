@@ -144,7 +144,7 @@ Each node has no data at the time of creation. Please confirm that with flare-st
 
 You can store a key-value entry to the cluster as follows.
 
- $ printf "set key1 0 0 6\r\nvalue1\r\nquit\r\n" |netcat mynode1 12121
+ $ printf "set key1 0 0 6\r\nvalue1\r\nquit\r\n" | netcat mynode1 12121
  STORED
 
 Now flare-stats reports that the node has one item.
@@ -159,20 +159,19 @@ In this section, you will find how to add a node as a slave to a partition.
 
 === STEP 1. Storing more data to the cluster
 
-I really want you to know that adding a slave node may become a time consuming work.
-Before doing that, lets add more data to the cluster.
+Adding a slave node may become a time-consuming work.
+Before doing that, lets add more data to the cluster to make the situation more real.
 
- $ (for i in $(seq 0 9999); do printf "set key%04d 0 0 9\r\nvalue%04d\r\n" $i $i; done; echo "quit") | netcat mynode1 12121
- ...
- STORED
- ...
+ $ (for i in $(seq 0 99999); do printf "set key%06d 0 0 10000\r\n%010000d\r\n" $i $i; done; echo "quit") | netcat mynode1 12121 2>&1 > /dev/null
  $ flare-stats
  hostname:port              state   role partition balance    items conn behind hit size uptime version
- mynode1:12121             active master         0       1    10001    3      0   -    0     1d  1.0.14
+ mynode1:12121             active master         0       1   100001    2      0   -    0     1d  1.0.14
+
+This command stores about 1GB data.
 
 === STEP 2. Starting the second node.
 
-Next start the second node on mynode2.
+Next, start the second node on mynode2.
 
  mynode2$ sudo /etc/init.d/flare start-node
 
@@ -181,19 +180,185 @@ Next start the second node on mynode2.
  mynode2:12121                            -  proxy active       0
  mynode1:12121                            0 master active       1
 
-=== STEP 3. 
+=== STEP 3. Making a slave node
 
  $ flare-admin slave mynode2:12121:1:0
  making node slave (node=mynode2:12121, role=proxy -> slave) (y/n): y
  started constructing slave node...
- 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 0 sec)]
- 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 1 sec)]
- 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 2 sec)]
- 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 3 sec)]
- 0/10001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 4 sec)]
- 2360/10001 (role = slave, state = prepare) [ETA: 16 sec (elapsed = 5 sec)]
- 10001/10001 (role = slave, state = active) [ETA: 0 sec (elapsed = 6 sec)]
+ 0/100001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 3 sec)]
+ 0/100001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 4 sec)]
+ 5/100001 (role = slave, state = prepare) [ETA: 102796 sec (elapsed = 5 sec)]
+ 866/100001 (role = slave, state = prepare) [ETA: 705 sec (elapsed = 6 sec)]
+ 2230/100001 (role = slave, state = prepare) [ETA: 314 sec (elapsed = 7 sec)]
+ 3604/100001 (role = slave, state = prepare) [ETA: 219 sec (elapsed = 8 sec)]
+ 4977/100001 (role = slave, state = prepare) [ETA: 175 sec (elapsed = 9 sec)]
+ 6608/100001 (role = slave, state = prepare) [ETA: 144 sec (elapsed = 10 sec)]
+ 8433/100001 (role = slave, state = prepare) [ETA: 122 sec (elapsed = 11 sec)]
+ 10629/100001 (role = slave, state = prepare) [ETA: 103 sec (elapsed = 12 sec)]
+ ...
+ 77306/100001 (role = slave, state = prepare) [ETA: 10 sec (elapsed = 36 sec)]
+ 80288/100001 (role = slave, state = prepare) [ETA: 9 sec (elapsed = 37 sec)]
+ 83298/100001 (role = slave, state = prepare) [ETA: 7 sec (elapsed = 38 sec)]
+ 86277/100001 (role = slave, state = prepare) [ETA: 6 sec (elapsed = 39 sec)]
+ 89000/100001 (role = slave, state = prepare) [ETA: 5 sec (elapsed = 40 sec)]
+ 90753/100001 (role = slave, state = prepare) [ETA: 4 sec (elapsed = 41 sec)]
+ 91627/100001 (role = slave, state = prepare) [ETA: 3 sec (elapsed = 42 sec)]
+ 93623/100001 (role = slave, state = prepare) [ETA: 2 sec (elapsed = 43 sec)]
+ 95840/100001 (role = slave, state = prepare) [ETA: 1 sec (elapsed = 44 sec)]
+ 96910/100001 (role = slave, state = prepare) [ETA: 1 sec (elapsed = 45 sec)]
+ 98110/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 46 sec)]
+ 100001/100001 (role = slave, state = active) [ETA: 0 sec (elapsed = 48 sec)]
  state is active -> stop waiting
  node                             partition   role  state balance
  mynode2:12121                            0  slave active       1
+
+=== STEP 4. Adding more data
+
+== Reconstructing nodes
+
+Sometimes the size of database may become larger than that of the actual data 
+because of fragmentation or some other reason peculiar to the backend datastore.
+In that situation, reconstruction of a database is helpful and you might want 
+to do that periodically.
+
+Reconstructing a node is basically the same as making a slave, but before changing 
+the role, the node is turned down and its data are cleared by 'flush_all' command.
+
+== Reconstructing a node
+
+Flare has fail over feature to keep a cluster alive in case that the master is down,
+so it is possible to specify the master node of a partition.
+
+ mynode1$ flare-stats
+ hostname:port              state   role partition balance    items conn behind hit size uptime version
+ mynode1:12121             active master         0       1   100001    2      0   -    0     2d  1.0.14
+ mynode2:12121             active  slave         0       1   100001    2      0   -    0     1d  1.0.14
+
+In this case, mynode1 is a master and mynode2 is a slave.
+Type the command shown below and check its behavior.
+
+ mynode1$ flare-admin reconstruct mynode1:12121
+ node                             partition   role  state balance
+ mynode1:12121                            0 master active       1
+ 
+ you are trying to reconstruct mynode1:12121 without redanduncy.
+ reconstructing node (node=mynode1:12121, role=master) (y/n/a/q/h:help): y
+ turning down...
+ waiting for node to be active again...
+ started constructing node...
+ 0/100001 (role = slave, state = prepare) [ETA: n/a sec (elapsed = 0 sec)]
+ 606/100001 (role = slave, state = prepare) [ETA: 174 sec (elapsed = 1 sec)]
+ 1502/100001 (role = slave, state = prepare) [ETA: 136 sec (elapsed = 2 sec)]
+ 2379/100001 (role = slave, state = prepare) [ETA: 127 sec (elapsed = 3 sec)]
+ 3302/100001 (role = slave, state = prepare) [ETA: 120 sec (elapsed = 4 sec)]
+ 4508/100001 (role = slave, state = prepare) [ETA: 108 sec (elapsed = 5 sec)]
+ 5879/100001 (role = slave, state = prepare) [ETA: 98 sec (elapsed = 6 sec)]
+ 7665/100001 (role = slave, state = prepare) [ETA: 86 sec (elapsed = 7 sec)]
+ 9853/100001 (role = slave, state = prepare) [ETA: 75 sec (elapsed = 8 sec)]
+ 12711/100001 (role = slave, state = prepare) [ETA: 63 sec (elapsed = 9 sec)]
+ 16441/100001 (role = slave, state = prepare) [ETA: 52 sec (elapsed = 10 sec)]
+ 21198/100001 (role = slave, state = prepare) [ETA: 41 sec (elapsed = 11 sec)]
+ 24516/100001 (role = slave, state = prepare) [ETA: 37 sec (elapsed = 12 sec)]
+ ...
+ 78659/100001 (role = slave, state = prepare) [ETA: 7 sec (elapsed = 28 sec)]
+ 78669/100001 (role = slave, state = prepare) [ETA: 8 sec (elapsed = 29 sec)]
+ 79113/100001 (role = slave, state = prepare) [ETA: 8 sec (elapsed = 30 sec)]
+ 80108/100001 (role = slave, state = prepare) [ETA: 7 sec (elapsed = 31 sec)]
+ 82138/100001 (role = slave, state = prepare) [ETA: 7 sec (elapsed = 32 sec)]
+ 83652/100001 (role = slave, state = prepare) [ETA: 6 sec (elapsed = 33 sec)]
+ 86597/100001 (role = slave, state = prepare) [ETA: 5 sec (elapsed = 34 sec)]
+ 90671/100001 (role = slave, state = prepare) [ETA: 3 sec (elapsed = 35 sec)]
+ 93559/100001 (role = slave, state = prepare) [ETA: 2 sec (elapsed = 36 sec)]
+ 93968/100001 (role = slave, state = prepare) [ETA: 2 sec (elapsed = 37 sec)]
+ 94964/100001 (role = slave, state = prepare) [ETA: 2 sec (elapsed = 38 sec)]
+ 95469/100001 (role = slave, state = prepare) [ETA: 1 sec (elapsed = 39 sec)]
+ 97760/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 40 sec)]
+ 100001/100001 (role = slave, state = active) [ETA: 0 sec (elapsed = 41 sec)]
+ state is active -> stop waiting
+ done.
+ node                             partition   role  state balance
+ mynode1:12121                            0  slave active       1
+
+Reconstruction has finished, please check the state of the cluster.
+ 
+ mynode1$ flare-stats
+ hostname:port              state   role partition balance    items conn behind hit size uptime version
+ mynode2:12121             active master         0       1   100001    2      0   -    0     1d  1.0.14
+ mynode1:12121             active  slave         0       1   100001    2      0   -    0     2d  1.0.14
+
+The node mynode2 has taken over the role of mynode1.
+
+=== Reconstructing all the nodes
+
+In many cases, most nodes in a cluster have similar state of their database because 
+they might be created at the same time and have been doing the same transaction.
+Reconstruct subcommand has --all option for that situation.
+
+ mynode1$ flare-admin reconstruct --all
+
+This reconstructs nodes one-by-one. 
+If you don't want to be asked for each node, 
+specify --force option to skip the confirmation.
+
+ mynode1$ flare-admin reconstruct --all --force
+
+== Stopping and Restoring a node
+
+=== STEP 1. Turning a node down
+
+If you'd like to stop the node and bring it back to a proxy role, please use down subcommand.
+
+ mynode1$ flare-stats
+ hostname:port              state   role partition balance    items conn behind hit size uptime version
+ mynode2:12121             active master         0       1   100001    2      0   -    0     1d  1.0.14
+ mynode1:12121             active  slave         0       1   100001    2      0   -    0     2d  1.0.14
+ 
+ mynode1$ flare-admin down mynode2:12121
+ turning node down (node=192.168.0.2:12121, state=active -> down) (y/n): y
+ node                             partition   role  state balance
+ mynode2:12121                           -1  proxy   down       0
+
+Now, the node mynode2 is a proxy and nolonger duplicates master's data.
+
+ mynode1$ flare-stats
+ hostname:port              state   role partition balance    items conn behind hit size uptime version
+ mynode2:12121             active  proxy        -1       0   100001    2      0   -    0     1d  1.0.14
+ mynode1:12121             active master         0       1   100001    2      0   -    0     2d  1.0.14
+
+=== STEP 2. Restoring a slave
+
+Once you turn a node down, it's purged from a partition and the data become invalid.
+The reconstruction step is needed to restore the node.
+
+ $ flare-admin slave mynode2:12121:1:0
+ making node slave (node=192.168.0.2:12121, role=proxy -> slave) (y/n): y
+ started constructing slave node...
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 0 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 1 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 2 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 3 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 4 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 5 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 6 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 7 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 8 sec)]
+ ...
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 49 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 50 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 51 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 52 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 53 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 54 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 55 sec)]
+ 100001/100001 (role = slave, state = prepare) [ETA: 0 sec (elapsed = 56 sec)]
+ 100001/100001 (role = slave, state = active) [ETA: 0 sec (elapsed = 57 sec)]
+ state is active -> stop waiting
+ node                             partition   role  state balance
+ mynode2:12121                            0  slave active       1
+
+This time the progress might seem to be 100% at the beginning of reconstruction,
+but the target node just has invalid data. 
+Wait for a moment while data copying process is running.
+
+
 
