@@ -4,6 +4,10 @@ task :default => [:test]
 tests = ["daemon", "stats", "cluster", "logger", "node", "cli", "util"]
 envargs = "-u FLARE_INDEX_SERVER -u FLARE_INDEX_SERVER_PORT"
 
+if ENV.has_key? "TESTS"
+  tests = ENV["TESTS"].split(' ')
+end
+
 task :test do
   tests.each do |test|
     sh "env #{envargs} ruby #{test}_test.rb"

@@ -60,10 +60,6 @@ setup do |opt|
   end
 end
 
-Signal.trap(:INT) do
-  subc.interrupt
-end
-
 execute do |args|
   command = args.shift
   subc.execute({ :command => command,

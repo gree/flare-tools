@@ -1,3 +1,4 @@
+Flare-tools.txt
 History.txt
 Manifest.txt
 PostInstall.txt
@@ -12,6 +13,7 @@ lib/flare/test/daemon.rb
 lib/flare/test/node.rb
 lib/flare/tools.rb
 lib/flare/tools/cli.rb
+lib/flare/tools/cli/#sub_command.rb#
 lib/flare/tools/cli/balance.rb
 lib/flare/tools/cli/deploy.rb
 lib/flare/tools/cli/down.rb
@@ -40,6 +42,7 @@ lib/flare/util/exception.rb
 lib/flare/util/filesystem.rb
 lib/flare/util/flared_conf.rb
 lib/flare/util/flarei_conf.rb
+lib/flare/util/interruption.rb
 lib/flare/util/logger.rb
 lib/flare/util/logging.rb
 lib/flare/util/result.rb

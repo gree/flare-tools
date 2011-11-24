@@ -11,27 +11,28 @@ require 'flare/util/conversion.rb'
 
 include Flare::Util::Logging
 include Flare::Util::Constant
-include Flare::Util::Conversion
 
-
-index_server_hostname = '127.0.0.1'
-index_server_port = 12120
+index_server_hostname = DefaultIndexServerName
+index_server_port = DefaultIndexServerPort
+timeout = DefaultTimeout
 dry_run = false
-timeout = 10
-numeric_hosts = false
+
+if ENV.has_key? "FLARE_INDEX_SERVER"
+  h, p = ENV["FLARE_INDEX_SERVER"].split(':')
+  index_server_hostname = h unless h.nil?
+  index_server_port = p unless p.nil?
+end
 
 subc = Flare::Tools::Cli::Stats.new
 
 setup do |opt|
   opt.banner = "Usage: flare-stats [options]"
-#  opt.on("-n",  '--dry-run',                  "dry run") {dry_run = true}
+  opt.on("-n",  '--dry-run',                  "dry run") {dry_run = true}
   opt.on('-i',  '--index-server=[HOSTNAME]',  "index server hostname(default:#{index_server_hostname})") {|v| index_server_hostname = v}
   opt.on('-p',  '--index-server-port=[PORT]', "index server port(default:#{index_server_port})") {|v| index_server_port = v.to_i}
-  subc.setup(opt)
-end
+  opt.on(       '--log-file=[LOGFILE]',       "outputs log to LOGFILE") {|v| Logging.set_logger(v)}
 
-Signal.trap(:INT) do
-  subc.interrupt
+  subc.setup(opt)
 end
 
 execute do |args|

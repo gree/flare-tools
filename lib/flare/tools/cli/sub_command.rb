@@ -4,12 +4,15 @@
 # License::   NOTYET
 
 require 'flare/util/logging'
+require 'flare/util/interruption'
 
 module Flare
   module Tools
     module Cli
       class SubCommand
         include Flare::Util::Logging
+        include Flare::Util::Interruption
+
         @@myname = {}
         @@desc = {}
         @@usage = {}
@@ -54,33 +57,7 @@ module Flare
         end
         
         def initialize
-          @interruptible = false
-          @interrupted = false
-        end
-
-        def interruptible(&block)
-          @interruptible = true
-          block.call
-        ensure
-          @interruptible = false
-        end
-
-        def interruptible?
-          @interruptible
-        end
-
-        def interrupted?
-          @interrupted
-        ensure
-          @interrupted = false
-        end
-
-        def interrupt
-          @interrupted = true
-          if interruptible?
-            info "INTERRUPTED"
-            exit 1 
-          end
+          super
         end
         
         def execute(config, *args)

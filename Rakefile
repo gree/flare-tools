@@ -15,7 +15,7 @@ require 'flare/tools'
 
 Hoe.plugin :newgem
 
-Hoe.spec 'flare-tools' do
+$hoe = Hoe.spec 'flare-tools' do
   self.version = Flare::Tools::VERSION
   self.developer 'kikehara', 'kiyoshi.ikehara@gree.co.jp'
   self.url = 'http://github.com/kgws/flare-tools'
@@ -24,7 +24,8 @@ Hoe.spec 'flare-tools' do
   self.description = "Flare-tools is a collection of tools for Flare distributed key-value store."
   self.readme_file = "README.txt"
   self.extra_deps = [['log4r', '>= 1.1.4']]
-  self.rubyforge_name = 'flare-tools'  
+  self.rubyforge_name = 'flare-tools'
+  self.extra_rdoc_files = []
 end
 
 require 'newgem/tasks'
