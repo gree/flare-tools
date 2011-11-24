@@ -13,7 +13,6 @@ lib/flare/test/daemon.rb
 lib/flare/test/node.rb
 lib/flare/tools.rb
 lib/flare/tools/cli.rb
-lib/flare/tools/cli/#sub_command.rb#
 lib/flare/tools/cli/balance.rb
 lib/flare/tools/cli/deploy.rb
 lib/flare/tools/cli/down.rb

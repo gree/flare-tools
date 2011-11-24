@@ -10,9 +10,6 @@ module Flare
   module Tools
     module Cli
       class SubCommand
-        include Flare::Util::Logging
-        include Flare::Util::Interruption
-
         @@myname = {}
         @@desc = {}
         @@usage = {}
@@ -52,17 +49,19 @@ module Flare
           self.to_sym.to_s
         end
 
+        def initalize
+        end
+
         def setup(opt)
           raise "setup"
-        end
-        
-        def initialize
-          super
         end
         
         def execute(config, *args)
           raise "execute"
         end
+
+        include Flare::Util::Logging
+        include Flare::Util::Interruption
       end
     end
   end

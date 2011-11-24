@@ -28,6 +28,7 @@ module Flare
         end
         
         def initialize
+          super
           @wait = false
         end
         

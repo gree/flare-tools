@@ -30,6 +30,7 @@ module Flare
         end
 
         def initialize
+          super
           @force = false
           @retry = 5
         end

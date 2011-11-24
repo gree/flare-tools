@@ -26,6 +26,7 @@ module Flare
         end
 
         def initialize
+          super
           @numeric_hosts = false
         end
 

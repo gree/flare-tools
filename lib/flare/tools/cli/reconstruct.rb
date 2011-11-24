@@ -31,6 +31,7 @@ module Flare
         end
 
         def initialize
+          super
           @force = false
           @safe = false
           @all = false

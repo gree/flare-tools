@@ -6,16 +6,13 @@
 module Flare
   module Util
     module Interruption
-      @@__interrupts__ = []
+      InterruptionTargets = []
 
       def self.included(klass)
-        ObjectSpace.each_object(klass) {|inst|
-          inst.initialize_rands
-        }
-        
         klass.class_eval {
           alias_method :initialize_before_interruption, :initialize
           def initialize(*args)
+            super
             initialize_before_interruption(*args)
             initialize_interruption
           end
@@ -23,14 +20,13 @@ module Flare
       end
 
       def self.interrupt_all
-        puts @@__interrupts__
-        @@__interrupts__.each do |x|
-          x.interrupt
+        InterruptionTargets.each do |x|
+          x.interrupt_
         end
       end
 
       def initialize_interruption
-        @@__interrupts__ << self
+        InterruptionTargets.push self
         @__interruptible__ = false
         @__interrupted__ = false
       end
@@ -51,9 +47,13 @@ module Flare
       ensure
         @__interrupted__ = false
       end
+
+      def interrupt_
+        @__interrupted__ = true
+        interrupt
+      end
       
       def interrupt
-        @__interrupted__ = true
         if interruptible?
           info "INTERRUPTED"
           exit 1 
@@ -65,7 +65,6 @@ module Flare
 end
 
 Signal.trap(:INT) do
-  print "^C"
   Flare::Util::Interruption.interrupt_all
 end
 

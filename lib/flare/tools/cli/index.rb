@@ -27,6 +27,7 @@ module Flare
         end
 
         def initialize
+          super
           @formatter = REXML::Formatters::Default
         end
   

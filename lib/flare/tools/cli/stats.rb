@@ -33,6 +33,7 @@ module Flare
         end
 
         def initialize
+          super
           @qps = false
           @wait = 1
           @count = 1
