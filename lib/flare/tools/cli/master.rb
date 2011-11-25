@@ -24,10 +24,12 @@ module Flare
 
         def setup(opt)
           opt.on('--force',            "commits changes without confirmation") {@force = true}
+          opt.on('--keep-ready',       "keeps the state ready") {@keep_ready = true}
         end
 
         def initialize
           @force = false
+          @keep_ready = false
         end
   
         def execute(config, *args)
@@ -73,9 +75,14 @@ module Flare
                 end
               end
               if exec
-                resp = s.set_role(hostname, port, role, balance, partition) unless config[:dry_run]
-                if resp
-                  wait_for_master_construction(s, hostname_port, config[:timeout])
+                unless config[:dry_run]
+                  if s.set_role(hostname, port, role, balance, partition) 
+                    wait_for_master_construction(s, hostname_port, config[:timeout])
+                    unless @keep_ready
+                      resp = s.set_state(hostname, port, 'active')
+                    end
+                    return 1 unless resp
+                  end
                 end
               end
             end
