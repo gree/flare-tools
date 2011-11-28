@@ -33,8 +33,8 @@ module Flare
         end
         
         def execute(config, *args)
-          resp = nil
           args.each do |arg|
+            resp = nil
             hostname, port = arg.split(':', 2)
             until resp
               begin

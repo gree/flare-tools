@@ -74,12 +74,12 @@ module Flare
               end
               unless cluster.reconstructable? hostname_port
                 puts "#{hostname_port} is not reconstructable."
-                return 1
+                next
               end
               is_safe = cluster.safely_reconstructable? hostname_port
               if @safe && !is_safe
                 puts "The partition needs one more slave to reconstruct #{hostname_port} safely."
-                return 1
+                next
               end
 
               exec = @force
