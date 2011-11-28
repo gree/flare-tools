@@ -28,8 +28,9 @@ if ENV.has_key? "FLARE_INDEX_SERVER"
 end
 
 scname = ARGV[0].to_sym if ARGV.size > 0
-scclasses = [Cli::List, Cli::Stats, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Index, Cli::Master, Cli::Deploy, Cli::Threads, Cli::Ping]
-unsupported = [] # [Cli::Master, Cli::Deploy]
+scclasses = [Cli::List, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Master, Cli::Threads, Cli::Ping]
+unsupported = [Cli::Index, Cli::Stats, Cli::Deploy]
+scclasses.concat unsupported
 
 subcommands = Hash[*scclasses.map {|x| [x.to_sym, x]}.flatten]
 
