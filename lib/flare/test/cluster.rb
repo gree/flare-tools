@@ -94,6 +94,12 @@ module Flare
         end
       end
 
+      def clear_data(node)
+        Flare::Tools::Node.open(node.hostname, node.port, 10) do |n|
+          n.flush_all
+        end
+      end
+
     end
   end
 end

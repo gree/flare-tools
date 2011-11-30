@@ -10,6 +10,9 @@ require 'flare/test/cluster'
 
 class CliTest < Test::Unit::TestCase
   include Flare::Tools::Common
+
+  S_OK = 0
+  S_NG = 1
   
   def setup
     @flare_cluster = Flare::Test::Cluster.new('test')
@@ -43,14 +46,14 @@ class CliTest < Test::Unit::TestCase
     @node_servers.each {|n| n.terminate}
     sleep 1
     for node in @node_servers.map{|n| "#{n.hostname}:#{n.port}"}
-      assert_equal(1, ping(node))
+      assert_equal(S_NG, ping(node))
     end
   end
 
   def test_ping
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     for node in @node_servers.map{|n| "#{n.hostname}:#{n.port}"}
-      assert_equal(0, ping(node))
+      assert_equal(S_OK, ping(node))
     end
   end
   
@@ -61,8 +64,8 @@ class CliTest < Test::Unit::TestCase
   
   def test_list
     @flare_cluster.prepare_master_and_slaves(@node_servers)
-    assert_equal(0, list())
-    assert_equal(0, list('--numeric-hosts'))
+    assert_equal(S_OK, list())
+    assert_equal(S_OK, list('--numeric-hosts'))
   end
 
   def stats(*args)
@@ -76,9 +79,9 @@ class CliTest < Test::Unit::TestCase
   def test_stats
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
-    assert_equal(0, stats())
-    assert_equal(0, stats('--qps', '--count=5'))
-    assert_equal(0, stats('--qps', '--wait=2', '--count=3'))
+    assert_equal(S_OK, stats())
+    assert_equal(S_OK, stats('--qps', '--count=5'))
+    assert_equal(S_OK, stats('--qps', '--wait=2', '--count=3'))
   end
 
   def down(*args)
@@ -93,7 +96,7 @@ class CliTest < Test::Unit::TestCase
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     args = @node_servers.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
-    assert_equal(0, down(*args))
+    assert_equal(S_OK, down(*args))
   end
 
   def test_down_except_last_one
@@ -102,7 +105,7 @@ class CliTest < Test::Unit::TestCase
     targets = @node_servers.dup
     targets.shift
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
-    assert_equal(0, down(*args))
+    assert_equal(S_OK, down(*args))
   end
 
   def slave(*args)
@@ -119,11 +122,34 @@ class CliTest < Test::Unit::TestCase
     targets = @node_servers.dup
     targets.shift
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
-    assert_equal(0, down(*args))
+    assert_equal(S_OK, down(*args))
     newbalance = 1
     args = targets.map{|n| "#{n.hostname}:#{n.port}:#{newbalance}:0"} << "--force"
     sleep 3
-    assert_equal(0, slave(*args))
+    assert_equal(S_OK, slave(*args))
+  end
+
+  def test_slave_clean
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
+    @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
+    targets = @node_servers.dup
+    targets.shift # remove master
+    args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    assert_equal(S_OK, down(*args))
+    @flare_cluster.clear_data(@node_servers[0])
+    newbalance = 1
+    args = targets.map{|n| "#{n.hostname}:#{n.port}:#{newbalance}:0"} << "--force" << "--clean"
+    sleep 3
+    assert_equal(S_OK, slave(*args))
+    size = targets.map {|slave|
+      slave.open do |n|
+        s = n.stats()
+        p s
+        s['cur_items'].to_i
+      end
+    }
+    assert_equal(0, size[0])
+    assert_equal(0, size[1])
   end
 
   def balance(*args)
@@ -139,7 +165,7 @@ class CliTest < Test::Unit::TestCase
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     newbalance = 4
     args = @node_servers.map{|n| "#{n.hostname}:#{n.port}:#{newbalance}"} << "--force"
-    assert_equal(0, balance(*args))
+    assert_equal(S_OK, balance(*args))
   end
   
   def reconstruct(*args)
@@ -154,11 +180,11 @@ class CliTest < Test::Unit::TestCase
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     args = @node_servers.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
-    assert_equal(0, reconstruct(*args))
+    assert_equal(S_OK, reconstruct(*args))
     args = @node_servers.map{|n| "#{n.hostname}"} << "--force"
-    assert_equal(1, reconstruct(*args))
+    assert_equal(S_NG, reconstruct(*args))
     args = @node_servers.map{|n| ":#{n.port}"} << "--force"
-    assert_equal(1, reconstruct(*args))
+    assert_equal(S_NG, reconstruct(*args))
   end
 
   def test_reconstructable
@@ -167,9 +193,9 @@ class CliTest < Test::Unit::TestCase
     targets = @node_servers.dup
     targets = targets[1..-1]
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
-    assert_equal(0, down(*args))
+    assert_equal(S_OK, down(*args))
     args = @node_servers.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
-    assert_equal(1, reconstruct(*args))
+    assert_equal(S_NG, reconstruct(*args))
   end
 
   def test_unsafe_reconstruct
@@ -178,9 +204,9 @@ class CliTest < Test::Unit::TestCase
     targets = @node_servers.dup
     targets = targets[2..-1]
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
-    assert_equal(0, down(*args))
+    assert_equal(S_OK, down(*args))
     args = @node_servers.map{|n| "#{n.hostname}:#{n.port}"} << "--force" << "--safe"
-    assert_equal(1, reconstruct(*args))
+    assert_equal(S_NG, reconstruct(*args))
   end
 
   def index(*args)
@@ -194,7 +220,6 @@ class CliTest < Test::Unit::TestCase
   def test_index
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 10)
-    assert_equal(0, index())
-    assert_equal(0, index("--transitive"))
+    assert_equal(S_OK, index())
   end
 end

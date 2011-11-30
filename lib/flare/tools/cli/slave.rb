@@ -27,12 +27,14 @@ module Flare
         def setup(opt)
           opt.on('--force',            "commits changes without confirmation") {@force = true}
           opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})") {|v| @retry = v.to_i}
+          opt.on('--clean',            "clears datastore before construction") {@clean = true}
         end
 
         def initialize
           super
           @force = false
           @retry = 5
+          @clean = false
         end
 
         def execute(config, *args)
@@ -64,21 +66,28 @@ module Flare
                 error "invalid 'hostname:port' pair: #{hostname_port}"
                 return 1
               end
-              
-              exec = false
-              if @force
-                exec = true
-              elsif node['role'] != 'proxy'
+
+              if node['role'] != 'proxy'
                 puts "#{ipaddr}:#{port} is not a proxy."
-              else
+                next
+              end
+              
+              exec = @force
+              unless exec
                 print "making node slave (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
                 interruptible do
                   exec = true if gets.chomp.upcase == "Y"
                 end
               end
               if exec
-                resp = false
+                if @clean
+                  Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
+                    n.flush_all unless config[:dry_run]
+                  end
+                end
+
                 nretry = 0
+                resp = false
                 while resp == false && nretry < @retry
                   resp = s.set_role(hostname, port, role, 0, partition) unless config[:dry_run]
                   if resp
