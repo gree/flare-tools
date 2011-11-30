@@ -3,11 +3,9 @@
 # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
 # License::   NOTYET
 
-require 'rexml/document'
 require 'flare/tools/stats'
 require 'flare/tools/cli/sub_command'
 require 'flare/util/conversion'
-require 'rexml/document'
 
 module Flare
   module Tools
@@ -23,56 +21,67 @@ module Flare
         Roles = { "master" => '0', "slave" => '1', "proxy" => '2' }
 
         def setup(opt)
-          opt.on('-t', '--transitive',            "outputs transitive xml") {@formatter = REXML::Formatters::Pretty}
+          
         end
 
         def initialize
           super
-          @formatter = REXML::Formatters::Default
+        end
+
+        def serattr(x)
+          return "" if x.nil?
+          " class_id=\"#{x['class_id']}\" tracking_level=\"#{x['tracking_level']}\" version=\"#{x['version']}\""
         end
   
         def execute(config, *args)
           Flare::Tools::Stats.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+            thread_type = 0
 
-            doc = REXML::Document.new
-            doc << REXML::XMLDecl.new('1.0', 'UTF-8') 
-            
-            puts '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
-            puts '<!DOCTYPE boost_serialization>'
-            puts '<boost_serialization signature="serialization::archive" version="4">'
-
+            node_map_id = {"class_id"=>"0", "tracking_level"=>"0", "version"=>"0"}
             item_id = {"class_id"=>"1", "tracking_level"=>"0", "version"=>"0"}
             second_id = {"class_id"=>"2", "tracking_level"=>"0", "version"=>"0"}
 
-            node_map = doc.add_element("node_map", {"class_id"=>"0", "tracking_level"=>"0", "version"=>"0"})
-            node_map.add_element('count').add_text("2")
-            node_map.add_element("item_version").add_text("0")
+            print <<"EOS"
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="4">
+<node_map#{serattr(node_map_id)}>
+\t<count>#{nodes.size}</count>
+\t<item_version>0</item_version>
+EOS
             nodes.each do |k,v|
               node_server_name, node_server_port = k.split(':')
-              node_role = v['role']
-              node_state = v['state']
+              node_role = Roles[v['role']]
+              node_state = States[v['state']]
               node_partition = v['partition']
               node_balance = v['balance']
-              node_thread_type = v['thread_type']
-              item = node_map.add_element("item", item_id)
-              item_id = {}
-              item.add_element("first").add_text(k)
-              second = item.add_element("second", second_id)
-              second_id = {}
-              second.add_element("node_server_name").add_text(node_server_name)
-              second.add_element("node_server_port").add_text(node_server_port)
-              second.add_element("node_role").add_text(Roles[node_role])
-              second.add_element("node_state").add_text(States[node_state])
-              second.add_element("node_partition").add_text(node_partition)
-              second.add_element("node_balance").add_text(node_balance)
-              second.add_element("node_thread_type").add_text(node_thread_type)
+              node_thread_type = v['thread_type'].to_i
+
+              print <<"EOS"
+\t<item#{serattr(item_id)}>
+\t\t<first>#{k}</first>
+\t\t<second#{serattr(second_id)}>
+\t\t\t<node_server_name>#{node_server_name}</node_server_name>
+\t\t\t<node_server_port>#{node_server_port}</node_server_port>
+\t\t\t<node_role>#{node_role}</node_role>
+\t\t\t<node_state>#{node_state}</node_state>
+\t\t\t<node_partition>#{node_partition}</node_partition>
+\t\t\t<node_balance>#{node_balance}</node_balance>
+\t\t\t<node_thread_type>#{node_thread_type}</node_thread_type>
+\t\t</second>
+\t</item>
+EOS
+              item_id = nil
+              second_id  = nil
+              thread_type = node_thread_type+1 if node_thread_type >= thread_type
             end
-            xml = ''
-            formatter = @formatter.new
-            formatter.write(doc.root, xml)
-            puts xml
+            print <<EOS
+</node_map>
+<thread_type>#{thread_type}</thread_type>
+</boost_serialization>
+EOS
           end
         
           return 0
