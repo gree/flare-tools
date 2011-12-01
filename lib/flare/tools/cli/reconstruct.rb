@@ -41,7 +41,7 @@ module Flare
           if @all
             if args.size > 0
               puts "don't specify any nodes with --all option."
-              return 1
+              return S_NG
             else
               Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
                 cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
@@ -49,14 +49,14 @@ module Flare
               end
             end
           else
-            return 1 if args.size == 0
+            return S_NG if args.size == 0
           end
 
           hosts = args.map {|x| x.to_s.split(':')}
           hosts.each do |x|
             if x.size != 2
               puts "invalid argument '#{x.join(':')}'. it must be hostname:port."
-              return 1
+              return S_NG
             end
           end
           
@@ -70,7 +70,7 @@ module Flare
               
               unless node = cluster.node_stat(hostname_port)
                 puts "#{hostname_port} is not found in this cluster."
-                return 1
+                return S_NG
               end
               unless cluster.reconstructable? hostname_port
                 puts "#{hostname_port} is not reconstructable."
@@ -97,7 +97,7 @@ module Flare
                     exec = true
                   when "N"
                   when "Q"
-                    return 0
+                    return S_OK
                   when "Y"
                     exec = true
                   else
@@ -130,7 +130,7 @@ module Flare
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
           
-          return 0
+          S_OK
         end # execute()
 
       end

@@ -25,19 +25,20 @@ module Flare
   
         def setup(opt)
           opt.on('--force',            "commits changes without confirmation") {@force = true}
+          opt.on('--wait=[SECOND]',    "time to wait node for getting ready(default:#{@wait})") {|v| @wait = v.to_i}
           opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})") {|v| @retry = v.to_i}
+          opt.on('--connection-threshold=[COUNT]',    "connection threashold(default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
         end
 
         def initialize
           super
           @force = false
-          @retry = 30
+          @wait = 30
+          @retry = 5
+          @connection_threshold = 2
         end
 
         def execute(config, *args)
-          nodes = {}
-          threads = {}
-
           hosts = args.map {|x| x.split(':')}
           hosts.each do |x|
             if x.size != 2
@@ -49,29 +50,48 @@ module Flare
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
 
             hosts.each do |hostname,port|
-              nodes = s.stats_nodes
-
-              unless @force
-                Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
-                  nretry = @retry
-                  until nretry > 0
-                    interruptible do
-                      sleep 1
-                    end
-                    conn = n.node_stats['conn'].to_i
-                    info "waiting until the number of connections #{conn} becomes 2..."
-                    nretry = nretry-1
+              exec = false
+              Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
+                nwait = @wait
+                while nwait > 0
+                  stats = n.stats
+                  conn = stats['curr_connections'].to_i
+                  cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+                  role = cluster.node_stat("#{hostname}:#{port}")['role']
+                  info "waiting until #{hostname}:#{port}(role=#{role}, connections=#{conn}) is inactive..."
+                  if conn <= @connection_threshold && role == 'proxy'
+                    exec = true
+                    break
                   end
+                  interruptible {sleep 1}
+                  nwait -= 1
                 end
               end
-              s.set_state(hostname, port, 'down') unless config[:dry_run]
-              s.node_remove(hostname, port) unless config[:dry_run]
+              if exec
+                suc = false
+                nretry = @retry
+                while nretry > 0
+                  resp = false
+                  info "turning down #{hostname}:#{port}."
+                  s.set_state(hostname, port, 'down') unless config[:dry_run]
+                  info "removing #{hostname}:#{port}."
+                  resp = s.node_remove(hostname, port) unless config[:dry_run]
+                  if resp
+                    suc = true
+                    break
+                  end
+                  nretry -= 1
+                end
+                info "done." if suc
+                info "failed." unless suc
+              else
+                info "skipped."
+              end
             end
-
             puts string_of_nodelist(s.stats_nodes)
           end
           
-          return S_OK
+          S_OK
         end
         
       end

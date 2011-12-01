@@ -45,11 +45,11 @@ module Flare
                   end
                 end
               rescue IOError
-                return 1
+                return S_NG
               rescue
                 unless @wait
                   puts "down"
-                  return 1
+                  return S_NG
                 end
                 sleep 1
               end
@@ -57,7 +57,7 @@ module Flare
           end
           
           puts "alive"
-          return 0
+          S_OK
         end
         
       end

@@ -213,7 +213,8 @@ module Flare
               t.join
             end
           end
-          return 0
+          
+          S_OK
         end
 
         def wait_for_stats

@@ -84,7 +84,7 @@ EOS
 EOS
           end
         
-          return 0
+          S_OK
         end
       end
     end

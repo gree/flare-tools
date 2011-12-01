@@ -34,13 +34,13 @@ module Flare
         end
 
         def execute(config, *args)
-          return 1 if args.size < 1
+          return S_NG if args.size < 1
 
           hosts = args.map {|x| x.split(':')}
           hosts.each do |x|
             if x.size != 2
               puts "invalid argument '#{x.join(':')}'."
-              return 1
+              return S_NG
             end
           end
           
@@ -55,7 +55,7 @@ module Flare
           
               unless node = nodes.inject(false) {|r,i| if i[0] == hostname_port then i[1] else r end}
                 error "invalid 'hostname:port' pair: #{hostname_port}"
-                return 1
+                return S_NG
               end
 
               exec = @force
@@ -76,7 +76,7 @@ module Flare
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
           
-          return 0
+          S_OK
         end # execute()
         
         def stat_one_node(s)

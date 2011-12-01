@@ -33,13 +33,13 @@ module Flare
         end
   
         def execute(config, *args)
-          return 1 if args.size < 1
+          return S_NG if args.size < 1
 
           hosts = args.map {|x| x.to_s.split(':')}
           hosts.each do |x|
             if x.size != 4
               puts "invalid argument '#{x.join(':')}'."
-              return 1
+              return S_NG
             end
           end
           
@@ -54,7 +54,7 @@ module Flare
           
               unless node = nodes.inject(false) {|r,i| if i[0] == hostname_port then i[1] else r end}
                 error "unknown host: #{hostname_port}"
-                return 1
+                return S_NG
               end
 
               partition = if partition == '' then node['partition'].to_i else partition.to_i end
@@ -81,7 +81,7 @@ module Flare
                     unless @keep_ready
                       resp = s.set_state(hostname, port, 'active')
                     end
-                    return 1 unless resp
+                    return S_NG unless resp
                   end
                 end
               end
@@ -89,7 +89,7 @@ module Flare
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
 
-          return 0
+          S_OK
         end # execute()
         
         def stat_one_node(s)

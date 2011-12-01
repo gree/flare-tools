@@ -35,7 +35,7 @@ module Flare
 
           if args.size > 1
             error "invalid arguments: "+args.join(' ')
-            return 1 
+            return S_NG
           end
 
           hostname = config[:index_server_hostname]
@@ -63,7 +63,8 @@ module Flare
                            data['queue'],
                           ]
           end
-          return 0
+          
+          S_OK
         end
         
       end
