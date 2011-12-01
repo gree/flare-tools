@@ -54,8 +54,8 @@ module Flare
               Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
                 nwait = @wait
                 while nwait > 0
-                  stats = n.stats
-                  conn = stats['curr_connections'].to_i
+                  node = n.stats
+                  conn = node['curr_connections'].to_i
                   cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
                   role = cluster.node_stat("#{hostname}:#{port}")['role']
                   info "waiting until #{hostname}:#{port}(role=#{role}, connections=#{conn}) is inactive..."
@@ -65,6 +65,10 @@ module Flare
                   end
                   interruptible {sleep 1}
                   nwait -= 1
+                end
+                unless @force
+                  print "turning node down (node=#{hostname}:#{port}, role=#{node['role']}) (y/n): "
+                  interruptible {exec = false if gets.chomp.upcase != "Y"}
                 end
               end
               if exec
