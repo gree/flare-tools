@@ -223,9 +223,7 @@ class CliTest < Test::Unit::TestCase
     args = ["--output=flare.xml"]
     assert_equal(S_OK, index(*args))
     assert_equal(true, File.exist?("flare.xml"))
-    open("flare.xml") do |f|
-      assert_equal(@flare_cluster.index, f.read)
-    end
+    assert_equal(@flare_cluster.index, open("flare.xml").read)
     File.delete("flare.xml")
   end
 

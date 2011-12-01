@@ -60,6 +60,8 @@ module Flare
             end
           end
           
+          status = S_OK
+
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
 
@@ -74,11 +76,13 @@ module Flare
               end
               unless cluster.reconstructable? hostname_port
                 puts "#{hostname_port} is not reconstructable."
+                status = S_NG
                 next
               end
               is_safe = cluster.safely_reconstructable? hostname_port
               if @safe && !is_safe
                 puts "The partition needs one more slave to reconstruct #{hostname_port} safely."
+                status = S_NG
                 next
               end
 
@@ -128,9 +132,9 @@ module Flare
             end
 
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
-          end
+          end # open
           
-          S_OK
+          status
         end # execute()
 
       end
