@@ -70,7 +70,7 @@ module Flare
             nodes = s.stats_nodes
             unless nodes
               error "Invalid index server."
-              exit 1
+              return S_NG
             end
             nodes = nodes.sort_by{|key,val| [val['partition'], val['role'], key]}
             threads = s.stats_threads_by_peer
@@ -80,8 +80,7 @@ module Flare
           queue = {}
 
           nodes.each do |hostname_port,data|
-            ipaddr, port = hostname_port.split(":", 2)
-            hostname = hostname_of_address(ipaddr)
+            hostname, port = hostname_port.split(":", 2)
             queue[hostname_port] = SizedQueue.new(1)
             worker_threads << Thread.new do
               q = queue[hostname_port]
@@ -91,7 +90,7 @@ module Flare
                 begin
                   while s.nil? && @cont
                     begin
-                      s = Flare::Tools::Stats.open(ipaddr, data['port'], config[:timeout])
+                      s = Flare::Tools::Stats.open(hostname, data['port'], config[:timeout])
                     rescue => e
                       sleep 1
                     end
@@ -144,9 +143,7 @@ module Flare
           query_prev = {} if @qps
 
           if @count > 1 || @qps
-            interruptible do
-              sleep 1
-            end
+            interruptible {sleep 1}
           end
 
           s = Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout])

@@ -29,6 +29,7 @@ module Flare
                                             'server-port' => @indexport,
                                             'data-dir' => @datadir,
                                           })
+        @flare_xml = [@datadir, "flare.xml"].join('/')
         sleep 1
       end
 
@@ -97,6 +98,19 @@ module Flare
       def clear_data(node)
         Flare::Tools::Node.open(node.hostname, node.port, 10) do |n|
           n.flush_all
+        end
+      end
+
+      def exist?(node)
+        return Flare::Tools::IndexServer.open(indexname, indexport, 10) do |s|
+          nodes_stats = s.stats_nodes
+          nodes_stats.has_key? node
+        end
+      end
+
+      def index
+        open(@flare_xml) do |f|
+          f.read
         end
       end
 

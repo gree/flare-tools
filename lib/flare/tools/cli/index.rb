@@ -21,11 +21,12 @@ module Flare
         Roles = { "master" => '0', "slave" => '1', "proxy" => '2' }
 
         def setup(opt)
-          
+          opt.on('--output=[FILE]',            "outputs index to a file") {|v|@output = v}
         end
 
         def initialize
           super
+          @output = nil
         end
 
         def serattr(x)
@@ -43,7 +44,7 @@ module Flare
             item_id = {"class_id"=>"1", "tracking_level"=>"0", "version"=>"0"}
             second_id = {"class_id"=>"2", "tracking_level"=>"0", "version"=>"0"}
 
-            print <<"EOS"
+            output =<<"EOS"
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!DOCTYPE boost_serialization>
 <boost_serialization signature="serialization::archive" version="4">
@@ -59,7 +60,7 @@ EOS
               node_balance = v['balance']
               node_thread_type = v['thread_type'].to_i
 
-              print <<"EOS"
+              output +=<<"EOS"
 \t<item#{serattr(item_id)}>
 \t\t<first>#{k}</first>
 \t\t<second#{serattr(second_id)}>
@@ -77,11 +78,18 @@ EOS
               second_id  = nil
               thread_type = node_thread_type+1 if node_thread_type >= thread_type
             end
-            print <<EOS
+            output +=<<"EOS"
 </node_map>
 <thread_type>#{thread_type}</thread_type>
 </boost_serialization>
 EOS
+            if @output.nil?
+              info output
+            else
+              open(@output, "w") do |f|
+                f.write(output)
+              end
+            end
           end
         
           S_OK

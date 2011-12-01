@@ -141,12 +141,7 @@ class CliTest < Test::Unit::TestCase
     args = targets.map{|n| "#{n.hostname}:#{n.port}:#{newbalance}:0"} << "--force" << "--clean"
     sleep 3
     assert_equal(S_OK, slave(*args))
-    size = targets.map {|slave|
-      slave.open do |n|
-        s = n.stats()
-        s['cur_items'].to_i
-      end
-    }
+    size = targets.map {|slave| slave.open { |n| n.stats['cur_items'].to_i } }
     assert_equal(0, size[0])
     assert_equal(0, size[1])
   end
@@ -186,7 +181,7 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_NG, reconstruct(*args))
   end
 
-  def test_reconstructable
+  def test_reconstruct_reconstructable
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     targets = @node_servers.dup
@@ -197,7 +192,7 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_NG, reconstruct(*args))
   end
 
-  def test_unsafe_reconstruct
+  def test_reconstruct_unsafe
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     targets = @node_servers.dup
@@ -222,6 +217,18 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, index())
   end
 
+  def test_index_ident
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
+    @flare_cluster.prepare_data(@node_servers[0], "key", 10)
+    args = ["--output=flare.xml"]
+    assert_equal(S_OK, index(*args))
+    assert_equal(true, File.exist?("flare.xml"))
+    open("flare.xml") do |f|
+      assert_equal(@flare_cluster.index, f.read)
+    end
+    File.delete("flare.xml")
+  end
+
   def remove(*args)
     opt = OptionParser.new
     subc = Flare::Tools::Cli::Remove.new
@@ -234,21 +241,25 @@ class CliTest < Test::Unit::TestCase
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     targets = @node_servers.dup
-    targets.shift
+    master = targets.shift
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, down(*args))
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force" << "--connection-threshold=4"
     sleep 3
     assert_equal(S_OK, remove(*args))
+    assert_equal(false, @flare_cluster.exist?(args[0]))
+    assert_equal(false, @flare_cluster.exist?(args[1]))
   end
 
-  def test_remove2
+  def test_remove_unremovable
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     targets = @node_servers.dup
-    targets.shift
+    master = targets.shift
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force" << "--connection-threshold=4" << "--wait=3"
     assert_equal(S_OK, remove(*args))
+    assert_equal(true, @flare_cluster.exist?(args[0]))
+    assert_equal(true, @flare_cluster.exist?(args[1]))
   end
 
 end
