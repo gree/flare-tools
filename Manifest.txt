@@ -23,6 +23,7 @@ lib/flare/tools/cli/list.rb
 lib/flare/tools/cli/master.rb
 lib/flare/tools/cli/ping.rb
 lib/flare/tools/cli/reconstruct.rb
+lib/flare/tools/cli/remove.rb
 lib/flare/tools/cli/slave.rb
 lib/flare/tools/cli/stats.rb
 lib/flare/tools/cli/sub_command.rb
