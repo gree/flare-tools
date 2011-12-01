@@ -1,5 +1,15 @@
 :title: History of flare-tools
 
+=== 0.2.3 / 2011-11-24
+* Major Enhancements
+  * Added 'remove' subcommand to flare-admin for removing nodes from a cluster.
+* Minor Enhancements
+  * Aded --keep-ready option to 'master' subcommand, which is used for keeping 
+    the constructed master in ready state.
+  * Modified 'reconstruct' subcommand to skip when a node isn't ready for reconstruction.
+  * Added --clean option to 'slave' subcommand to rebuild database from scratch.
+  * Removed --transitive option from 'index' subcommand because it's the default behavior now.
+
 === 0.2.2 / 2011-11-24
 * Minor Enhancements
   * Introduced log4r.
@@ -8,7 +18,7 @@
 
 === 0.2.1 / 2011-11-18
 * Minor Enhancements
-  * Added --all option to the reconstruct subcommand to flush and reconstruct all 
+  * Added --all option to the 'reconstruct' subcommand to flush and reconstruct all 
     the nodes in a cluster one by one.
   * Improved the confirmation step of the reconstruct sumcommand.
 
