@@ -19,6 +19,7 @@ module Flare
       autoload :Deploy,      'flare/tools/cli/deploy'
       autoload :Threads,     'flare/tools/cli/threads'
       autoload :Ping,        'flare/tools/cli/ping'
+      autoload :Remove,      'flare/tools/cli/remove'
     end
   end
 end

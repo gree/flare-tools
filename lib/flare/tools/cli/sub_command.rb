@@ -14,6 +14,9 @@ module Flare
         @@desc = {}
         @@usage = {}
 
+        S_OK = 0
+        S_NG = 1
+
         def self.to_sym
           myname
         end

@@ -38,13 +38,9 @@ module Flare
         end
 
         def execute(config, *args)
-          nodes = {}
-          threads = {}
-
           return 1 if args.size < 1
 
           hosts = args.map {|x| x.split(':')}
-          
           hosts.each do |x|
             if x.size != 4
               error "invalid argument '#{x.join(':')}'. it must be hostname:port:balance:partition."

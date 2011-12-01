@@ -144,7 +144,6 @@ class CliTest < Test::Unit::TestCase
     size = targets.map {|slave|
       slave.open do |n|
         s = n.stats()
-        p s
         s['cur_items'].to_i
       end
     }
