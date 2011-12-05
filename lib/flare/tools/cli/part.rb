@@ -26,10 +26,13 @@ module Flare
 
         def setup(opt)
           opt.on('--force',            "commits changes without confirmation") {@force = true}
+          opt.on('--retry=[COUNT]',    "retry count") {|v| @retry = v.to_i}
         end
 
         def initialize
+          super
           @force = false
+          @retry = nil
         end
   
         def execute(config, *args)
@@ -82,7 +85,8 @@ module Flare
             subc = Flare::Tools::Cli::Slave.new
             subc.setup(opt)
             args = slaves
-            args << "--force" if @force 
+            args << "--force" if @force
+            args << "--retry=#{@retry}" unless @retry.nil?
             opt.parse!(args)
             subc.execute(config, *args)
           end
