@@ -1,6 +1,6 @@
 :title: History of flare-tools
 
-=== 0.2.3 / 2011-11-24
+=== 0.2.3 / 2011-11-30
 * Major Enhancements
   * Added 'remove' subcommand to flare-admin for removing nodes from a cluster.
 * Minor Enhancements

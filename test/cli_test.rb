@@ -68,6 +68,21 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, list('--numeric-hosts'))
   end
 
+  def test_list
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
+    assert_equal(S_OK, list())
+    assert_equal(S_OK, list('--numeric-hosts'))
+  end
+
+  def test_list_log_file
+    File.delete("list.log") if File.exist?("list.log")
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
+    Flare::Util::Logging.set_logger('list.log')
+    assert_equal(S_OK, list())
+    assert_equal(true, File.exist?("list.log"))
+    File.delete("list.log") if File.exist?("list.log")
+  end
+
   def stats(*args)
     opt = OptionParser.new
     subc = Flare::Tools::Cli::Stats.new
