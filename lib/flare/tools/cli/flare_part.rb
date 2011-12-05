@@ -5,7 +5,7 @@
 
 require 'resolv'
 require 'flare/tools/stats.rb'
-require 'flare/tools/cli/stats'
+require 'flare/tools/cli/part'
 require 'flare/util/command_line.rb'
 require 'flare/util/conversion.rb'
 
@@ -23,7 +23,7 @@ if ENV.has_key? "FLARE_INDEX_SERVER"
   index_server_port = p unless p.nil?
 end
 
-subc = Flare::Tools::Cli::Stats.new
+subc = Flare::Tools::Cli::Part.new
 
 setup do |opt|
   opt.banner = "Usage: flare-stats [options]"

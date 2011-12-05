@@ -42,4 +42,7 @@ class ReplicationTest < Test::Unit::TestCase
     end
   end
 
+  def test_replication2
+  end
+
 end

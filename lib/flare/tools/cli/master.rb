@@ -80,8 +80,8 @@ module Flare
                     wait_for_master_construction(s, hostname_port, config[:timeout])
                     unless @keep_ready
                       resp = s.set_state(hostname, port, 'active')
+                      return S_NG unless resp
                     end
-                    return S_NG unless resp
                   end
                 end
               end
