@@ -37,6 +37,14 @@ module Flare
         ret
       end
 
+      def stop
+        Process.kill :STOP, @pid
+      end
+
+      def cont
+        Process.cont :STOP, @pid
+      end
+
       def terminate
         puts "killing... #{@pid}"
         begin

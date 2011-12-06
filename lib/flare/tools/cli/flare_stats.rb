@@ -27,7 +27,7 @@ subc = Flare::Tools::Cli::Stats.new
 
 setup do |opt|
   opt.banner = "Usage: flare-stats [options]"
-  opt.on("-n",  '--dry-run',                  "dry run") {dry_run = true}
+  opt.on('-n',  '--dry-run',                  "dry run") {dry_run = true}
   opt.on('-i',  '--index-server=[HOSTNAME]',  "index server hostname(default:#{index_server_hostname})") {|v| index_server_hostname = v}
   opt.on('-p',  '--index-server-port=[PORT]', "index server port(default:#{index_server_port})") {|v| index_server_port = v.to_i}
   opt.on(       '--log-file=[LOGFILE]',       "outputs log to LOGFILE") {|v| Flare::Util::Logging.set_logger(v)}
@@ -36,7 +36,7 @@ setup do |opt|
 end
 
 execute do |args|
-  subc.execute({ :command => 'stats',
+  subc.execute({ :command => 'flare-stats',
                  :index_server_hostname => index_server_hostname,
                  :index_server_port => index_server_port,
                  :dry_run => dry_run,
