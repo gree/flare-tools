@@ -23,6 +23,13 @@ class ReplicationTest < Test::Unit::TestCase
       :dry_run => false,
       :timeout => 10
     }
+    @nodes = @node_servers.map do |node|
+      Flare::Tools::Node.open(node.hostname, node.port, 10)
+    end
+  end
+
+  def teardown
+    @nodes.map {|n| n.close}
   end
 
   def test_replication
@@ -59,6 +66,7 @@ class ReplicationTest < Test::Unit::TestCase
 
   def replication_consistent(noreply, wait = 0)
     @flare_cluster.prepare_master_and_slaves(@node_servers)
+    
     Flare::Tools::Node.open(@flare_cluster.indexname, @flare_cluster.indexport, 10) do |s|
       puts string_of_nodelist(s.stats_nodes)
       ntry = 256
@@ -104,9 +112,7 @@ class ReplicationTest < Test::Unit::TestCase
               # puts "#{entry[:index]}:#{entry[:hostname]}:#{entry[:port]}: end"
               entry[:result_queue].enq("finished")
             when "execute_noreply"
-              # puts "#{entry[:hostname]}:#{entry[:port]}: begin"
               (0...nloop).each do |i|
-                # print "(#{entry[:index]})"
                 case rand(10)
                 when 0
                   n.delete_noreply("key")
@@ -117,17 +123,11 @@ class ReplicationTest < Test::Unit::TestCase
                 else
                   n.incr_noreply("key", "1")
                 end
-                # Thread.pass
               end
-              # puts "#{entry[:hostname]}:#{entry[:port]}: end"
               entry[:result_queue].enq("finished")
             end
           end
         end
-      end
-
-      nodes = @node_servers.map do |node|
-        Flare::Tools::Node.open(node.hostname, node.port, 10)
       end
 
       (0...ntry).each do |n|
@@ -148,7 +148,7 @@ class ReplicationTest < Test::Unit::TestCase
         for i in 1..5
           failed = false
           sleep wait
-          results = nodes.map do |n|
+          results = @nodes.map do |n|
             n.get("key")
           end
           slave_results = results.dup
@@ -173,6 +173,6 @@ class ReplicationTest < Test::Unit::TestCase
       puts string_of_nodelist(s.stats_nodes)
       puts "done."
     end
-  end
+  end # func
 
 end
