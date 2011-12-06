@@ -67,15 +67,19 @@ module Flare
         resp
       end
 
-      defcmd_noreply :delete_, 'delete %s\r\n'
+      defcmd_noreply :delete_noreply_, 'delete %s\r\n'
       defcmd :delete_, 'delete %s\r\n' do |resp|
         resp
       end
 
       defcmd :get_, 'get %s\r\n' do |resp|
         header, content = resp.split("\r\n", 2)
-        sig, key, f, len = header.split(" ")
-        content[0...len.to_i]
+        if header.nil?
+          false
+        else
+          sig, key, f, len = header.split(" ")
+          content[0...len.to_i]
+        end
       end
 
       defcmd_oneline_noreply :incr_noreply, 'incr %s %s\r\n'

@@ -4,8 +4,23 @@
 # License::   NOTYET
 
 require 'rubygems'
-require 'log4r'
-require 'log4r/configurator'
+require 'flare/util/logger'
+
+module Flare
+  module Util
+    module Logging
+    end
+  end
+end
+
+begin
+  gem 'log4r'
+  require 'flare/util/log4r_logger'
+  Flare::Util::Logging::Logger = Flare::Util::Log4rLogger
+rescue LoadError
+  require 'flare/util/default_logger'
+  Flare::Util::Logging::Logger = Flare::Util::DefaultLogger
+end
 
 # 
 module Flare
@@ -15,35 +30,9 @@ module Flare
     # Logging is a mix-in module for logging.
     module Logging
       @@logger = nil
-      @@formatter = Log4r::PatternFormatter.new(
-                                                :pattern => "%d %C[%l]: %M",
-                                                :date_format => "%Y/%m/%d %H:%M:%S"
-                                                )
-      @@console_formatter = Log4r::PatternFormatter.new(
-                                                        :pattern => "%M",
-                                                        :date_format => "%Y/%m/%d %H:%M:%S"
-                                                        )
+      
       def self.set_logger(logger = nil)
-        if logger.nil?
-          outputter = Log4r::StdoutOutputter.new(
-                                                 "console",
-                                                 :formatter => @@console_formatter
-                                                 )
-          logger = Log4r::Logger.new($0)
-          logger.level = Log4r::INFO
-          logger.add(outputter)
-        elsif logger.instance_of?(String)
-          outputter = Log4r::FileOutputter.new(
-                                               "file",
-                                               :filename => logger,
-                                               :trunc => false,
-                                               :formatter => @@formatter
-                                               )
-          logger = Log4r::Logger.new($0)
-          logger.level = Log4r::INFO
-          logger.add(outputter)
-        end
-        @@logger = logger
+        @@logger = Logger.new(logger)
       end
       
       def self.logger

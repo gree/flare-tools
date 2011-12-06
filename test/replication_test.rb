@@ -13,7 +13,7 @@ class ReplicationTest < Test::Unit::TestCase
   def setup
     @flare_cluster = Flare::Test::Cluster.new('test')
     sleep 1 # XXX
-    @node_servers = ['node1', 'node2', 'node3'].map {|name| @flare_cluster.create_node(name)}
+    @node_servers = ['node1', 'node2', 'node3', 'node4', 'node5', 'node6'].map {|name| @flare_cluster.create_node(name)}
     sleep 1 # XXX
     @flare_cluster.wait_for_ready
     @config = {
@@ -49,20 +49,29 @@ class ReplicationTest < Test::Unit::TestCase
     end
   end
 
-  def test_replication_consistent1
+  def test_replication_consistent
+    replication_consistent(false)
+  end
+
+  def test_replication_consistent_noreply
+    replication_consistent(true, 0.1)
+  end
+
+  def replication_consistent(noreply, wait = 0)
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     Flare::Tools::Node.open(@flare_cluster.indexname, @flare_cluster.indexport, 10) do |s|
       puts string_of_nodelist(s.stats_nodes)
-      ntry = 10
-      nparallel = 100
-      nloop = 100
+      ntry = 256
+      nparallel = 128
+      nloop = 32
       entries = (0...nparallel).map { |i|
         {
           :index => i,
           :command_queue => Queue.new,
           :hostname => @node_servers[0].hostname,
           :port => @node_servers[0].port,
-          :result_queue => Queue.new
+          :result_queue => Queue.new,
+          :backlog_queue => Queue.new
         }
       }
       puts "creating threads..."
@@ -97,16 +106,18 @@ class ReplicationTest < Test::Unit::TestCase
             when "execute_noreply"
               # puts "#{entry[:hostname]}:#{entry[:port]}: begin"
               (0...nloop).each do |i|
-                # print "."
-                if i%10 == 0
+                # print "(#{entry[:index]})"
+                case rand(10)
+                when 0
                   n.delete_noreply("key")
-                  n.set_noreply("key", "111")
-                elsif i%10 == 1
+                when 1
+                  n.set_noreply("key", rand(100).to_s)
+                when 2
                   n.decr_noreply("key", "1")
                 else
                   n.incr_noreply("key", "1")
                 end
-                Thread.pass
+                # Thread.pass
               end
               # puts "#{entry[:hostname]}:#{entry[:port]}: end"
               entry[:result_queue].enq("finished")
@@ -114,16 +125,45 @@ class ReplicationTest < Test::Unit::TestCase
           end
         end
       end
-      # sleep 1
+
+      nodes = @node_servers.map do |node|
+        Flare::Tools::Node.open(node.hostname, node.port, 10)
+      end
+
       (0...ntry).each do |n|
-        entries.each {|entry| entry[:command_queue].enq("execute")}
-        puts "waiting(#{n})..."
-        entries.map {|entry| assert_equal("finished", entry[:result_queue].deq)}
-        p @node_servers.map {|node|
-          Flare::Tools::Node.open(node.hostname, node.port, 10) do |n|
+        entries.each {|entry|
+          command = if noreply then "execute_noreply" else "execute" end
+          entry[:command_queue].enq(command)
+        }
+        print "waiting(#{n})..."
+        if noreply && wait > 0
+          while entries[0][:result_queue].empty?
+            @node_servers[0].stop
+            sleep wait
+            @node_servers[0].cont
+            sleep wait if entries[0][:result_queue].empty?
+          end
+        end
+        entries.map {|entry| assert_equal("finished", entry[:result_queue].deq) }
+        for i in 1..5
+          failed = false
+          sleep wait
+          results = nodes.map do |n|
             n.get("key")
           end
-        }
+          slave_results = results.dup
+          master_result = slave_results.shift
+          slave_results.each {|r| failed = true if master_result != r}
+          puts results.join(' ')
+          if failed
+            if i > 3
+              puts "inconsistent data: master=#{master_result}\n"
+            end
+          else
+            break
+          end
+        end
+        slave_results.each {|r| assert_equal(master_result, r)}
       end
       entries.each {|entry| entry[:command_queue].enq("end") }
       entries.map {|entry| assert_equal("terminated", entry[:result_queue].deq)}

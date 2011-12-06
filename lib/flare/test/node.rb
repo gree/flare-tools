@@ -42,7 +42,7 @@ module Flare
       end
 
       def cont
-        Process.cont :STOP, @pid
+        Process.kill :CONT, @pid
       end
 
       def terminate
