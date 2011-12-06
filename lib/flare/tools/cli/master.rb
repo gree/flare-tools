@@ -19,7 +19,7 @@ module Flare
         include Flare::Tools::Common
 
         myname :master
-        desc   "set the master of a partition."
+        desc   "construct a partition with a master."
         usage  "master [hostname:port:balance:partition] ..."
 
         def setup(opt)

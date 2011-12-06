@@ -42,7 +42,33 @@ class ReplicationTest < Test::Unit::TestCase
     end
   end
 
-  def test_replication2
+  def parallel(*args, &block)
+    args.map do |arg|
+      q = Queue.new
+      Thread.new do
+        block.call(arg, q)
+      end
+      q
+    end
+  end
+
+  def test_replication_consistent1
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
+    Flare::Tools::Node.open(@flare_cluster.indexname, @flare_cluster.indexport, 10) do |s|
+      puts string_of_nodelist(s.stats_nodes)
+      queues = parallel(*@node_servers) do |arg, q|
+        Flare::Tools::Node.open(arg.hostname, arg.port, 10) do |n|
+          fmt = "key%010.10d"
+          (0...10).each do |i|
+            n.set(fmt % i, "All your base are belong to us.")
+          end
+          q.push("finished")
+          sleep 1
+        end
+      end
+      puts queues.map { |q| q.pop }
+      puts string_of_nodelist(s.stats_nodes)
+    end
   end
 
 end

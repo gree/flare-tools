@@ -33,13 +33,28 @@ module Flare
         end
         
         def execute(config, *args)
-          args.each do |arg|
+
+          hosts = args.map do |arg|
+            hostname, port, rest = arg.split(':', 3)
+            if !rest.nil? || hostname.nil? || hostname.empty? || port.nil? || port.empty?
+              error "invalid argument '#{arg}'. it must be hostname:port."
+              return S_NG
+            end
+            begin
+              ipaddr = Resolv.getaddress(hostname)
+            rescue Resolv::ResolvError
+              error "unknown host '#{hostname}'"
+              return S_NG
+            end
+            [hostname, port]
+          end
+
+          hosts.each do |hostname, port|
             resp = nil
-            hostname, port = arg.split(':', 2)
             until resp
               begin
+                debug "trying..."
                 interruptible do
-                  debug "trying..."
                   Flare::Tools::Stats.open(hostname, port, config[:timeout]) do |s|
                     resp = s.ping
                   end
@@ -48,10 +63,10 @@ module Flare
                 return S_NG
               rescue
                 unless @wait
-                  puts "down"
+                  puts "#{hostname}:#{port} is down"
                   return S_NG
                 end
-                sleep 1
+                interruptible {sleep 1}
               end
             end
           end

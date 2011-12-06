@@ -21,7 +21,7 @@ module Flare
         include Flare::Tools::Common
         
         myname :slave
-        desc   "make proxy nodes slaves."
+        desc   "construct slaves from proxy nodes."
         usage  "slave [hostname:port:balance:partition] ..."
 
         def setup(opt)
@@ -38,14 +38,16 @@ module Flare
         end
 
         def execute(config, *args)
-          return 1 if args.size < 1
+          return S_NG if args.size < 1
 
-          hosts = args.map {|x| x.split(':')}
-          hosts.each do |x|
-            if x.size != 4
-              error "invalid argument '#{x.join(':')}'. it must be hostname:port:balance:partition."
-              return 1
+          hosts = args.map do |arg|
+            hostname, port, balance, partition, rest = arg.split(':', 5)
+            unless rest.nil?
+              error "invalid argument '#{arg}'. it must be hostname:port:balance:partition."
+              return S_NG
             end
+            port = if port.empty? then DefaultNodePort else port.to_i end
+            [hostname, port, balance, partition]
           end
           
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
@@ -54,13 +56,12 @@ module Flare
             hosts.each do |hostname,port,balance,partition|
               role = 'slave'
               
-              port = if port.nil? then DefaultNodePort else port.to_i end
               hostname_port = "#{hostname}:#{port}"              
               ipaddr = address_of_hostname(hostname)
 
               unless node = nodes.inject(false) {|r,i| if i[0] == hostname_port then i[1] else r end}
                 error "invalid 'hostname:port' pair: #{hostname_port}"
-                return 1
+                return S_NG
               end
 
               if node['role'] != 'proxy'
@@ -104,7 +105,7 @@ module Flare
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
           
-          return 0
+          return S_OK
         end # execute()
 
       end
