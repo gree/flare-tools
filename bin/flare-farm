@@ -1,0 +1,6 @@
+#!/usr/bin/ruby
+# -*- coding: utf-8; -*-
+
+$LOAD_PATH.unshift File.dirname(__FILE__)+"/../lib"
+
+require 'flare/farm/cli/flare_farm.rb'
