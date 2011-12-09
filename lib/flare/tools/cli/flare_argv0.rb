@@ -3,9 +3,16 @@
 # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
 # License::   NOTYET
 
+cliname = File.basename($PROGRAM_NAME)
+cliname[/flare-/] = ""
+
 require 'resolv'
-require 'flare/tools/stats.rb'
-require 'flare/tools/cli/stats'
+require 'flare/util/logging.rb'
+begin
+  require "flare/tools/cli/#{cliname}"
+rescue LoadError
+  exit 1
+end
 require 'flare/util/command_line.rb'
 require 'flare/util/conversion.rb'
 
@@ -23,7 +30,7 @@ if ENV.has_key? "FLARE_INDEX_SERVER"
   index_server_port = p unless p.nil?
 end
 
-subc = Flare::Tools::Cli::Stats.new
+subc = eval "Flare::Tools::Cli::#{cliname.capitalize}.new"
 
 setup do |opt|
   opt.banner = "Usage: flare-stats [options]"
@@ -36,7 +43,7 @@ setup do |opt|
 end
 
 execute do |args|
-  subc.execute({ :command => 'flare-stats',
+  subc.execute({ :command => File.basename($PROGRAM_NAME),
                  :index_server_hostname => index_server_hostname,
                  :index_server_port => index_server_port,
                  :dry_run => dry_run,

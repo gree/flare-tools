@@ -112,17 +112,22 @@ class ReplicationTest < Test::Unit::TestCase
               # puts "#{entry[:index]}:#{entry[:hostname]}:#{entry[:port]}: end"
               entry[:result_queue].enq("finished")
             when "execute_noreply"
+              count = 0
               (0...nloop).each do |i|
-                case rand(10)
+                case rand(8)
                 when 0
                   n.delete_noreply("key")
                 when 1
-                  n.set_noreply("key", rand(100).to_s)
+                  n.set_noreply("key", count.to_s)
                 when 2
-                  n.decr_noreply("key", "1")
+                  # n.decr_noreply("key", "1")
+                  n.set_noreply("key", count.to_s)
                 else
                   n.incr_noreply("key", "1")
+                  # n.set_noreply("key", count.to_s)
                 end
+                count = count+1
+                count = 0 if count > 1000
               end
               entry[:result_queue].enq("finished")
             end
@@ -156,7 +161,8 @@ class ReplicationTest < Test::Unit::TestCase
           slave_results.each {|r| failed = true if master_result != r}
           puts results.join(' ')
           if failed
-            if i > 3
+            sleep 1
+            if i == 5
               puts "inconsistent data: master=#{master_result}\n"
             end
           else
