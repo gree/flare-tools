@@ -34,6 +34,7 @@ module Flare
   
         def execute(config, *args)
           return S_NG if args.size < 1
+          status = S_OK
 
           hosts = args.map {|x| x.to_s.split(':')}
           hosts.each do |x|
@@ -70,18 +71,25 @@ module Flare
                 puts "the partiton already has a master #{existing_master}."
               else
                 print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
-                interruptible do
-                  exec = true if gets.chomp.upcase == "Y"
-                end
+                exec = interruptible {(gets.chomp.upcase == "Y")}
               end
               if exec
                 unless config[:dry_run]
                   if s.set_role(hostname, port, role, balance, partition) 
                     wait_for_master_construction(s, hostname_port, config[:timeout])
                     unless @keep_ready
-                      resp = s.set_state(hostname, port, 'active')
-                      return S_NG unless resp
+                      unless @force
+                        node = s.stats_nodes[hostname_port]
+                        print "changing node's state (node=#{ipaddr}:#{port}, state=#{node['state']} -> active) (y/n): "
+                        exec = interruptible {(gets.chomp.upcase == "Y")}
+                      end
+                      if exec
+                        resp = s.set_state(hostname, port, 'active')
+                        return S_NG unless resp
+                      end
                     end
+                  else
+                    status = S_NG
                   end
                 end
               end
@@ -89,7 +97,7 @@ module Flare
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
 
-          S_OK
+          status
         end # execute()
         
         def stat_one_node(s)

@@ -36,9 +36,11 @@ module Flare
         ret = format % NodeListHeader.map{|x| x[1]}.flatten
         nodes.each do |hostname_port, node|
           if opt.empty? || opt.include?(hostname_port)
+            partition = node['partition'] == "-1" ? "-" : node['partition']
+
             ret += format % [
                              hostname_port,
-                             node['partition'],
+                             partition,
                              node['role'],
                              node['state'],
                              node['balance'],

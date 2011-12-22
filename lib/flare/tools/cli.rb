@@ -20,6 +20,7 @@ module Flare
       autoload :Threads,     'flare/tools/cli/threads'
       autoload :Ping,        'flare/tools/cli/ping'
       autoload :Remove,      'flare/tools/cli/remove'
+      autoload :Activate,    'flare/tools/cli/activate'
     end
   end
 end

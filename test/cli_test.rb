@@ -152,6 +152,14 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, down(*args))
   end
 
+  def activate(*args)
+    opt = OptionParser.new
+    subc = Flare::Tools::Cli::Activate.new
+    subc.setup(opt)
+    opt.parse!(args)
+    subc.execute(@config.merge({:command => 'activate'}), *args)
+  end
+
   def slave(*args)
     opt = OptionParser.new
     subc = Flare::Tools::Cli::Slave.new
@@ -241,9 +249,7 @@ class CliTest < Test::Unit::TestCase
   def test_reconstruct_reconstructable1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
-    targets = @node_servers.dup
-    targets = targets[1..-1]
-    args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    args = @node_servers.dup[1..-1].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, down(*args))
     args = @node_servers.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_NG, reconstruct(*args))
@@ -252,8 +258,7 @@ class CliTest < Test::Unit::TestCase
   def test_reconstruct_unsafe1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
-    targets = @node_servers.dup
-    targets = targets[2..-1]
+    targets = @node_servers.dup[2..-1]
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, down(*args))
     args = @node_servers.map{|n| "#{n.hostname}:#{n.port}"} << "--force" << "--safe"
@@ -315,6 +320,36 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, remove(*args))
     assert_equal(true, @flare_cluster.exist?(args[0]))
     assert_equal(true, @flare_cluster.exist?(args[1]))
+  end
+
+  def master(*args)
+    opt = OptionParser.new
+    subc = Flare::Tools::Cli::Master.new
+    subc.setup(opt)
+    opt.parse!(args)
+    subc.execute(@config.merge({:command => 'master'}), *args)
+  end
+
+  def test_master_simple1
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
+    @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
+    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    assert_equal(S_OK, down(*args))
+    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    assert_equal(S_OK, activate(*args))
+    args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--force"
+    assert_equal(S_OK, master(*args))
+  end
+
+  def test_master_keepready1
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
+    @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
+    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    assert_equal(S_OK, down(*args))
+    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    assert_equal(S_OK, activate(*args))
+    args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--force" << "--keep-ready"
+    assert_equal(S_OK, master(*args))
   end
 
 end

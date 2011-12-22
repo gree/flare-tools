@@ -6,6 +6,7 @@
 require 'optparse'
 require 'flare/util/logging'
 require 'flare/util/constant'
+require 'flare/tools'
 require 'flare/tools/cli'
 
 require 'flare/util/command_line'
@@ -28,14 +29,14 @@ if ENV.has_key? "FLARE_INDEX_SERVER"
 end
 
 scname = ARGV[0].to_sym if ARGV.size > 0
-scclasses = [Cli::List, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Master, Cli::Threads, Cli::Ping, Cli::Remove, Cli::Index]
+scclasses = [Cli::List, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Master, Cli::Threads, Cli::Ping, Cli::Remove, Cli::Index, Cli::Activate]
 unsupported = [Cli::Stats, Cli::Deploy]
 scclasses.concat unsupported
 
 subcommands = Hash[*scclasses.map {|x| [x.to_sym, x]}.flatten]
 
 setup do |opt|
-  opt.banner = "Usage: flare-admin [subcommand] [options] [arguments]"
+  opt.banner = "#{Flare::Tools::TITLE}\nUsage: flare-admin [subcommand] [options] [arguments]"
   opt.on("-n",  '--dry-run',                  "dry run") {dry_run = true}
   opt.on("-i",  '--index-server=[HOSTNAME]',  "index server hostname(default:#{index_server_hostname})") {|v| index_server_hostname = v}
   opt.on("-p",  '--index-server-port=[PORT]', "index server port(default:#{index_server_port})") {|v| index_server_port = v.to_i}

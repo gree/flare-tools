@@ -7,7 +7,8 @@ cliname = File.basename($PROGRAM_NAME)
 cliname[/flare-/] = ""
 
 require 'resolv'
-require 'flare/util/logging.rb'
+require 'flare/tools'
+require 'flare/util/logging'
 begin
   require "flare/tools/cli/#{cliname}"
 rescue LoadError
@@ -33,7 +34,7 @@ end
 subc = eval "Flare::Tools::Cli::#{cliname.capitalize}.new"
 
 setup do |opt|
-  opt.banner = "Usage: flare-stats [options]"
+  opt.banner = "#{Flare::Tools::TITLE}\nUsage: flare-#{cliname} [options]"
   opt.on('-n',  '--dry-run',                  "dry run") {dry_run = true}
   opt.on('-i',  '--index-server=[HOSTNAME]',  "index server hostname(default:#{index_server_hostname})") {|v| index_server_hostname = v}
   opt.on('-p',  '--index-server-port=[PORT]', "index server port(default:#{index_server_port})") {|v| index_server_port = v.to_i}

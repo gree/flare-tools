@@ -56,6 +56,7 @@ class NodeTest < Test::Unit::TestCase
         assert_equal(false, n.get("key"))
         n.set("key", "0")
         n.delete_noreply("key")
+        sleep 0.1
         assert_equal(false, n.get("key"))
       end
     end

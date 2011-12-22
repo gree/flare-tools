@@ -15,13 +15,13 @@ module Flare
   module Tools
     module Cli
       
-      class Down < SubCommand
+      class Activate < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
         
-        myname :down
-        desc   "turn down nodes and destroy their data."
+        myname :activate
+        desc   "activate "
         usage  "down [hostname:port] ..."
         
         def setup(opt)
@@ -49,7 +49,6 @@ module Flare
           
             hosts.each do |hostname,port|
               hostname_port = "#{hostname}:#{port}"
-              down = 'down'
               port = if port.nil? then DefaultNodePort else port.to_i end
               ipaddr = address_of_hostname(hostname)
           
@@ -60,14 +59,16 @@ module Flare
 
               exec = @force
               if exec
-              elsif node['state'] == down
-                puts "#{ipaddr}:#{port} is already down."
+              elsif node['state'] == 'active'
+                puts "#{ipaddr}:#{port} is already active."
               else
-                print "turning node down (node=#{ipaddr}:#{port}, state=#{node['state']} -> #{down}) (y/n): "
-                exec = interruptible {(gets.chomp.upcase == "Y")}
+                print "turning node up (node=#{ipaddr}:#{port}, state=#{node['state']} -> activate) (y/n): "
+                interruptible do
+                  exec = true if gets.chomp.upcase == "Y"
+                end
               end
               if exec
-                s.set_state(hostname, port, down) unless config[:dry_run]
+                s.set_state(hostname, port, 'active') unless config[:dry_run]
               end
             end
 
