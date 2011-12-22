@@ -1,5 +1,5 @@
 
-$LOAD_PATH << File.dirname(__FILE__)+"/lib"
+$LOAD_PATH.unshift File.dirname(__FILE__)+"/lib"
 
 require 'rubygems'
 gem 'hoe', '>= 2.1.0'
