@@ -26,7 +26,7 @@ module Flare
 
         def setup(opt)
           opt.on('--force',            "commits changes without confirmation") {@force = true}
-          opt.on('--retry=[COUNT]',    "retries count(default:#{@retry})") {|v| @retry = v.to_i}
+          opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})") {|v| @retry = v.to_i}
           opt.on('--clean',            "clears datastore before construction") {@clean = true}
         end
 
@@ -107,6 +107,9 @@ module Flare
                       s.set_role(hostname, port, role, balance, partition) unless config[:dry_run]
                     end
                   end
+                else
+                  error "failed to change the state."
+                  return S_NG
                 end
               end
             end

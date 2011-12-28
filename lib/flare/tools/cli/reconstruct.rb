@@ -27,6 +27,7 @@ module Flare
         def setup(opt)
           opt.on('--force',            "commits changes without confirmation") {@force = true}
           opt.on('--safe',             "reconstructs a node safely") {@safe = true}
+          opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})") {|v| @retry = v.to_i}
           opt.on('--all',              "reconstructs all nodes") {@all = true}
         end
 
@@ -35,6 +36,7 @@ module Flare
           @force = false
           @safe = false
           @all = false
+          @retry = 5
         end
 
         def execute(config, *args)
@@ -111,22 +113,36 @@ module Flare
                 end
               end
               if exec
-                STDERR.print "turning down..."
+                puts "turning down..."
                 s.set_state(hostname, port, 'down') unless config[:dry_run]
-                STDERR.print "\n"
 
-                STDERR.print "waiting for node to be active again..."
+                puts "waiting for node to be active again..."
                 sleep 3
-                STDERR.print "\n"
 
                 Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
                   n.flush_all unless config[:dry_run]
                 end
-                s.set_role(hostname, port, 'slave', 0, node['partition']) unless config[:dry_run]
-                STDERR.puts "started constructing node..."
-                wait_for_slave_construction(s, hostname_port, config[:timeout]) unless config[:dry_run]
-                s.set_role(hostname, port, 'slave', node['balance'], node['partition']) unless config[:dry_run]
-                STDERR.puts "done."
+                nretry = 0
+                resp = false
+                while resp == false && nretry < @retry
+                  resp = s.set_role(hostname, port, 'slave', 0, node['partition']) unless config[:dry_run]
+                  if resp
+                    puts "started constructing node..."
+                  else
+                    nretry += 1
+                    puts "waiting #{nretry} sec..."
+                    sleep nretry
+                    puts "retrying..."
+                  end
+                end
+                if resp
+                  wait_for_slave_construction(s, hostname_port, config[:timeout]) unless config[:dry_run]
+                  s.set_role(hostname, port, 'slave', node['balance'], node['partition']) unless config[:dry_run]
+                  puts "done."
+                else
+                  error "failed to change the state."
+                  return S_NG
+                end
               end
               @force = false if interrupted?
             end
