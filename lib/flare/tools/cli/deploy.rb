@@ -98,6 +98,9 @@ module Flare
                                                  'server-name' => hostname,
                                                  'server-port' => port,
                                                  'data-dir' => datadir,
+                                                 'monitor-interval' => @monitor_interval,
+                                                 'monitor-threshold' => @monitor_threshold,
+                                                 'monitor-read-timeout' => @monitor_read_timeout,
                                                })
             open(basedir+"/flarei.conf", "w") do |f|
               f.puts conf
@@ -135,9 +138,6 @@ module Flare
               'data-dir' => datadir,
               'proxy-concurrency' => @proxy_concurrency,
               'thread-pool-size' => @thread_pool_size,
-              'monitor-interval' => @monitor_interval,
-              'monitor-threshold' => @monitor_threshold,
-              'monitor-read-timeout' => @monitor_read_timeout,
             }
 
             unless @noreply_window_limit.nil?
