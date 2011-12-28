@@ -26,6 +26,9 @@ module Flare
           opt.on('--proxy-concurrency=[CONC]',            "proxy concurrency") {|v| @proxy_concurrency = v.to_i}
           opt.on('--noreply-window-limit=[WINLIMIT]',     "noreply window limit") {|v| @noreply_window_limit = v.to_i}
           opt.on('--thread-pool-size=[SIZE]',             "thread pool size") {|v| @thread_pool_size = v.to_i}
+          opt.on('--monitor-threshold=[COUNT]',           "monitor threshold") {|v| @monitor_threshold = v.to_i}
+          opt.on('--monitor-interval=[SECOND]',           "monitor interval") {|v| @monitor_interval = v.to_i}
+          opt.on('--monitor-read-timeout=[MILLISECOND]',  "monitor read timeout in millisecond") {|v| @monitor_read_timeout = v.to_i}
           opt.on('--deploy-index',                        "deploys index") {@deploy_index = true}
           opt.on('--delete',                              "deletes existing contents before deploying") {@delete = true}
         end
@@ -35,6 +38,9 @@ module Flare
           @noreply_window_limit = nil
           @thread_pool_size = 16
           @deploy_index = false
+          @monitor_threshold = 3
+          @monitor_interval = 5
+          @monitor_read_timeout = 1000
           @delete = false
           @flarei = "/usr/local/bin/flarei"
           @flared = "/usr/local/bin/flared"
@@ -129,6 +135,9 @@ module Flare
               'data-dir' => datadir,
               'proxy-concurrency' => @proxy_concurrency,
               'thread-pool-size' => @thread_pool_size,
+              'monitor-interval' => @monitor_interval,
+              'monitor-threshold' => @monitor_threshold,
+              'monitor-read-timeout' => @monitor_read_timeout,
             }
 
             unless @noreply_window_limit.nil?

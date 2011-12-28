@@ -1,5 +1,12 @@
 :title: History of flare-tools
 
+=== 0.2.4 / 2011-12-22
+* Major Enhancements
+  * Added 'activate' subcommand to flare-admin for activating a master node in ready state.
+* Minor Enhancements
+  * Removed --keep-ready option from 'master' subcommand. Now it's the default behavior.
+  * Added --activate option to activate a new master after its construction.
+
 === 0.2.3 / 2011-11-30
 * Major Enhancements
   * Added 'remove' subcommand to flare-admin for removing nodes from a cluster.

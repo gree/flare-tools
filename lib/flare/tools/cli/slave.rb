@@ -28,7 +28,6 @@ module Flare
           opt.on('--force',            "commits changes without confirmation") {@force = true}
           opt.on('--retry=[COUNT]',    "retries count(default:#{@retry})") {|v| @retry = v.to_i}
           opt.on('--clean',            "clears datastore before construction") {@clean = true}
-          opt.on('--keep-inactive',    "keeps new slave's balance 0") {@keep_inactive = true}
         end
 
         def initialize
@@ -36,7 +35,6 @@ module Flare
           @force = false
           @retry = 5
           @clean = false
-          @keep_inactive = false
         end
 
         def execute(config, *args)
@@ -100,7 +98,7 @@ module Flare
                 end
                 if resp
                   wait_for_slave_construction(s, hostname_port, config[:timeout]) unless config[:dry_run]
-                  unless @keep_inactive || balance == 0
+                  if balance > 0
                     unless @force
                       print "changing node's balance (node=#{ipaddr}:#{port}, balance=0 -> #{balance}) (y/n): "
                       exec = interruptible {(gets.chomp.upcase == "Y")}

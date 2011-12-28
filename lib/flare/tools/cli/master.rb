@@ -24,12 +24,12 @@ module Flare
 
         def setup(opt)
           opt.on('--force',            "commits changes without confirmation") {@force = true}
-          opt.on('--keep-ready',       "keeps the state ready") {@keep_ready = true}
+          opt.on('--activate',         "changes node's state from ready to active") {@activate = true}
         end
 
         def initialize
           @force = false
-          @keep_ready = false
+          @activate = false
         end
   
         def execute(config, *args)
@@ -77,7 +77,7 @@ module Flare
                 unless config[:dry_run]
                   if s.set_role(hostname, port, role, balance, partition) 
                     wait_for_master_construction(s, hostname_port, config[:timeout])
-                    unless @keep_ready
+                    if @activate || partition == 0
                       unless @force
                         node = s.stats_nodes[hostname_port]
                         print "changing node's state (node=#{ipaddr}:#{port}, state=#{node['state']} -> active) (y/n): "
