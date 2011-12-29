@@ -35,8 +35,8 @@ module Flare
           super
           @force = false
           @safe = false
+          @retry = 10
           @all = false
-          @retry = 5
         end
 
         def execute(config, *args)
@@ -112,20 +112,21 @@ module Flare
                   end
                 end
               end
-              if exec
+              if exec && !config[:dry_run]
                 puts "turning down..."
-                s.set_state(hostname, port, 'down') unless config[:dry_run]
+                s.set_state(hostname, port, 'down')
 
                 puts "waiting for node to be active again..."
                 sleep 3
 
                 Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
-                  n.flush_all unless config[:dry_run]
+                  n.flush_all
                 end
+
                 nretry = 0
                 resp = false
                 while resp == false && nretry < @retry
-                  resp = s.set_role(hostname, port, 'slave', 0, node['partition']) unless config[:dry_run]
+                  resp = s.set_role(hostname, port, 'slave', 0, node['partition'])
                   if resp
                     puts "started constructing node..."
                   else
@@ -135,13 +136,18 @@ module Flare
                     puts "retrying..."
                   end
                 end
+                balance = node['balance']
                 if resp
-                  wait_for_slave_construction(s, hostname_port, config[:timeout]) unless config[:dry_run]
-                  s.set_role(hostname, port, 'slave', node['balance'], node['partition']) unless config[:dry_run]
+                  wait_for_slave_construction(s, hostname_port, config[:timeout])
+                  unless @force
+                    print "changing node's balance (node=#{hostname_port}, balance=0 -> #{balance}) (y/n): "
+                    exec = interruptible {(gets.chomp.upcase == "Y")}
+                  end
+                  s.set_role(hostname, port, 'slave', node['balance'], node['partition']) if exec
                   puts "done."
                 else
                   error "failed to change the state."
-                  return S_NG
+                  status = S_NG
                 end
               end
               @force = false if interrupted?

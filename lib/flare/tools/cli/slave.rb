@@ -33,7 +33,7 @@ module Flare
         def initialize
           super
           @force = false
-          @retry = 5
+          @retry = 10
           @clean = false
         end
 
@@ -54,10 +54,7 @@ module Flare
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
           
             hosts.each do |hostname,port,balance,partition|
-              role = 'slave'
-              
               hostname_port = "#{hostname}:#{port}"              
-              ipaddr = address_of_hostname(hostname)
 
               unless node = nodes.inject(false) {|r,i| if i[0] == hostname_port then i[1] else r end}
                 error "invalid 'hostname:port' pair: #{hostname_port}"
@@ -65,28 +62,28 @@ module Flare
               end
 
               if node['role'] != 'proxy'
-                puts "#{ipaddr}:#{port} is not a proxy."
+                puts "#{hostname_port} is not a proxy."
                 next
               end
               
               exec = @force
               unless exec
-                print "making node slave (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
+                print "making node slave (node=#{hostname_port}, role=#{node['role']} -> slave) (y/n): "
                 interruptible do
                   exec = true if gets.chomp.upcase == "Y"
                 end
               end
-              if exec
+              if exec && !config[:dry_run]
                 if @clean
                   Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
-                    n.flush_all unless config[:dry_run]
+                    n.flush_all
                   end
                 end
 
                 nretry = 0
                 resp = false
                 while resp == false && nretry < @retry
-                  resp = s.set_role(hostname, port, role, 0, partition) unless config[:dry_run]
+                  resp = s.set_role(hostname, port, 'slave', 0, partition)
                   if resp
                     puts "started constructing slave node..."
                   else
@@ -97,14 +94,14 @@ module Flare
                   end
                 end
                 if resp
-                  wait_for_slave_construction(s, hostname_port, config[:timeout]) unless config[:dry_run]
+                  wait_for_slave_construction(s, hostname_port, config[:timeout])
                   if balance > 0
                     unless @force
-                      print "changing node's balance (node=#{ipaddr}:#{port}, balance=0 -> #{balance}) (y/n): "
+                      print "changing node's balance (node=#{hostname_port}, balance=0 -> #{balance}) (y/n): "
                       exec = interruptible {(gets.chomp.upcase == "Y")}
                     end
                     if exec
-                      s.set_role(hostname, port, role, balance, partition) unless config[:dry_run]
+                      s.set_role(hostname, port, 'slave', balance, partition)
                     end
                   end
                 else

@@ -24,11 +24,13 @@ module Flare
 
         def setup(opt)
           opt.on('--force',            "commits changes without confirmation") {@force = true}
+          opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})") {|v| @retry = v.to_i}
           opt.on('--activate',         "changes node's state from ready to active") {@activate = true}
         end
 
         def initialize
           @force = false
+          @retry = 10
           @activate = false
         end
   
@@ -73,24 +75,36 @@ module Flare
                 print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
                 exec = interruptible {(gets.chomp.upcase == "Y")}
               end
-              if exec
-                unless config[:dry_run]
-                  if s.set_role(hostname, port, role, balance, partition) 
-                    wait_for_master_construction(s, hostname_port, config[:timeout])
-                    if @activate || partition == 0
-                      unless @force
-                        node = s.stats_nodes[hostname_port]
-                        print "changing node's state (node=#{ipaddr}:#{port}, state=#{node['state']} -> active) (y/n): "
-                        exec = interruptible {(gets.chomp.upcase == "Y")}
-                      end
-                      if exec
-                        resp = s.set_state(hostname, port, 'active')
-                        return S_NG unless resp
-                      end
-                    end
+              if exec && !config[:dry_run]
+                nretry = 0
+                resp = false
+                while resp == false && nretry < @retry
+                  resp = s.set_role(hostname, port, role, balance, partition)
+                  if resp
+                    puts "started constructing master node..."
                   else
-                    status = S_NG
+                    nretry += 1
+                    puts "waiting #{nretry} sec..."
+                    sleep nretry
+                    puts "retrying..."
                   end
+                end
+                if resp
+                  wait_for_master_construction(s, hostname_port, config[:timeout])
+                  if @activate || partition == 0
+                    unless @force || partition == 0
+                      node = s.stats_nodes[hostname_port]
+                      print "changing node's state (node=#{ipaddr}:#{port}, state=#{node['state']} -> active) (y/n): "
+                      exec = interruptible {(gets.chomp.upcase == "Y")}
+                    end
+                    if exec
+                      resp = s.set_state(hostname, port, 'active')
+                      status = S_NG unless resp
+                    end
+                  end
+                else
+                  error "failed to change the state."
+                  status = S_NG
                 end
               end
             end
