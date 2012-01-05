@@ -4,9 +4,7 @@
 # License::   NOTYET
 
 require 'timeout'
-require 'flare/net/connection'
-require 'flare/util/logging'
-require 'flare/util/constant'
+require 'flare/tools/client'
 
 # 
 module Flare
@@ -14,101 +12,7 @@ module Flare
 
     # == Description
     # 
-    class Stats
-      include Flare::Util::Logging
-      include Flare::Util::Constant
-
-      DEFCMD_NOREPLY = 0x01
-      DEFCMD_ONELINE = 0x02
-
-      def self.open(host, port, tout = DefaultTimeout, &block)
-        stats = self.new(host, port, tout)
-        return stats if block.nil?
-        return block.call(stats)
-      ensure
-        stats.close unless stats.nil? # this might raise IOError
-      end
-
-      def initialize(host, port, tout)
-        @tout = tout
-        timeout(tout) do
-          @conn = Flare::Net::Connection.new(host, port)
-        end
-      rescue Errno::ECONNREFUSED
-        debug "Connection refused. server=[#{@conn}]"
-        raise
-      rescue TimeoutError
-        debug "Connection timeout. server=[#{@conn}]"
-        raise
-      rescue SocketError
-        debug "Connection error. server=[#{host}:#{port}]"
-        raise
-      end
-
-      def host
-        @conn.host
-      end
-
-      def port
-        @conn.port
-      end
-
-      def request(cmd, oneline = true, noreply = false, *args)
-        # info "request(#{cmd}, #{oneline}, #{noreply})"
-        @conn.reconnect if @conn.closed?
-        debug "Enter the command server. server=[#{@conn}] command=[#{cmd} #{args.join(' ')}]"
-        response = nil
-        timeout(@tout) do
-          args.push "noreply" if noreply
-          @conn.send(cmd, *args)
-          response = @conn.recv(oneline) unless noreply
-        end
-        response
-      rescue TimeoutError => e
-        error "Connection timeout. server=[#{@conn}] command=[#{cmd} #{args.join(' ')}]"
-        @conn.close
-        raise e
-      end
-
-      @@parsers = {}
-
-      def self.defcmd_(method_symbol, command_template, oneline, noreply, &block)
-        @@parsers[method_symbol] = block
-        # oneline = if oneline then "true" else "false" end
-        # noreply = if noreply then "true" else "false" end
-        self.class_eval %{
-          def #{method_symbol.to_s}(*args)
-            cmd = "#{command_template}"
-            cmd = cmd % args if args.size > 0
-            resp = request(cmd, #{oneline}, #{noreply})
-            if resp then @@parsers[:#{method_symbol.to_s}].call(resp) else false end
-          end
-        }
-      end
-
-      def self.defcmd(method_symbol, command_template, flag = 0, &block)
-        noreply = ((flag & DEFCMD_NOREPLY) == DEFCMD_NOREPLY)
-        oneline = ((flag & DEFCMD_ONELINE) == DEFCMD_ONELINE)
-        # puts "defcmd(#{oneline}, #{noreply})"
-        defcmd_(method_symbol, command_template, oneline, noreply, &block)
-      end
-
-      def self.defcmd_oneline(method_symbol, command_template, &block)
-        defcmd(method_symbol, command_template, DEFCMD_ONELINE, &block)
-      end
-
-      def self.defcmd_noreply(method_symbol, command_template, &block)
-        defcmd(method_symbol, command_template, DEFCMD_NOREPLY, &block)
-      end
-
-      def self.defcmd_oneline_noreply(method_symbol, command_template, &block)
-        defcmd(method_symbol, command_template, DEFCMD_NOREPLY|DEFCMD_ONELINE, &block)
-      end
-
-      def close()
-        quit
-        @conn.close
-      end
+    class Stats < Client
 
       defcmd :stats_nodes, 'stats nodes' do |resp|
         result = {}

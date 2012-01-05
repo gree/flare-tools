@@ -30,16 +30,16 @@ module Flare
         x_list_push_(k.chomp, 0, 0, v.size, v)
       end
 
-      def x_list_pop(k)
-        x_list_pop_(k.chomp)
-      end
-
       def set(k, v)
         set_(k.chomp, 0, 0, v.size, v)
       end
 
       def set_noreply(k, v)
         set_noreply_(k.chomp, 0, 0, v.size, v)
+      end
+
+      def cas(k, v, casunique)
+        cas_(k.chomp, 0, 0, v.size, casunique, v)
       end
 
       def delete(k)
@@ -50,24 +50,20 @@ module Flare
         delete_noreply_(k.chomp)
       end
 
-      def get(k)
-        get_(k)
-      end
-
       def incr(k, v)
-        incr_(k, v.to_s)
+        incr_(k.chomp, v.to_s)
       end
 
       def incr_noreply(k, v)
-        incr_noreply(k, v.to_s)
+        incr_noreply(k.chomp, v.to_s)
       end
 
       def decr(k, v)
-        decr_(k, v.to_s)
+        decr_(k.chomp, v.to_s)
       end
 
       def decr_noreply(k, v)
-        decr_noreply_(k, v.to_s)
+        decr_noreply_(k.chomp, v.to_s)
       end
 
       defcmd :x_list_push_, 'list_push %s %d %d %d\r\n%s\r\n' do |resp|
@@ -79,9 +75,17 @@ module Flare
         resp
       end
 
+      defcmd :cas_, 'set %s %d %d %d %d\r\n%s\r\n' do |resp|
+        resp
+      end
+
       defcmd_noreply :delete_noreply_, 'delete %s\r\n'
       defcmd :delete_, 'delete %s\r\n' do |resp|
         resp
+      end
+
+      def x_list_pop(k)
+        x_list_pop_(k.chomp)
       end
 
       defcmd :x_list_pop_, 'list_pop %s\r\n' do |resp|
@@ -94,23 +98,43 @@ module Flare
         end
       end
 
+      def get(k)
+        get_(k.chomp)
+      end
+
       defcmd :get_, 'get %s\r\n' do |resp|
         header, content = resp.split("\r\n", 2)
         if header.nil?
           false
         else
-          sig, key, f, len = header.split(" ")
+          sig, key, f, len  = header.split(" ")
           content[0...len.to_i]
         end
       end
 
-      defcmd_oneline_noreply :incr_noreply, 'incr %s %s\r\n'
+      def gets(k)
+        gets_(k.chomp)
+      end
+
+      defcmd_value :gets_, 'gets %s\r\n' do |data, key, flag, len, version, expire|
+        [data, version]
+      end
+
+      def dump(wait = 0, part = 0, partsize = 1, bwlimit = 0, &block)
+        dump_(wait, part, partsize, bwlimit, &block)
+      end
+
+      defcmd_value :dump_, 'dump %d %d %d %d\r\n' do |data, key, flag, version, expire|
+        [data, key, flag, len, version, expire]
+      end
+
+      defcmd_noreply :incr_noreply, 'incr %s %s\r\n'
       defcmd_oneline :incr_, 'incr %s %s\r\n' do |resp|
         resp.chomp!
         resp
       end
 
-      defcmd_oneline_noreply :decr_noreply_, 'decr %s %s\r\n'
+      defcmd_noreply :decr_noreply_, 'decr %s %s\r\n'
       defcmd_oneline :decr_, 'decr %s %s\r\n' do |resp|
         resp.chomp!
         resp

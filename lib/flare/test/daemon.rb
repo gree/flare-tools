@@ -44,6 +44,7 @@ module Flare
           rescue TimeoutError => e
             Process.kill :KILL, pid
             Process.waitpid pid
+            STDERR.print "*"
           end
         end
         STDERR.print "\n"

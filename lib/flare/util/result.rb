@@ -24,7 +24,7 @@ module Flare
       ServerError = :SERVER_ERROR
 
       # Converts a result code to its string representation.
-      def string_of_result(result)
+      def self.string_of_result(result)
         case result
         when None
           ""
@@ -36,7 +36,7 @@ module Flare
       end
       
       # Converts a string representation of a request result to its result code.
-      def result_of_string(string)
+      def self.result_of_string(string)
         case string
         when ""
           None

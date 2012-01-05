@@ -29,7 +29,7 @@ if ENV.has_key? "FLARE_INDEX_SERVER"
 end
 
 scname = ARGV[0].to_sym if ARGV.size > 0
-scclasses = [Cli::List, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Master, Cli::Threads, Cli::Ping, Cli::Remove, Cli::Index, Cli::Activate]
+scclasses = [Cli::List, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Master, Cli::Threads, Cli::Ping, Cli::Remove, Cli::Index, Cli::Activate, Cli::Dump]
 unsupported = [Cli::Stats, Cli::Deploy]
 scclasses.concat unsupported
 

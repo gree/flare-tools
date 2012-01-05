@@ -21,6 +21,7 @@ module Flare
       autoload :Ping,        'flare/tools/cli/ping'
       autoload :Remove,      'flare/tools/cli/remove'
       autoload :Activate,    'flare/tools/cli/activate'
+      autoload :Dump,        'flare/tools/cli/dump'
     end
   end
 end

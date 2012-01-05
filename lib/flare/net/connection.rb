@@ -57,28 +57,18 @@ module Flare
         @sent = cmd
       end
 
-      def recv(oneline = false)
-        # trace "recv. server=[#{self}]"
-        resp = ""
-        crlf = "\r\n"
-        while x = @socket.gets
-          # trace "recv. [#{x}]"
-          ans = x.chomp.split(' ', 2)
-          ans = if ans.empty? then '' else ans[0] end
-          case ans
-          when string_of_result(Ok), string_of_result(End), string_of_result(Stored), string_of_result(Deleted), string_of_result(NotFound)
-            break
-          when string_of_result(Error), string_of_result(ServerError), string_of_result(ClientError)
-            warn "Failed command. server=[#{self}] sent=[#{@sent}] result=[#{x.chomp}]"
-            resp = false
-            break
-          else
-            resp += x
-            break if oneline
-          end
-        end
-        # trace "exit recv. [#{resp}]"
-        resp
+      def last_sent
+        @sent
+      end
+
+      def getline
+        ret = @socket.gets
+        # p ret
+        ret
+      end
+
+      def read(length = nil)
+        @socket.read(length)
       end
 
       def to_s
