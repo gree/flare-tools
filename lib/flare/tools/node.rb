@@ -26,30 +26,6 @@ module Flare
         resp
       end
 
-      def x_list_push(k, v)
-        x_list_push_(k.chomp, 0, 0, v.size, v)
-      end
-
-      def set(k, v)
-        set_(k.chomp, 0, 0, v.size, v)
-      end
-
-      def set_noreply(k, v)
-        set_noreply_(k.chomp, 0, 0, v.size, v)
-      end
-
-      def cas(k, v, casunique)
-        cas_(k.chomp, 0, 0, v.size, casunique, v)
-      end
-
-      def delete(k)
-        delete_(k.chomp)
-      end
-
-      def delete_noreply(k)
-        delete_noreply_(k.chomp)
-      end
-
       def incr(k, v)
         incr_(k.chomp, v.to_s)
       end
@@ -66,42 +42,69 @@ module Flare
         decr_noreply_(k.chomp, v.to_s)
       end
 
+      def x_list_push(k, v)
+        x_list_push_(k.chomp, 0, 0, v.size, v)
+      end
       defcmd :x_list_push_, 'list_push %s %d %d %d\r\n%s\r\n' do |resp|
         resp
       end
 
+      def x_list_unshift(k, v)
+        x_list_unshift_(k.chomp, 0, 0, v.size, v)
+      end
+      defcmd :x_list_unshift_, 'list_unshift %s %d %d %d\r\n%s\r\n' do |resp|
+        resp
+      end
+
+      def set(k, v)
+        set_(k.chomp, 0, 0, v.size, v)
+      end
+      defcmd :set_, 'set %s %d %d %d\r\n%s\r\n' do |resp| resp end
+
+      def set_noreply(k, v)
+        set_noreply_(k.chomp, 0, 0, v.size, v)
+      end
       defcmd_noreply :set_noreply_, 'set %s %d %d %d\r\n%s\r\n'
-      defcmd :set_, 'set %s %d %d %d\r\n%s\r\n' do |resp|
-        resp
-      end
 
-      defcmd :cas_, 'set %s %d %d %d %d\r\n%s\r\n' do |resp|
-        resp
+      def cas(k, v, casunique)
+        cas_(k.chomp, 0, 0, v.size, casunique, v)
       end
+      defcmd :cas_, 'set %s %d %d %d %d\r\n%s\r\n' do |resp| resp end
 
+      def delete(k)
+        delete_(k.chomp)
+      end
+      defcmd :delete_, 'delete %s\r\n' do |resp| resp end
+
+      def delete_noreply(k)
+        delete_noreply_(k.chomp)
+      end
       defcmd_noreply :delete_noreply_, 'delete %s\r\n'
-      defcmd :delete_, 'delete %s\r\n' do |resp|
-        resp
-      end
 
       def x_list_pop(k)
         x_list_pop_(k.chomp)
       end
+      defcmd_value :x_list_pop_, 'list_pop %s\r\n' do |data, key, flag, len, version, expire|
+        data
+      end
 
-      defcmd :x_list_pop_, 'list_pop %s\r\n' do |resp|
-        header, content = resp.split("\r\n", 2)
-        if header.nil?
-          false
-        else
-          sig, key, f, len = header.split(" ")
-          content[0...len.to_i]
-        end
+      def x_list_shift(k)
+        x_list_shift_(k.chomp)
+      end
+      defcmd_value :x_list_shift_, 'list_shift %s\r\n' do |data, key, flag, len, version, expire|
+        data
+      end
+
+      def x_list_get(k, b, e, &block)
+        x_list_get_(k.chomp, b, e, &block)
+      end
+      defcmd_value :x_list_get_, 'list_get %s %d %d\r\n' do |data, key, flag, len, version, expire|
+        data
       end
 
       def get(k)
         get_(k.chomp)
       end
-
       defcmd :get_, 'get %s\r\n' do |resp|
         header, content = resp.split("\r\n", 2)
         if header.nil?

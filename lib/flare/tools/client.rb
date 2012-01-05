@@ -17,6 +17,7 @@ module Flare
     # 
     class Client
       include Flare::Util::Logging
+      extend Flare::Util::Logging
       include Flare::Util::Constant
       include Flare::Util::Result
 
@@ -147,13 +148,17 @@ module Flare
               key, flag, len, version, expire = elems[1], elems[2].to_i, elems[3].to_i, elems[4], elems[5]
               data = conn.read(len)
               unless processor.nil?
-                r = processor.call(data, key, flag, len, version, expire) 
+                r = processor.call(data, key, flag, len, version, expire)
                 rets << r if r
               end
               conn.getline # skip
             elsif elems[0] == "END"
+              if rets.size == 1
+                return rets[0]
+              end
               return rets
             else
+              info "error \"#{line.chomp}\""
               return false
             end
           end
