@@ -11,7 +11,7 @@ require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
 
-autoload :CSV, 'csv'
+require 'csv'
 
 module Flare
   module Tools
