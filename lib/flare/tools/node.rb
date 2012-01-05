@@ -94,18 +94,24 @@ module Flare
         end
       end
 
-      defcmd_value :gets_, 'gets %s\r\n' do |data, key, flag, len, cas|
-        [data, cas]
+      defcmd_value :gets_, 'gets %s\r\n' do |data, key, flag, len, version, expire|
+        [data, version]
       end
 
-      defcmd :dump_, 'dump %d %d %d\r\n' do |resp|
-        header, content = resp.split("\r\n", 2)
-        if header.nil?
-          false
+      def dump(wait = 0, part = nil, partsize = nil, &block)
+        if part == nil || partsize == nil
+          dump_all_(wait, &block)
         else
-          sig, key, f, len = header.split(" ")
-          content[0...len.to_i]
+          dump_part_(wait, part, partsize, &block)
         end
+      end
+
+      defcmd_value :dump_all_, 'dump %d\r\n' do |data, key, flag, len, version, expire|
+        [data, key, flag, len, version, expire]
+      end
+
+      defcmd_value :dump_part_, 'dump %d %d %d\r\n' do |data, key, flag, version, expire|
+        [data, key, flag, len, version, expire]
       end
 
       defcmd_noreply :incr_noreply, 'incr %s %s\r\n'

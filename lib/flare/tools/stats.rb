@@ -52,37 +52,39 @@ module Flare
         @conn.port
       end
 
-      NoreplyParser = Proc.new do |conn, processor|
+      NoreplyParser = lambda {|conn,processor|
         processor.call() unless processor.nil?
-      end
+      }
 
-      OnelineParser = Proc.new do |conn, processor|
+      OnelineParser = lambda {|conn,processor|
         line = conn.getline
         if processor.nil?
           line
         else
           processor.call(line)
         end
-      end
+      }
 
-      ValueParser = Proc.new do |conn, processor|
+      ValueParser = lambda {|conn,processor|
         rets = []
         while true
           line = conn.getline
           elems = line.split(' ')
-          if result == "VALUE"
-            key, flag, len, cas = elem[1], elem[2].to_i, elem[3].to_i, elem[4]
-            cas = cas.to_i unless cas.nil?
+          if elems[0] == "VALUE"
+            key, flag, len, version, expire = elems[1], elems[2].to_i, elems[3].to_i, elems[4]
             data = conn.read(len)
-            rets << processor.call(data, key, flag, len, cas) unless processor.nil?
+            unless processor.nil?
+              r = processor.call(data, key, flag, len, version, expire) 
+              rets << r if r
+            end
             conn.getline # skip
-          elsif result == "END"
+          elsif elems[0] == "END"
             return rets
           else
             return false
           end
         end
-      end
+      }
 
       def request(cmd, parser, processor, *args)
         # info "request(#{cmd}, #{noreply})"
