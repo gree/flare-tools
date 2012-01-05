@@ -35,6 +35,7 @@ lib/flare/tools/cli/slave.rb
 lib/flare/tools/cli/stats.rb
 lib/flare/tools/cli/sub_command.rb
 lib/flare/tools/cli/threads.rb
+lib/flare/tools/client.rb
 lib/flare/tools/cluster.rb
 lib/flare/tools/common.rb
 lib/flare/tools/index_server.rb
