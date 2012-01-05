@@ -26,6 +26,14 @@ module Flare
         resp
       end
 
+      def x_list_push(k, v)
+        x_list_push_(k.chomp, 0, 0, v.size, v)
+      end
+
+      def x_list_pop(k)
+        x_list_pop_(k.chomp)
+      end
+
       def set(k, v)
         set_(k.chomp, 0, 0, v.size, v)
       end
@@ -62,6 +70,10 @@ module Flare
         decr_noreply_(k, v.to_s)
       end
 
+      defcmd :x_list_push_, 'list_push %s %d %d %d\r\n%s\r\n' do |resp|
+        resp
+      end
+
       defcmd_noreply :set_noreply_, 'set %s %d %d %d\r\n%s\r\n'
       defcmd :set_, 'set %s %d %d %d\r\n%s\r\n' do |resp|
         resp
@@ -70,6 +82,16 @@ module Flare
       defcmd_noreply :delete_noreply_, 'delete %s\r\n'
       defcmd :delete_, 'delete %s\r\n' do |resp|
         resp
+      end
+
+      defcmd :x_list_pop_, 'list_pop %s\r\n' do |resp|
+        header, content = resp.split("\r\n", 2)
+        if header.nil?
+          false
+        else
+          sig, key, f, len = header.split(" ")
+          content[0...len.to_i]
+        end
       end
 
       defcmd :get_, 'get %s\r\n' do |resp|
