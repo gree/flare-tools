@@ -8,9 +8,7 @@ require 'flare/util/result.rb'
 require 'flare/util/interruption'
 
 class UtilTest < Test::Unit::TestCase
-  class Result
-    include Flare::Util::Result
-  end
+  Result = Flare::Util::Result
 
   class InterruptionTestException < Exception
   end
@@ -27,8 +25,8 @@ class UtilTest < Test::Unit::TestCase
   end
   
   def test_result1
-    assert_equal("OK", Result.new.string_of_result(Result::Ok))
-    assert_equal(Result.new.result_of_string("OK"), Result::Ok)
+    assert_equal("OK", Result.string_of_result(Result::Ok))
+    assert_equal(Result.result_of_string("OK"), Result::Ok)
   end
 
   def test_interruption1

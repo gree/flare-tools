@@ -10,13 +10,15 @@ end
 
 task :test do
   tests.each do |test|
-    sh "env #{envargs} ruby #{test}_test.rb"
+    options = "--verbose"
+    sh "env #{envargs} ruby #{test}_test.rb #{options}"
   end
 end
 
 task :stress do
   tests.each do |test|
-    sh "env #{envargs} FLARE_TOOLS_STRESS_TEST=yes ruby #{test}_test.rb"
+    options = "--verbose"
+    sh "env #{envargs} FLARE_TOOLS_STRESS_TEST=yes ruby #{test}_test.rb #{options}"
   end
 end
 

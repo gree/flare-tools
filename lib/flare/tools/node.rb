@@ -34,6 +34,10 @@ module Flare
         set_noreply_(k.chomp, 0, 0, v.size, v)
       end
 
+      def cas(k, v, casunique)
+        cas_(k.chomp, 0, 0, v.size, casunique, v)
+      end
+
       def delete(k)
         delete_(k.chomp)
       end
@@ -43,27 +47,35 @@ module Flare
       end
 
       def get(k)
-        get_(k)
+        get_(k.chomp)
+      end
+
+      def gets(k)
+        gets_(k.chomp)
       end
 
       def incr(k, v)
-        incr_(k, v.to_s)
+        incr_(k.chomp, v.to_s)
       end
 
       def incr_noreply(k, v)
-        incr_noreply(k, v.to_s)
+        incr_noreply(k.chomp, v.to_s)
       end
 
       def decr(k, v)
-        decr_(k, v.to_s)
+        decr_(k.chomp, v.to_s)
       end
 
       def decr_noreply(k, v)
-        decr_noreply_(k, v.to_s)
+        decr_noreply_(k.chomp, v.to_s)
       end
 
       defcmd_noreply :set_noreply_, 'set %s %d %d %d\r\n%s\r\n'
       defcmd :set_, 'set %s %d %d %d\r\n%s\r\n' do |resp|
+        resp
+      end
+
+      defcmd :cas_, 'set %s %d %d %d %d\r\n%s\r\n' do |resp|
         resp
       end
 
@@ -77,18 +89,32 @@ module Flare
         if header.nil?
           false
         else
+          sig, key, f, len  = header.split(" ")
+          content[0...len.to_i]
+        end
+      end
+
+      defcmd_value :gets_, 'gets %s\r\n' do |data, key, flag, len, cas|
+        [data, cas]
+      end
+
+      defcmd :dump_, 'dump %d %d %d\r\n' do |resp|
+        header, content = resp.split("\r\n", 2)
+        if header.nil?
+          false
+        else
           sig, key, f, len = header.split(" ")
           content[0...len.to_i]
         end
       end
 
-      defcmd_oneline_noreply :incr_noreply, 'incr %s %s\r\n'
+      defcmd_noreply :incr_noreply, 'incr %s %s\r\n'
       defcmd_oneline :incr_, 'incr %s %s\r\n' do |resp|
         resp.chomp!
         resp
       end
 
-      defcmd_oneline_noreply :decr_noreply_, 'decr %s %s\r\n'
+      defcmd_noreply :decr_noreply_, 'decr %s %s\r\n'
       defcmd_oneline :decr_, 'decr %s %s\r\n' do |resp|
         resp.chomp!
         resp

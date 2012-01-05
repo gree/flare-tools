@@ -7,6 +7,7 @@ require 'timeout'
 require 'flare/net/connection'
 require 'flare/util/logging'
 require 'flare/util/constant'
+require 'flare/util/result'
 
 # 
 module Flare
@@ -17,9 +18,7 @@ module Flare
     class Stats
       include Flare::Util::Logging
       include Flare::Util::Constant
-
-      DEFCMD_NOREPLY = 0x01
-      DEFCMD_ONELINE = 0x02
+      include Flare::Util::Result
 
       def self.open(host, port, tout = DefaultTimeout, &block)
         stats = self.new(host, port, tout)
@@ -53,15 +52,46 @@ module Flare
         @conn.port
       end
 
-      def request(cmd, oneline = true, noreply = false, *args)
-        # info "request(#{cmd}, #{oneline}, #{noreply})"
+      NoreplyParser = Proc.new do |conn, processor|
+        processor.call() unless processor.nil?
+      end
+
+      OnelineParser = Proc.new do |conn, processor|
+        line = conn.getline
+        if processor.nil?
+          line
+        else
+          processor.call(line)
+        end
+      end
+
+      ValueParser = Proc.new do |conn, processor|
+        rets = []
+        while true
+          line = conn.getline
+          elems = line.split(' ')
+          if result == "VALUE"
+            key, flag, len, cas = elem[1], elem[2].to_i, elem[3].to_i, elem[4]
+            cas = cas.to_i unless cas.nil?
+            data = conn.read(len)
+            rets << processor.call(data, key, flag, len, cas) unless processor.nil?
+            conn.getline # skip
+          elsif result == "END"
+            return rets
+          else
+            return false
+          end
+        end
+      end
+
+      def request(cmd, parser, processor, *args)
+        # info "request(#{cmd}, #{noreply})"
         @conn.reconnect if @conn.closed?
         debug "Enter the command server. server=[#{@conn}] command=[#{cmd} #{args.join(' ')}]"
         response = nil
         timeout(@tout) do
-          args.push "noreply" if noreply
           @conn.send(cmd, *args)
-          response = @conn.recv(oneline) unless noreply
+          response = parser.call(@conn, processor)
         end
         response
       rescue TimeoutError => e
@@ -70,39 +100,67 @@ module Flare
         raise e
       end
 
+      @@processors = {}
       @@parsers = {}
 
-      def self.defcmd_(method_symbol, command_template, oneline, noreply, &block)
-        @@parsers[method_symbol] = block
-        # oneline = if oneline then "true" else "false" end
-        # noreply = if noreply then "true" else "false" end
+      def self.defcmd_generic(method_symbol, command_template, parser, &processor)
+        @@parsers[method_symbol] = parser
+        @@processors[method_symbol] = processor
+        noreply = (parser == NoreplyParser)
         self.class_eval %{
-          def #{method_symbol.to_s}(*args)
+          def #{method_symbol.to_s}(*args, &processor)
+            options = []
+            options << "noreply" if #{noreply}
             cmd = "#{command_template}"
             cmd = cmd % args if args.size > 0
-            resp = request(cmd, #{oneline}, #{noreply})
-            if resp then @@parsers[:#{method_symbol.to_s}].call(resp) else false end
+            processor = @@processors[:#{method_symbol}] if processor.nil?
+            request(cmd, @@parsers[:#{method_symbol}], processor, *options)
           end
         }
       end
 
-      def self.defcmd(method_symbol, command_template, flag = 0, &block)
-        noreply = ((flag & DEFCMD_NOREPLY) == DEFCMD_NOREPLY)
-        oneline = ((flag & DEFCMD_ONELINE) == DEFCMD_ONELINE)
-        # puts "defcmd(#{oneline}, #{noreply})"
-        defcmd_(method_symbol, command_template, oneline, noreply, &block)
+      def self.defcmd(method_symbol, command_template, &processor)
+        parser = Proc.new do |conn, processor|
+          resp = ""
+          answers = [Ok, End, Stored, Deleted, NotFound].map {|x| Flare::Util::Result.string_of_result(x)}
+          errors = [Error, ServerError, ClientError].map {|x| Flare::Util::Result.string_of_result(x)}
+          while x = conn.getline
+            ans = x.chomp.split(' ', 2)
+            ans = if ans.empty? then '' else ans[0] end
+            case ans
+            when *answers
+              break
+            when *errors
+              warn "Failed command. server=[#{self}] sent=[#{conn.last_sent}] result=[#{x.chomp}]"
+              resp = false
+              break
+            else
+              resp += x
+            end
+          end
+          if resp 
+            if processor.nil?
+              resp
+            else
+              processor.call(resp)
+            end
+          else
+            false
+          end
+        end
+        defcmd_generic(method_symbol, command_template, parser, &processor)
       end
 
-      def self.defcmd_oneline(method_symbol, command_template, &block)
-        defcmd(method_symbol, command_template, DEFCMD_ONELINE, &block)
+      def self.defcmd_oneline(method_symbol, command_template, &processor)
+        defcmd_generic(method_symbol, command_template, OnelineParser, &processor)
       end
 
-      def self.defcmd_noreply(method_symbol, command_template, &block)
-        defcmd(method_symbol, command_template, DEFCMD_NOREPLY, &block)
+      def self.defcmd_noreply(method_symbol, command_template, &processor)
+        defcmd_generic(method_symbol, command_template, NoreplyParser, &processor)
       end
 
-      def self.defcmd_oneline_noreply(method_symbol, command_template, &block)
-        defcmd(method_symbol, command_template, DEFCMD_NOREPLY|DEFCMD_ONELINE, &block)
+      def self.defcmd_value(method_symbol, command_template, &processor)
+        defcmd_generic(method_symbol, command_template, ValueParser, &processor)
       end
 
       def close()
