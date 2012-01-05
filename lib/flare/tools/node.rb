@@ -46,14 +46,6 @@ module Flare
         delete_noreply_(k.chomp)
       end
 
-      def get(k)
-        get_(k.chomp)
-      end
-
-      def gets(k)
-        gets_(k.chomp)
-      end
-
       def incr(k, v)
         incr_(k.chomp, v.to_s)
       end
@@ -84,6 +76,10 @@ module Flare
         resp
       end
 
+      def get(k)
+        get_(k.chomp)
+      end
+
       defcmd :get_, 'get %s\r\n' do |resp|
         header, content = resp.split("\r\n", 2)
         if header.nil?
@@ -94,23 +90,19 @@ module Flare
         end
       end
 
+      def gets(k)
+        gets_(k.chomp)
+      end
+
       defcmd_value :gets_, 'gets %s\r\n' do |data, key, flag, len, version, expire|
         [data, version]
       end
 
-      def dump(wait = 0, part = nil, partsize = nil, &block)
-        if part == nil || partsize == nil
-          dump_all_(wait, &block)
-        else
-          dump_part_(wait, part, partsize, &block)
-        end
+      def dump(wait = 0, part = 0, partsize = 1, bwlimit = 0, &block)
+        dump_(wait, part, partsize, bwlimit, &block)
       end
 
-      defcmd_value :dump_all_, 'dump %d\r\n' do |data, key, flag, len, version, expire|
-        [data, key, flag, len, version, expire]
-      end
-
-      defcmd_value :dump_part_, 'dump %d %d %d\r\n' do |data, key, flag, version, expire|
+      defcmd_value :dump_, 'dump %d %d %d %d\r\n' do |data, key, flag, version, expire|
         [data, key, flag, len, version, expire]
       end
 

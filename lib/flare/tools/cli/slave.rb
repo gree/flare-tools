@@ -41,7 +41,7 @@ module Flare
           return S_NG if args.size < 1
 
           hosts = args.map do |arg|
-            hostname, port, balance, partition = arg.split(':', 5)
+            hostname, port, balance, partition, rest = arg.split(':', 5)
             if rest != nil || balance.nil?
               error "invalid argument '#{arg}'. it must be hostname:port:balance:partition."
               return S_NG

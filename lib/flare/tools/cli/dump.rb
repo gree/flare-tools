@@ -11,7 +11,7 @@ require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
 
-require 'csv'
+autoload :CSV, 'csv'
 
 module Flare
   module Tools
@@ -28,17 +28,29 @@ module Flare
         
         def setup(opt)
           opt.on('-o', '--output=[FILE]',            "outputs to file") {|v| @output = v}
-          opt.on('-f', '--format=[FORMAT]',          "output format (csv,tsv)") {|v| @format = v}
+          opt.on('-f', '--format=[FORMAT]',          "output format [csv]") {|v| @format = v}
+          opt.on('--bwlimit=[BANDWIDTH]',            "bandwidth limit (bytes/s)") {|v| @bwlimit = v}
         end
 
         def initialize
           super
           @output = nil
           @format = nil
+          @wait = 0
+          @part = 0
+          @partsize = 1
+          @bwlimit = 0
         end
 
         def execute(config, *args)
           return S_NG if args.size < 1
+
+          unless @format.nil?
+            unless ["csv"].include? @format
+              puts "unknown format: #{@format}"
+              return S_NG
+            end
+          end
 
           hosts = args.map {|x| x.split(':')}
           hosts.each do |x|
@@ -54,13 +66,17 @@ module Flare
               unless @output.nil?
                 output = File.open(@output, "w")
               end
-              writer = CSV::Writer.generate(output)
-              n.dump do |data, key, flag, len, cas|
+              if @format == "csv"
+                writer = CSV::Writer.generate(output)
+                output.puts "# key, flag, len, version, expire, data"
+              end
+              n.dump(@wait, @part, @partsize, @bwlimit) do |data, key, flag, len, version, expire|
                 if @format == "csv"
-                  writer << [key, data]
+                  writer << [key, flag, len, version, expire, data]
                 else
-                  output.puts "#{key} '#{data}'"
+                  output.puts "#{key} #{flag} #{len} #{version} #{expire} '#{data}'"
                 end
+                false
               end
               output.close if output != STDOUT
             end

@@ -52,40 +52,6 @@ module Flare
         @conn.port
       end
 
-      NoreplyParser = lambda {|conn,processor|
-        processor.call() unless processor.nil?
-      }
-
-      OnelineParser = lambda {|conn,processor|
-        line = conn.getline
-        if processor.nil?
-          line
-        else
-          processor.call(line)
-        end
-      }
-
-      ValueParser = lambda {|conn,processor|
-        rets = []
-        while true
-          line = conn.getline
-          elems = line.split(' ')
-          if elems[0] == "VALUE"
-            key, flag, len, version, expire = elems[1], elems[2].to_i, elems[3].to_i, elems[4]
-            data = conn.read(len)
-            unless processor.nil?
-              r = processor.call(data, key, flag, len, version, expire) 
-              rets << r if r
-            end
-            conn.getline # skip
-          elsif elems[0] == "END"
-            return rets
-          else
-            return false
-          end
-        end
-      }
-
       def request(cmd, parser, processor, *args)
         # info "request(#{cmd}, #{noreply})"
         @conn.reconnect if @conn.closed?
@@ -105,14 +71,13 @@ module Flare
       @@processors = {}
       @@parsers = {}
 
-      def self.defcmd_generic(method_symbol, command_template, parser, &processor)
+      def self.defcmd_generic(method_symbol, command_template, parser, *options, &default_processor)
         @@parsers[method_symbol] = parser
-        @@processors[method_symbol] = processor
-        noreply = (parser == NoreplyParser)
+        @@processors[method_symbol] = default_processor
+        optary = options.map {|x| '"'+x+'"'}.join(',')
         self.class_eval %{
           def #{method_symbol.to_s}(*args, &processor)
-            options = []
-            options << "noreply" if #{noreply}
+            options = [#{optary}]
             cmd = "#{command_template}"
             cmd = cmd % args if args.size > 0
             processor = @@processors[:#{method_symbol}] if processor.nil?
@@ -121,7 +86,7 @@ module Flare
         }
       end
 
-      def self.defcmd(method_symbol, command_template, &processor)
+      def self.defcmd(method_symbol, command_template, &default_processor)
         parser = Proc.new do |conn, processor|
           resp = ""
           answers = [Ok, End, Stored, Deleted, NotFound].map {|x| Flare::Util::Result.string_of_result(x)}
@@ -150,19 +115,50 @@ module Flare
             false
           end
         end
-        defcmd_generic(method_symbol, command_template, parser, &processor)
+        defcmd_generic(method_symbol, command_template, parser, &default_processor)
       end
 
-      def self.defcmd_oneline(method_symbol, command_template, &processor)
-        defcmd_generic(method_symbol, command_template, OnelineParser, &processor)
+      def self.defcmd_noreply(method_symbol, command_template, &default_processor)
+        parser = lambda {|conn,processor|
+          processor.call() unless processor.nil?
+        }
+        defcmd_generic(method_symbol, command_template, parser, "noreply", &default_processor)
+      end
+ 
+      def self.defcmd_oneline(method_symbol, command_template, &default_processor)
+        parser = lambda {|conn,processor|
+          line = conn.getline
+          if processor.nil?
+            line
+          else
+            processor.call(line)
+          end
+        }
+        defcmd_generic(method_symbol, command_template, parser, &default_processor)
       end
 
-      def self.defcmd_noreply(method_symbol, command_template, &processor)
-        defcmd_generic(method_symbol, command_template, NoreplyParser, &processor)
-      end
-
-      def self.defcmd_value(method_symbol, command_template, &processor)
-        defcmd_generic(method_symbol, command_template, ValueParser, &processor)
+      def self.defcmd_value(method_symbol, command_template, &default_processor)
+        parser = lambda {|conn,processor|
+          rets = []
+          while true
+            line = conn.getline
+            elems = line.split(' ')
+            if elems[0] == "VALUE"
+              key, flag, len, version, expire = elems[1], elems[2].to_i, elems[3].to_i, elems[4], elems[5]
+              data = conn.read(len)
+              unless processor.nil?
+                r = processor.call(data, key, flag, len, version, expire) 
+                rets << r if r
+              end
+              conn.getline # skip
+            elsif elems[0] == "END"
+              return rets
+            else
+              return false
+            end
+          end
+        }
+        defcmd_generic(method_symbol, command_template, parser, &default_processor)
       end
 
       def close()
