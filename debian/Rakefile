@@ -3,7 +3,6 @@ $LOAD_PATH.unshift(File.dirname(__FILE__)+"/../lib")
 
 require 'flare/tools'
 
-version = Flare::Tools::VERSION
 flaretools = "flare-tools"
 
 task :default => [:build]
@@ -14,5 +13,20 @@ end
 
 task :debclean do
   sh "(cd #{flaretools} && debclean)"
+end
+
+task :change do
+  puts "================================="
+  puts "  Flare::Tools::VERSION = #{Flare::Tools::VERSION}"
+  puts "================================="
+  sh "(cd #{flaretools} && dch -i)"
+end
+
+task :clean => [:debclean] do
+  sh "rm -f *.deb *.dsc *.tar.gz *.build *.changes"
+end
+
+task :cleanall => [:clean] do
+  sh "rm -f flare-tools/debian/changelog.dch"
 end
 
