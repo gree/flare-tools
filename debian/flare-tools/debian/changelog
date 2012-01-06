@@ -1,0 +1,30 @@
+flare-tools (0.2.4-1) unstable; urgency=low
+
+  * added activate subcommand.
+
+ -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Thu, 22 Dec 2011 19:11:21 +0900
+
+flare-tools (0.2.3-4) unstable; urgency=low
+
+  * fixed top level script files.
+
+ -- Kiyoshi Ikehara <kiyoshi-ikehara@gree.co.jp>  Mon, 05 Dec 2011 21:47:24 +0900
+
+flare-tools (0.2.3-3) unstable; urgency=low
+
+  * fixed dependency again.
+
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Mon, 05 Dec 2011 19:44:29 +0900
+
+flare-tools (0.2.3-2) unstable; urgency=low
+
+  * fixed dependency.
+
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Mon, 05 Dec 2011 19:21:00 +0900
+
+flare-tools (0.2.3-1) unstable; urgency=low
+
+  * Initial release
+
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Mon, 05 Dec 2011 17:25:58 +0900
+

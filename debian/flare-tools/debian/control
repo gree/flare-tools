@@ -1,0 +1,17 @@
+Source: flare-tools
+Section: misc
+Priority: extra
+Maintainer: Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.7.3
+
+Package: flare-tools-ruby1.8
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ruby1.8 (>= 1.8.7), rubygems1.8, liblog4r-ruby1.8
+Description: Administration tools for flare server.
+
+Package: flare-tools-ruby1.9
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ruby1.9 (>= 1.9.1), rubygems1.9, liblog4r-ruby
+Description: Administration tools for flare server.
+

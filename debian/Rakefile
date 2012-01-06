@@ -1,0 +1,21 @@
+
+$LOAD_PATH.unshift(File.dirname(__FILE__)+"/../lib")
+
+require 'flare/tools'
+
+version = Flare::Tools::VERSION
+flaretools = "flare-tools"
+
+task :default => [:build]
+
+directory libdir
+directory usrbin
+
+task :build => ["temp/#{flaretools}", libdir, usrbin] do |t|
+  sh "(cd #{flaretools} && debuild -us -uc)"
+end
+
+task :debclean do
+  sh "(cd #{flaretools} && debclean)"
+end
+
