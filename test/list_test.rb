@@ -38,70 +38,62 @@ class ListTest < Test::Unit::TestCase
     @nodes.map {|n| n.close}
   end
 
-  def test_puah_and_get1
-    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    key = "k#{rand(100000)}"
-    n = @nodes[0]
+  def push_and_get(npush, nget)
+    list if defined? DEBUG
+    key = "k"
     (0...10).each do |i|
       value = "v#{i}"
-      n.x_list_push(key, value)
-      n.x_list_get(key, i, i+1) do |v, k, f|
+      npush.x_list_push(key, value)
+      nget.x_list_get(key, i, i+1) do |v, k, f|
         assert_equal(key, k)
         assert_equal(value, v)
       end
-      value = n.x_list_shift(key)
     end
   end
 
-  def test_push_to_master_and_shift_from_master1
+  def test_push_and_get_mm
     @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    key = "k#{rand(100000)}"
-    n = @nodes[0]
+    push_and_get(@nodes[0], @nodes[0])
+  end
+
+  def test_push_and_get_mp
+    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
+    push_and_get(@nodes[0], @nodes[2])
+  end
+
+  def push_and_shift(npush, nshift)
+    list if defined? DEBUG
+    key = "k"
     size = 1000
     (0...size).each do |i|
       value = "v#{i}"
-      n.x_list_push(key, "v#{i}")
+      npush.x_list_push(key, "v#{i}")
     end
     (0...size).each do |i|
       value = "v#{i}"
-      v = n.x_list_shift(key)
+      v = nshift.x_list_shift(key)
       assert_equal(value, v)
     end
   end
 
-  def test_push_to_master_and_shift_from_slave1
+  def test_push_and_shift_mm
     @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    key = "k#{rand(100000)}"
-    size = 1000
-    m = @nodes[0]
-    s = @nodes[1]
-    (0...size).each do |i|
-      value = "v#{i}"
-      m.x_list_push(key, value)
-    end
-    (0...size).each do |i|
-      value = "v#{i}"
-      v = s.x_list_shift(key)
-      assert_equal(value, v)
-    end
+    push_and_shift(@nodes[0], @nodes[0])
   end
 
-  def test_push_to_slave_and_shift_from_master1
+  def test_push_and_shift_ms
     @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    list
-    key = "k#{rand(100000)}"
-    size = 1000
-    m = @nodes[0]
-    s = @nodes[1]
-    (0...size).each do |i|
-      value = "v#{i}"
-      s.x_list_push(key, value)
-    end
-    (0...size).each do |i|
-      value = "v#{i}"
-      v = m.x_list_shift(key)
-      assert_equal(value, v)
-    end
+    push_and_shift(@nodes[0], @nodes[1])
+  end
+
+  def test_push_and_shift_sm
+    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
+    push_and_shift(@nodes[1], @nodes[0])
+  end
+
+  def test_push_and_shift_ss
+    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
+    push_and_shift(@nodes[1], @nodes[1])
   end
 
 end
