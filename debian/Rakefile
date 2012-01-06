@@ -8,10 +8,7 @@ flaretools = "flare-tools"
 
 task :default => [:build]
 
-directory libdir
-directory usrbin
-
-task :build => ["temp/#{flaretools}", libdir, usrbin] do |t|
+task :build do |t|
   sh "(cd #{flaretools} && debuild -us -uc)"
 end
 

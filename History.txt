@@ -2,7 +2,7 @@
 
 === 0.2.5 / 2011-12-29
 * Major Enhancements
-  * Added the various options of flarei and flared to 'deploy' subcommand.
+  * Added various options to 'deploy' subcommand.
 * Minor Enhancements
   * Fixed 'master' subcommand to retry role change commands in case of failure.
   * Changed default retry limit to 10 times for safety.

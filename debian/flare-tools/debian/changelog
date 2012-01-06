@@ -1,3 +1,9 @@
+flare-tools (0.2.5-1) unstable; urgency=low
+
+  * added various options to 'deploy' subcommand.
+
+ -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Fri, 06 Jan 2012 17:39:15 +0900
+
 flare-tools (0.2.4-1) unstable; urgency=low
 
   * added activate subcommand.
