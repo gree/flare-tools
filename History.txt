@@ -1,5 +1,11 @@
 :title: History of flare-tools
 
+=== 0.2.6 / 2012-01-06
+* Major Enhancements
+  * Added 'dump' subcommand for dumping data.
+* Minor Enhancements
+  * Added experimental list operations to flare/tools/node.rb.
+
 === 0.2.5 / 2011-12-29
 * Major Enhancements
   * Added various options to 'deploy' subcommand.
