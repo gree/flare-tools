@@ -34,14 +34,6 @@ class CliTest < Test::Unit::TestCase
   def teardown
   end
 
-  def instantiate(cls, args)
-    opt = OptionParser.new
-    subc = cls.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc
-  end
-
   def test_ping_simple_call1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     for node in @node_servers.map{|n| "#{n.hostname}:#{n.port}"}
