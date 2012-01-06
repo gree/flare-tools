@@ -23,7 +23,7 @@ task :change do
 end
 
 task :clean => [:debclean] do
-  sh "rm -f *.deb *.dsc *.tar.gz *.build *.changes"
+  sh "rm -f *.dsc *.tar.gz *.build *.changes"
 end
 
 task :cleanall => [:clean] do
