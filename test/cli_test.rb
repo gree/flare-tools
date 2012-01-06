@@ -7,9 +7,11 @@ require 'test/unit'
 require 'flare/tools'
 require 'flare/tools/cli'
 require 'flare/test/cluster'
+require 'subcommands'
 
 class CliTest < Test::Unit::TestCase
   include Flare::Tools::Common
+  include Subcommands
 
   S_OK = 0
   S_NG = 1
@@ -38,11 +40,6 @@ class CliTest < Test::Unit::TestCase
     subc.setup(opt)
     opt.parse!(args)
     subc
-  end
-
-  def ping(*args)
-    subc = instantiate(Flare::Tools::Cli::Ping, args)
-    subc.execute(@config.merge({:command => 'ping'}), *args)
   end
 
   def test_ping_simple_call1
@@ -79,11 +76,6 @@ class CliTest < Test::Unit::TestCase
     end
   end
   
-  def list(*args)
-    subc = instantiate(Flare::Tools::Cli::List, args)
-    subc.execute(@config.merge({:command => 'list'}))
-  end
-  
   def test_list_simple_call1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     assert_equal(S_OK, list())
@@ -105,28 +97,12 @@ class CliTest < Test::Unit::TestCase
     File.delete("list.log") if File.exist?("list.log")
   end
 
-  def stats(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Stats.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'stats'}), *args)
-  end
-
   def test_stats_simple_call1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     assert_equal(S_OK, stats())
     assert_equal(S_OK, stats('--qps', '--count=5'))
     assert_equal(S_OK, stats('--qps', '--wait=2', '--count=3'))
-  end
-
-  def down(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Down.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'down'}), *args)
   end
 
   def test_down_all_nodes1
@@ -150,22 +126,6 @@ class CliTest < Test::Unit::TestCase
     targets.shift
     args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, down(*args))
-  end
-
-  def activate(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Activate.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'activate'}), *args)
-  end
-
-  def slave(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Slave.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'slave'}), *args)
   end
 
   def test_slave_simple_call1
@@ -198,14 +158,6 @@ class CliTest < Test::Unit::TestCase
     assert_equal(0, size[1])
   end
 
-  def balance(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Balance.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'balance'}), *args)
-  end
-
   def test_balance_simple_call1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
@@ -220,14 +172,6 @@ class CliTest < Test::Unit::TestCase
     newbalance = 4
     args = @node_servers.map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_NG, balance(*args))
-  end
-  
-  def reconstruct(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Reconstruct.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'reconstruct'}), *args)
   end
 
   def test_reconstruct_simple_call1
@@ -265,14 +209,6 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_NG, reconstruct(*args))
   end
 
-  def index(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Index.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'index'}))
-  end
-
   def test_index_simple_call1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 10)
@@ -287,14 +223,6 @@ class CliTest < Test::Unit::TestCase
     assert_equal(true, File.exist?("flare.xml"))
     assert_equal(@flare_cluster.index, open("flare.xml").read)
     File.delete("flare.xml")
-  end
-
-  def remove(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Remove.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'remove'}), *args)
   end
 
   def test_remove_simple_call1
@@ -322,33 +250,25 @@ class CliTest < Test::Unit::TestCase
     assert_equal(true, @flare_cluster.exist?(args[1]))
   end
 
-  def master(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Master.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'master'}), *args)
-  end
-
   def test_master_simple1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
-    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, down(*args))
-    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, activate(*args))
     args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--force"
     assert_equal(S_OK, master(*args))
-    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, activate(*args))
   end
 
   def test_master_activate1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
-    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, down(*args))
-    args = @node_servers.dup[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
+    args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}"} << "--force"
     assert_equal(S_OK, activate(*args))
     args = @node_servers[2..3].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--force" << "--activate"
     assert_equal(S_OK, master(*args))

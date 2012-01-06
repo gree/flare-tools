@@ -1,19 +1,21 @@
 
 task :default => [:test]
 
-tests = ["daemon", "stats", "cluster", "logger", "node", "cli", "util"]
+tests = ["daemon", "stats", "cluster", "logger", "node", "cli", "util", "partition"]
 envargs = "-u FLARE_INDEX_SERVER -u FLARE_INDEX_SERVER_PORT"
 
 if ENV.has_key? "TESTS"
   tests = ENV["TESTS"].split(' ')
 end
 
-task :test do
-  tests.each do |test|
+tests.each do |test|
+  task test.to_sym do |t|
     options = "--verbose"
-    sh "env #{envargs} ruby #{test}_test.rb #{options}"
+    sh "env #{envargs} ruby #{t.name}_test.rb #{options}"
   end
 end
+
+task :test => tests.map {|x| x.to_sym}
 
 task :stress do
   tests.each do |test|
