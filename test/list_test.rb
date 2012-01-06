@@ -41,30 +41,41 @@ class ListTest < Test::Unit::TestCase
   def push_and_get(npush, nget)
     list if defined? DEBUG
     key = "k"
-    (0...10).each do |i|
+    (0...100).each do |i|
       value = "v#{i}"
       npush.x_list_push(key, value)
+      count = 0
       nget.x_list_get(key, i, i+1) do |v, k, f|
         assert_equal(key, k)
         assert_equal(value, v)
+        count += 1
       end
+      assert_equal(1, count)
     end
   end
 
-  def test_push_and_get_mm
-    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    push_and_get(@nodes[0], @nodes[0])
-  end
-
-  def test_push_and_get_mp
-    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    push_and_get(@nodes[0], @nodes[2])
+  def push_and_range_get(npush, nget)
+    list if defined? DEBUG
+    key = "k"
+    size = 100
+    (0...size).each do |i|
+      value = "v#{i}"
+      npush.x_list_push(key, value)
+    end
+    count = 0
+    nget.x_list_get(key, 0, size) do |v, k, f|
+      value = "v#{count}"
+      assert_equal(key, k)
+      assert_equal(value, v)
+      count += 1
+    end
+    assert_equal(size, count)
   end
 
   def push_and_shift(npush, nshift)
     list if defined? DEBUG
     key = "k"
-    size = 1000
+    size = 100
     (0...size).each do |i|
       value = "v#{i}"
       npush.x_list_push(key, "v#{i}")
@@ -76,25 +87,23 @@ class ListTest < Test::Unit::TestCase
     end
   end
 
-  def test_push_and_shift_mm
-    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    push_and_shift(@nodes[0], @nodes[0])
+  def self.deftest_allpair(name)
+    syms = ["m", "s", "p"]
+    for i in (0...syms.size)
+      for j in (0...syms.size)
+        self.class_eval %{
+          def test_#{name.to_s}_#{syms[i]}#{syms[j]}
+            @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
+            #{name.to_s}(@nodes[#{i}], @nodes[#{j}])
+          end
+        }
+      end
+    end
   end
 
-  def test_push_and_shift_ms
-    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    push_and_shift(@nodes[0], @nodes[1])
-  end
-
-  def test_push_and_shift_sm
-    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    push_and_shift(@nodes[1], @nodes[0])
-  end
-
-  def test_push_and_shift_ss
-    @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
-    push_and_shift(@nodes[1], @nodes[1])
-  end
+  deftest_allpair :push_and_get
+  deftest_allpair :push_and_range_get
+  deftest_allpair :push_and_shift
 
 end
 
