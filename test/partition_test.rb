@@ -38,14 +38,6 @@ class PartitionTest < Test::Unit::TestCase
     @nodes.map {|n| n.close}
   end
 
-  def master(*args)
-    opt = OptionParser.new
-    subc = Flare::Tools::Cli::Master.new
-    subc.setup(opt)
-    opt.parse!(args)
-    subc.execute(@config.merge({:command => 'master'}), *args)
-  end
-
   def test_dynamic_partition_creation1
     @flare_cluster.prepare_master_and_slaves(@node_servers[0..1])
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
