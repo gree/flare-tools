@@ -9,6 +9,11 @@ require 'flare/tools/cli'
 require 'flare/test/cluster'
 require 'subcommands'
 
+begin
+  require 'progressbar'
+rescue LoadError => e
+end
+
 class Result
   def initialize(resultq)
     @resultq = resultq
@@ -94,7 +99,7 @@ class PartitionTest < Test::Unit::TestCase
       :timeout => 10
     }
     @nodes = @node_servers.map {|node| node.open}
-    @wait = 0.01
+    @wait = 0.005
   end
 
   def teardown
@@ -191,13 +196,14 @@ class PartitionTest < Test::Unit::TestCase
     p, m0, s0, m1, s1, m2, s2 = 0, 1, 2, 3, 4, 5, 6
     @flare_cluster.prepare_master_and_slaves(@node_servers[m0..s0])
     assert_equal(S_OK, master(*@node_servers[m1..m1].map{|n| "#{n.hostname}:#{n.port}:1:1"}))
-    assert_equal(S_OK, slave(*@node_servers[s1..s1].map{|n| "#{n.hostname}:#{n.port}:0:1"}))
+    assert_equal(S_OK, slave(*@node_servers[s1..s1].map{|n| "#{n.hostname}:#{n.port}:1:1"}))
     assert_equal(S_OK, activate(*@node_servers[m1..m1].map{|n| "#{n.hostname}:#{n.port}"}))
     assert_equal(S_OK, master(*@node_servers[m2..m2].map{|n| "#{n.hostname}:#{n.port}:1:2"}))
-    assert_equal(S_OK, slave(*@node_servers[s2..s2].map{|n| "#{n.hostname}:#{n.port}:0:2"}))
+    assert_equal(S_OK, slave(*@node_servers[s2..s2].map{|n| "#{n.hostname}:#{n.port}:1:2"}))
     targets = @nodes.map {|n| FlareClient.new(n)}
     list
     size = 1000
+    pbar = ProgressBar.new('test_dynamic_partition_creation4', size, $stderr) if defined? ProgressBar
     for i in 0...size
       r = targets[rand(targets.size)].set("k#{i}", "piyo")
       r.sync
@@ -206,8 +212,11 @@ class PartitionTest < Test::Unit::TestCase
       assert_equal(items[m0], items[s0])
       assert_equal(items[m1], items[s1])
       assert_equal(items[m2], items[s2])
+      if defined? ProgressBar
+        pbar.inc
+      end
+      assert_equal(S_OK, activate(*@node_servers[m2..m2].map{|n| "#{n.hostname}:#{n.port}"})) if i == size/2
     end
-    assert_equal(size, items[m0]+items[m1])
     targets.each {|c| c.detach}
   end
 
