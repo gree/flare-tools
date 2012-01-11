@@ -30,26 +30,31 @@ module Subcommands
   end
 
   def down(*args)
+    args << "--force"
     subc = instantiate(Flare::Tools::Cli::Down, args)
     subc.execute(@config.merge({:command => 'down'}), *args)
   end
 
   def activate(*args)
+    args << "--force"
     subc = instantiate(Flare::Tools::Cli::Activate, args)
     subc.execute(@config.merge({:command => 'activate'}), *args)
   end
 
   def slave(*args)
+    args << "--force"
     subc = instantiate(Flare::Tools::Cli::Slave, args)
     subc.execute(@config.merge({:command => 'slave'}), *args)
   end
 
   def balance(*args)
+    args << "--force"
     subc = instantiate(Flare::Tools::Cli::Balance, args)
     subc.execute(@config.merge({:command => 'balance'}), *args)
   end
   
   def reconstruct(*args)
+    args << "--force"
     subc = instantiate(Flare::Tools::Cli::Reconstruct, args)
     subc.execute(@config.merge({:command => 'reconstruct'}), *args)
   end
@@ -60,11 +65,13 @@ module Subcommands
   end
 
   def remove(*args)
+    args << "--force"
     subc = instantiate(Flare::Tools::Cli::Remove, args)
     subc.execute(@config.merge({:command => 'remove'}), *args)
   end
 
   def master(*args)
+    args << "--force"
     subc = instantiate(Flare::Tools::Cli::Master, args)
     subc.execute(@config.merge({:command => 'master'}), *args)
   end
