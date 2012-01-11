@@ -22,17 +22,14 @@ module Flare
 
       def open(&block)
         return nil unless @alive
-        ret = nil
         node = Flare::Tools::Node.open(@hostname, @port)
-        if block.nil?
-          ret = node
-        else
-          begin
-            ret = block.call(node)
-          rescue => e
-            node.close
-            raise e
-          end
+        return node if block.nil?
+        ret = nil
+        begin
+          ret = block.call(node)
+        rescue => e
+          node.close
+          raise e
         end
         ret
       end

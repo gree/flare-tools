@@ -49,6 +49,10 @@ module Flare
         @conn.host
       end
 
+      def hostname
+        @conn.host
+      end
+
       def port
         @conn.port
       end
