@@ -6,7 +6,6 @@
 # 
 module Flare
   module Tools
-
     module Cli
       autoload :List,        'flare/tools/cli/list'
       autoload :Stats,       'flare/tools/cli/stats'
@@ -22,6 +21,7 @@ module Flare
       autoload :Remove,      'flare/tools/cli/remove'
       autoload :Activate,    'flare/tools/cli/activate'
       autoload :Dump,        'flare/tools/cli/dump'
+      autoload :Dumpkey,     'flare/tools/cli/dumpkey'
     end
   end
 end

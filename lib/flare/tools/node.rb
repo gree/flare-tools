@@ -26,22 +26,6 @@ module Flare
         resp
       end
 
-      def incr(k, v)
-        incr_(k.chomp, v.to_s)
-      end
-
-      def incr_noreply(k, v)
-        incr_noreply(k.chomp, v.to_s)
-      end
-
-      def decr(k, v)
-        decr_(k.chomp, v.to_s)
-      end
-
-      def decr_noreply(k, v)
-        decr_noreply_(k.chomp, v.to_s)
-      end
-
       def x_list_push(k, v)
         x_list_push_(k.chomp, 0, 0, v.size, v)
       end
@@ -118,7 +102,6 @@ module Flare
       def gets(k)
         gets_(k.chomp)
       end
-
       defcmd_value :gets_, 'gets %s\r\n' do |data, key, flag, len, version, expire|
         [data, version]
       end
@@ -126,21 +109,47 @@ module Flare
       def dump(wait = 0, part = 0, partsize = 1, bwlimit = 0, &block)
         dump_(wait, part, partsize, bwlimit, &block)
       end
-
       defcmd_value :dump_, 'dump %d %d %d %d\r\n' do |data, key, flag, version, expire|
-        [data, key, flag, len, version, expire]
+        false
       end
 
+      def dumpkey(part = nil, partsize = nil, &block)
+        return dumpkey_0_(&block) if part.nil?
+        return dumpkey_1_(part, &block) if partsize.nil?
+        return dumpkey_2_(part, partsize, &block)
+      end
+      defcmd_key :dumpkey_0_, 'dump_key' do |key|
+        false
+      end
+      defcmd_key :dumpkey_1_, 'dump_key %d' do |key|
+        false
+      end
+      defcmd_key :dumpkey_2_, 'dump_key %d %d' do |key|
+        false
+      end
+
+      def incr_noreply(k, v)
+        incr_noreply(k.chomp, v.to_s)
+      end
       defcmd_noreply :incr_noreply, 'incr %s %s\r\n'
+
+      def incr(k, v)
+        incr_(k.chomp, v.to_s)
+      end
       defcmd_oneline :incr_, 'incr %s %s\r\n' do |resp|
-        resp.chomp!
-        resp
+        resp.chomp
       end
 
+      def decr_noreply(k, v)
+        decr_noreply_(k.chomp, v.to_s)
+      end
       defcmd_noreply :decr_noreply_, 'decr %s %s\r\n'
+
+      def decr(k, v)
+        decr_(k.chomp, v.to_s)
+      end
       defcmd_oneline :decr_, 'decr %s %s\r\n' do |resp|
-        resp.chomp!
-        resp
+        resp.chomp
       end
 
     end

@@ -160,10 +160,10 @@ class PartitionTest < Test::Unit::TestCase
     @flare_cluster.prepare_master_and_slaves(@node_servers[m0..s0])
     target = FlareClient.new(ntarget)
     assert_equal(S_OK, master(*@node_servers[m1..m1].map{|n| "#{n.hostname}:#{n.port}:1:1"}))
-    assert_equal(S_OK, slave(*@node_servers[s1..s1].map{|n| "#{n.hostname}:#{n.port}:0:1"}))
+    assert_equal(S_OK, slave(*@node_servers[s1..s1].map{|n| "#{n.hostname}:#{n.port}:1:1"}))
     assert_equal(S_OK, activate(*@node_servers[m1..m1].map{|n| "#{n.hostname}:#{n.port}"}))
     assert_equal(S_OK, master(*@node_servers[m2..m2].map{|n| "#{n.hostname}:#{n.port}:1:2"}))
-    assert_equal(S_OK, slave(*@node_servers[s2..s2].map{|n| "#{n.hostname}:#{n.port}:0:2"}))
+    assert_equal(S_OK, slave(*@node_servers[s2..s2].map{|n| "#{n.hostname}:#{n.port}:1:2"}))
     list
     size = 10
     for i in 0...size
@@ -176,6 +176,16 @@ class PartitionTest < Test::Unit::TestCase
       assert_equal(items[m2], items[s2])
     end
     assert_equal(size, items[m0]+items[m1])
+    assert_equal(S_OK, activate(*@node_servers[m2..m2].map{|n| "#{n.hostname}:#{n.port}"}))
+    for i in 0...size
+      r = target.set("k#{i}", "piyo")
+      r.sync
+      sleep @wait
+      items = @nodes.map {|n| n.stats["curr_items"].to_i}
+      assert_equal(items[m0], items[s0])
+      assert_equal(items[m1], items[s1])
+      assert_equal(items[m2], items[s2])
+    end
     target.detach
   end
 

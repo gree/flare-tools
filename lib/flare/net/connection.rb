@@ -24,9 +24,12 @@ module Flare
         @port = port
         @socket = TCPSocket.open(host, port)
         @sent = ""
+        @sent_size = 0
+        @received_size = 0
       end
 
       attr_reader :host, :port
+      attr_accessor :sent_size, :received_size
 
       def close
         @socket.close
@@ -53,6 +56,7 @@ module Flare
           cmd += line+"\r\n"
         end
         # trace "send. server=[#{self}] cmd=[#{cmd}]"
+        @sent_size = cmd.size
         @socket.write cmd
         @sent = cmd
       end
@@ -63,12 +67,14 @@ module Flare
 
       def getline
         ret = @socket.gets
-        # p ret
+        @received_size += ret.size unless ret.nil?
         ret
       end
 
       def read(length = nil)
-        @socket.read(length)
+        ret = @socket.read(length)
+        @received_size += ret.size unless ret.nil?
+        ret
       end
 
       def to_s

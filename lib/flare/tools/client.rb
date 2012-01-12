@@ -73,6 +73,27 @@ module Flare
         raise e
       end
 
+      def sent_size
+        @conn.sent_size
+      end
+
+      def sent_size=(v)
+        @conn.sent_size = v
+      end
+
+      def received_size
+        @conn.received_size
+      end
+
+      def received_size=(v)
+        @conn.received_size = v
+      end
+
+      def close()
+        quit
+        @conn.close
+      end
+
       @@processors = {}
       @@parsers = {}
 
@@ -142,6 +163,29 @@ module Flare
         defcmd_generic(method_symbol, command_template, parser, &default_processor)
       end
 
+      def self.defcmd_key(method_symbol, command_template, &default_processor)
+        parser = lambda {|conn,processor|
+          rets = []
+          while true
+            line = conn.getline
+            elems = line.split(' ')
+            if elems[0] == "KEY"
+              unless processor.nil?
+                r = processor.call(elems[1])
+                rets << r if r
+              end
+            elsif elems[0] == "END"
+              return rets[0] if rets.size == 1
+              return rets
+            else
+              info "error \"#{line.chomp}\""
+              return false
+            end
+          end
+        }
+        defcmd_generic(method_symbol, command_template, parser, &default_processor)
+      end
+
       def self.defcmd_value(method_symbol, command_template, &default_processor)
         parser = lambda {|conn,processor|
           rets = []
@@ -157,9 +201,7 @@ module Flare
               end
               conn.getline # skip
             elsif elems[0] == "END"
-              if rets.size == 1
-                return rets[0]
-              end
+              return rets[0] if rets.size == 1
               return rets
             else
               info "error \"#{line.chomp}\""
@@ -168,11 +210,6 @@ module Flare
           end
         }
         defcmd_generic(method_symbol, command_template, parser, &default_processor)
-      end
-
-      def close()
-        quit
-        @conn.close
       end
 
     end
