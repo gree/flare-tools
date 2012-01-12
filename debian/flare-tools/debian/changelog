@@ -1,3 +1,9 @@
+flare-tools (0.2.6-1) unstable; urgency=low
+
+  * added 'dump' and 'dumpkey' subcommands.
+
+ -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Thu, 12 Jan 2012 19:13:44 +0900
+
 flare-tools (0.2.5-1) unstable; urgency=low
 
   * added various options to 'deploy' subcommand.
