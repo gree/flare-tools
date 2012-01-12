@@ -67,24 +67,36 @@ module Flare
               unless @output.nil?
                 output = File.open(@output, "w")
               end
-              if @format == "csv"
+              case @format
+              when "csv"
                 writer = CSV::Writer.generate(output)
                 output.puts "# key"
               end
               basetime = Time.now
               n.dumpkey(@part, @partsize) do |key|
-                if @format == "csv"
-                  writer << [key]
-                else
-                  output.puts "#{key}"
-                end
-                unless @bwlimit.nil?
-                  while n.received_size > (Time.now-basetime)*@bwlimit
-                    sleep 0.001
+                interruptible {
+                  case @format
+                  when "csv"
+                    writer << [key]
+                  else
+                    output.puts "#{key}"
                   end
-                  if Time.now-basetime > 1.0
+                }
+                unless @bwlimit.nil?
+                  now = Time.now
+                  receivable_size = (now-basetime)*@bwlimit
+                  if n.received_size > receivable_size
+                    debug "received_size=#{n.received_size} receivable_size=#{receivable_size}"
+                    interruptible {
+                      sleep((n.received_size-receivable_size).to_f/@bwlimit)
+                    }
+                  end
+                  diff = now-basetime
+                  if diff > 1.0
+                    bytes_par_sec = n.received_size/diff
+                    debug "#{bytes_par_sec} bytes/sec"
                     n.received_size = 0
-                    basetime = Time.now
+                    basetime = now
                   end
                 end
                 false

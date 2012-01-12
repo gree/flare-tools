@@ -266,4 +266,22 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, master(*args))
   end
 
+  def test_dump1
+  end
+
+  def test_dumpkey1
+    args = @node_servers[0..0].map{|n| "#{n.hostname}:#{n.port}:1:0"}
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[1..1].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    @flare_cluster.prepare_data(@node_servers[0], "key", 10000)
+    puts "dumping..."
+    args = @node_servers[0..2].map{|n| "#{n.hostname}:#{n.port}"} << "--bwlimit=10000" << "--output=keys.txt"
+    assert_equal(S_OK, dumpkey(*args))
+    th.join
+    # File.delete("keys.txt") if File.exist?("keys.txt")
+  end
+
 end

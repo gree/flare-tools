@@ -75,5 +75,15 @@ module Subcommands
     subc = instantiate(Flare::Tools::Cli::Master, args)
     subc.execute(@config.merge({:command => 'master'}), *args)
   end
+
+  def dump(*args)
+    subc = instantiate(Flare::Tools::Cli::Dump, args)
+    subc.execute(@config.merge({:command => 'dump'}), *args)
+  end
+  
+  def dumpkey(*args)
+    subc = instantiate(Flare::Tools::Cli::Dumpkey, args)
+    subc.execute(@config.merge({:command => 'dumpkey'}), *args)
+  end
   
 end

@@ -48,7 +48,7 @@ module Flare
       def set_noreply(k, v)
         set_noreply_(k.chomp, 0, 0, v.size, v)
       end
-      defcmd_noreply :set_noreply_, 'set %s %d %d %d\r\n%s\r\n'
+      defcmd_noreply :set_noreply_, 'set %s %d %d %d noreply\r\n%s\r\n'
 
       def cas(k, v, casunique)
         cas_(k.chomp, 0, 0, v.size, casunique, v)
@@ -63,7 +63,7 @@ module Flare
       def delete_noreply(k)
         delete_noreply_(k.chomp)
       end
-      defcmd_noreply :delete_noreply_, 'delete %s\r\n'
+      defcmd_noreply :delete_noreply_, 'delete %s noreply\r\n'
 
       def x_list_pop(k)
         x_list_pop_(k.chomp)
@@ -131,7 +131,7 @@ module Flare
       def incr_noreply(k, v)
         incr_noreply(k.chomp, v.to_s)
       end
-      defcmd_noreply :incr_noreply, 'incr %s %s\r\n'
+      defcmd_noreply :incr_noreply, 'incr %s %s noreply\r\n'
 
       def incr(k, v)
         incr_(k.chomp, v.to_s)
@@ -143,7 +143,7 @@ module Flare
       def decr_noreply(k, v)
         decr_noreply_(k.chomp, v.to_s)
       end
-      defcmd_noreply :decr_noreply_, 'decr %s %s\r\n'
+      defcmd_noreply :decr_noreply_, 'decr %s %s noreply\r\n'
 
       def decr(k, v)
         decr_(k.chomp, v.to_s)

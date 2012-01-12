@@ -26,7 +26,9 @@ module Flare
         return stats if block.nil?
         return block.call(stats)
       ensure
-        stats.close unless stats.nil? # this might raise IOError
+        unless stats.nil? # this might raise IOError
+          stats.close
+        end
       end
 
       def initialize(host, port, tout)
@@ -57,18 +59,18 @@ module Flare
         @conn.port
       end
 
-      def request(cmd, parser, processor, *args)
+      def request(cmd, parser, processor, tout = @tout)
         # info "request(#{cmd}, #{noreply})"
         @conn.reconnect if @conn.closed?
-        debug "Enter the command server. server=[#{@conn}] command=[#{cmd} #{args.join(' ')}]"
+        debug "Enter the command server. server=[#{@conn}] command=[#{cmd}}]"
         response = nil
-        timeout(@tout) do
-          @conn.send(cmd, *args)
+        timeout(tout) do
+          @conn.send(cmd)
           response = parser.call(@conn, processor)
         end
         response
       rescue TimeoutError => e
-        error "Connection timeout. server=[#{@conn}] command=[#{cmd} #{args.join(' ')}]"
+        error "Connection timeout. server=[#{@conn}] command=[#{cmd}}]"
         @conn.close
         raise e
       end
@@ -97,17 +99,16 @@ module Flare
       @@processors = {}
       @@parsers = {}
 
-      def self.defcmd_generic(method_symbol, command_template, parser, *options, &default_processor)
+      def self.defcmd_generic(method_symbol, command_template, parser, timeout, &default_processor)
         @@parsers[method_symbol] = parser
         @@processors[method_symbol] = default_processor
-        optary = options.map {|x| '"'+x+'"'}.join(',')
+        timeout_expr = if timeout then "@tout" else "nil" end
         self.class_eval %{
           def #{method_symbol.to_s}(*args, &processor)
-            options = [#{optary}]
             cmd = "#{command_template}"
             cmd = cmd % args if args.size > 0
             processor = @@processors[:#{method_symbol}] if processor.nil?
-            request(cmd, @@parsers[:#{method_symbol}], processor, *options)
+            request(cmd, @@parsers[:#{method_symbol}], processor, #{timeout_expr})
           end
         }
       end
@@ -141,14 +142,14 @@ module Flare
             false
           end
         end
-        defcmd_generic(method_symbol, command_template, parser, &default_processor)
+        defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
       end
 
       def self.defcmd_noreply(method_symbol, command_template, &default_processor)
         parser = lambda {|conn,processor|
           processor.call() unless processor.nil?
         }
-        defcmd_generic(method_symbol, command_template, parser, "noreply", &default_processor)
+        defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
       end
  
       def self.defcmd_oneline(method_symbol, command_template, &default_processor)
@@ -160,7 +161,7 @@ module Flare
             processor.call(line)
           end
         }
-        defcmd_generic(method_symbol, command_template, parser, &default_processor)
+        defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
       end
 
       def self.defcmd_key(method_symbol, command_template, &default_processor)
@@ -183,7 +184,7 @@ module Flare
             end
           end
         }
-        defcmd_generic(method_symbol, command_template, parser, &default_processor)
+        defcmd_generic(method_symbol, command_template, parser, false, &default_processor)
       end
 
       def self.defcmd_value(method_symbol, command_template, &default_processor)
@@ -209,7 +210,7 @@ module Flare
             end
           end
         }
-        defcmd_generic(method_symbol, command_template, parser, &default_processor)
+        defcmd_generic(method_symbol, command_template, parser, false, &default_processor)
       end
 
     end

@@ -47,14 +47,9 @@ module Flare
         @socket
       end
 
-      def send(cmd, *args)
-        lines = cmd.split("\r\n")
-        cmd = lines.shift
-        cmd += " "+args.join(" ") if args.size > 0
+      def send(cmd)
+        cmd.chomp!
         cmd += "\r\n"
-        for line in lines
-          cmd += line+"\r\n"
-        end
         # trace "send. server=[#{self}] cmd=[#{cmd}]"
         @sent_size = cmd.size
         @socket.write cmd
