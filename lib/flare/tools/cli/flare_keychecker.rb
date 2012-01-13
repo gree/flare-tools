@@ -4,6 +4,7 @@
 # License::   NOTYET
 
 require 'optparse'
+require "zlib"
 
 # Variables
 delimiter = "::"
@@ -17,22 +18,34 @@ bucket_file = nil
 default_bucket_file = "bucket.csv"
 partition_size = 100
 hint = 1
+hash = lambda {|k| r = 0; k.each_byte {|c| r += c }; r }
 
 # Options
 opt = OptionParser.new
 opt.on('-d', '--delimiter=[STRING]',        "delimiter (defalut #{delimiter})") {|v| delimiter = v; use_prefix = true }
 opt.on('-b', '--bucket-file=[CSVFILE]',     "bucket file (default #{default_bucket_file})") {|v| bucket_file = v; }
 opt.on('-s', '--partition-size=[SIZE]',     "max partition size (default #{partition_size})") {|v| partition_size = v.to_i }
+opt.on('-h', '--hash=[TYPE]',               "hash function (simple,bitshift,crc32)") {|v|
+  case v
+  when "simple"
+  when "bitshift"
+    hash = lambda {|k| r = 19790217; k.each_byte {|c| r = (r << 5) + (r << 2) + r + c }; r }
+  when "crc32"
+    hash = lambda {|k| Zlib.crc32(k, 0) }
+  else
+    puts "invalid hash function."
+    exit
+  end
+}
 opt.parse!(ARGV)
-
-# Setup
-hash = lambda {|k| r = 0; k.each_byte {|c| r += c }; r }
 
 # Bucket
 if bucket_file.nil?
   while line = STDIN.gets
     key = line.chomp
-    prefix, suffix = split(delimiter, 2)
+    parts = split(delimiter)
+    suffix = parts.pop
+    prefix = parts.join(delimiter)
     unless prefixes.has_key? prefix
       prefixes[prefix] = 0
       buckets[prefix] = Array.new(virtual, 0)

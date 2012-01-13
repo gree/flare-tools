@@ -3,7 +3,6 @@
 # Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
 # License::   NOTYET
 
-require 'flare/tools/stats'
 require 'flare/tools/node'
 require 'flare/tools/index_server'
 require 'flare/tools/common'
@@ -108,10 +107,6 @@ module Flare
           S_OK
         end # execute()
         
-        def stat_one_node(s)
-          
-        end
-
       end
     end
   end
