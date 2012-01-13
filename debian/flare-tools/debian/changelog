@@ -1,3 +1,9 @@
+flare-tools (0.2.6-2) unstable; urgency=low
+
+  * changed dependency of debian package.
+
+ -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Fri, 13 Jan 2012 10:16:55 +0900
+
 flare-tools (0.2.6-1) unstable; urgency=low
 
   * added 'dump' and 'dumpkey' subcommands.
