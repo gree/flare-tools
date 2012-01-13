@@ -8,6 +8,7 @@ Tutorial.txt
 bin/flare-admin
 bin/flare-argv0
 bin/flare-deploy
+bin/flare-keychecker
 bin/flare-part
 bin/flare-ping
 bin/flare-stats
@@ -17,6 +18,7 @@ lib/flare/test/daemon.rb
 lib/flare/test/node.rb
 lib/flare/tools.rb
 lib/flare/tools/cli.rb
+lib/flare/tools/cli/#flare_admin.rb#
 lib/flare/tools/cli/activate.rb
 lib/flare/tools/cli/balance.rb
 lib/flare/tools/cli/deploy.rb
@@ -25,6 +27,7 @@ lib/flare/tools/cli/dump.rb
 lib/flare/tools/cli/dumpkey.rb
 lib/flare/tools/cli/flare_admin.rb
 lib/flare/tools/cli/flare_argv0.rb
+lib/flare/tools/cli/flare_keychecker.rb
 lib/flare/tools/cli/index.rb
 lib/flare/tools/cli/list.rb
 lib/flare/tools/cli/master.rb
