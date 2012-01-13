@@ -1,7 +1,7 @@
 
 task :default => [:test]
 
-tests = ["daemon", "stats", "cluster", "logger", "node", "cli", "util", "partition"]
+tests = ["daemon", "stats", "cluster", "logger", "node", "cli", "util", "partition", "bwlimit"]
 envargs = "-u FLARE_INDEX_SERVER -u FLARE_INDEX_SERVER_PORT"
 
 if ENV.has_key? "TESTS"

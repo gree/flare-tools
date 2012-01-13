@@ -50,3 +50,10 @@ end
 task :clean do
   sh "(cd test && rake clean)"
 end
+
+task :manifest_post do
+  sh "grep -v '^debian' Manifest.txt| grep -v '^test' | grep -v '#\$' > Manifest.tmp"
+  sh "mv Manifest.tmp Manifest.txt"
+end
+
+task :install => [:manifest, :manifest_post, :install_gem]
