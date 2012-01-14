@@ -86,7 +86,10 @@ module Flare
       end
 
       def close()
-        quit
+        begin
+          timeout(1) { quit }
+        rescue Timeout::Error => e
+        end
         @conn.close
       end
 

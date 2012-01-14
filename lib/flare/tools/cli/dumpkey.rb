@@ -72,17 +72,17 @@ module Flare
                 writer = CSV::Writer.generate(output)
                 output.puts "# key"
               end
-              n.dumpkey(@part, @partsize) do |key|
-                interruptible {
+              interruptible {
+                n.dumpkey(@part, @partsize) do |key|
                   case @format
                   when "csv"
                     writer << [key]
                   else
                     output.puts "#{key}"
                   end
-                }
-                false
-              end
+                  false
+                end
+              }
               output.close if output != STDOUT
             end
           end
