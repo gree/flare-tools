@@ -13,10 +13,6 @@ module Flare
     # 
     class IndexServer < Stats
 
-      def initialize(host, port, tout = DefaultTimeout)
-        super(host, port, tout)
-      end
-
       def set_role(host, port, role, balance, partition)
         set_role_(host, port, role, balance, partition)
       end

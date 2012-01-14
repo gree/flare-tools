@@ -8,6 +8,7 @@ require 'flare/tools/index_server'
 require 'flare/tools/common'
 require 'flare/util/conversion'
 require 'flare/util/constant'
+require 'flare/util/bwlimit'
 require 'flare/tools/cli/sub_command'
 
 require 'csv'
@@ -30,7 +31,7 @@ module Flare
           opt.on('-f', '--format=[FORMAT]',          "output format [csv]") {|v| @format = v}
           opt.on('-p', '--partition=[NUMBER]',       "partition number") {|v| @part = v.to_i if v.to_i >= 0}
           opt.on('-s', '--partition-size=[SIZE]',    "partition size") {|v| @partsize = v.to_i if v.to_i > 0}
-          opt.on(      '--bwlimit=[BANDWIDTH]',      "bandwidth limit (bytes/s)") {|v| @bwlimit = v.to_i if v.to_i > 0}
+          opt.on(      '--bwlimit=[BANDWIDTH]',      "(experimental) bandwidth limit (bps)") {|v| @bwlimit = v if v.to_i > 0}
         end
 
         def initialize
@@ -61,7 +62,7 @@ module Flare
           end
           
           hosts.each do |hostname,port|
-            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout]) do |n|
+            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], @bwlimit, @bwlimit) do |n|
               output = STDOUT
               unless @output.nil?
                 output = File.open(@output, "w")
@@ -71,7 +72,6 @@ module Flare
                 writer = CSV::Writer.generate(output)
                 output.puts "# key"
               end
-              basetime = Time.now
               n.dumpkey(@part, @partsize) do |key|
                 interruptible {
                   case @format
@@ -81,23 +81,6 @@ module Flare
                     output.puts "#{key}"
                   end
                 }
-                unless @bwlimit.nil?
-                  now = Time.now
-                  receivable_size = (now-basetime)*@bwlimit
-                  if n.received_size > receivable_size
-                    debug "received_size=#{n.received_size} receivable_size=#{receivable_size}"
-                    interruptible {
-                      sleep((n.received_size-receivable_size).to_f/@bwlimit)
-                    }
-                  end
-                  diff = now-basetime
-                  if diff > 1.0
-                    bytes_par_sec = n.received_size/diff
-                    debug "#{bytes_par_sec} bytes/sec"
-                    n.received_size = 0
-                    basetime = now
-                  end
-                end
                 false
               end
               output.close if output != STDOUT

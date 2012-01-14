@@ -71,11 +71,7 @@ module Flare
 
       # This hides Kernel's puts()
       def puts(*args)
-        if @@logger.nil? || 
-            @@logger.instance_of?(Log4r::StdoutOutputter) ||
-            @@logger.instance_of?(Log4r::StderrOutputter)
-          return Kernel.puts *args
-        end
+        return Kernel.puts *args if @@logger.console?
         for msg in args
           info(msg)
         end

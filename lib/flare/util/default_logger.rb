@@ -42,6 +42,10 @@ module Flare
       def debug(msg)
         @logger.debug(msg)
       end
+
+      def console?
+        true
+      end
     end
 
   end

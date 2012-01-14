@@ -21,8 +21,8 @@ module Flare
       include Flare::Util::Constant
       include Flare::Util::Result
 
-      def self.open(host, port, tout = DefaultTimeout, &block)
-        stats = self.new(host, port, tout)
+      def self.open(host, port, tout = DefaultTimeout, uplink_limit = DefalutBwlimit, downlink_limit = DefalutBwlimit, &block)
+        stats = self.new(host, port, tout, uplink_limit, downlink_limit)
         return stats if block.nil?
         return block.call(stats)
       ensure
@@ -31,10 +31,10 @@ module Flare
         end
       end
 
-      def initialize(host, port, tout)
+      def initialize(host, port, tout = DefaultTimeout, uplink_limit = DefalutBwlimit, downlink_limit = DefalutBwlimit)
         @tout = tout
         timeout(tout) do
-          @conn = Flare::Net::Connection.new(host, port)
+          @conn = Flare::Net::Connection.new(host, port, uplink_limit, downlink_limit)
         end
       rescue Errno::ECONNREFUSED
         debug "Connection refused. server=[#{@conn}]"
@@ -64,6 +64,8 @@ module Flare
         @conn.reconnect if @conn.closed?
         debug "Enter the command server. server=[#{@conn}] command=[#{cmd}}]"
         response = nil
+        cmd.chomp!
+        cmd += "\r\n"
         timeout(tout) do
           @conn.send(cmd)
           response = parser.call(@conn, processor)
@@ -79,16 +81,8 @@ module Flare
         @conn.sent_size
       end
 
-      def sent_size=(v)
-        @conn.sent_size = v
-      end
-
       def received_size
         @conn.received_size
-      end
-
-      def received_size=(v)
-        @conn.received_size = v
       end
 
       def close()

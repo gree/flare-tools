@@ -55,7 +55,6 @@ module Flare
 
       def trace(msg)
         @logger.debug(msg)
-
       end
 
       def error(msg)
@@ -69,6 +68,11 @@ module Flare
       def debug(msg)
         @logger.debug(msg)
       end
+
+      def console?
+        @logger.instance_of?(Log4r::StdoutOutputter) || @logger.instance_of?(Log4r::StderrOutputter)
+      end
+
     end
 
   end

@@ -30,6 +30,10 @@ module Flare
 
       def debug(msg)
       end
+
+      def console?
+        false
+      end
     end
 
   end

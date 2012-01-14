@@ -8,6 +8,7 @@ require 'socket'
 require 'flare/util'
 require 'flare/util/logging'
 require 'flare/util/result'
+require 'flare/util/bwlimit'
 
 # 
 module Flare
@@ -19,17 +20,19 @@ module Flare
       include Flare::Util::Logging
       include Flare::Util::Result
 
-      def initialize(host, port)
+      def initialize(host, port, uplink_limit = nil, downlink_limit = nil)
         @host = host
         @port = port
         @socket = TCPSocket.open(host, port)
-        @sent = ""
+        @last_sent = ""
         @sent_size = 0
         @received_size = 0
+        @uplink_limit = Flare::Util::Bwlimit.new(uplink_limit)
+        @downlink_limit = Flare::Util::Bwlimit.new(downlink_limit)
       end
 
       attr_reader :host, :port
-      attr_accessor :sent_size, :received_size
+      attr_reader :sent_size, :received_size
 
       def close
         @socket.close
@@ -48,27 +51,38 @@ module Flare
       end
 
       def send(cmd)
-        cmd.chomp!
-        cmd += "\r\n"
         # trace "send. server=[#{self}] cmd=[#{cmd}]"
-        @sent_size = cmd.size
+        size = cmd.size
+        @sent_size += size
         @socket.write cmd
-        @sent = cmd
+        @last_sent = cmd
+        @uplink_limit.inc size
+        @uplink_limit.wait
       end
 
       def last_sent
-        @sent
+        @last_sent
       end
 
       def getline
         ret = @socket.gets
-        @received_size += ret.size unless ret.nil?
+        unless ret.nil?
+          size = ret.size
+          @received_size += size
+          @downlink_limit.inc size
+          @downlink_limit.wait
+        end
         ret
       end
 
       def read(length = nil)
         ret = @socket.read(length)
-        @received_size += ret.size unless ret.nil?
+        unless ret.nil?
+          size = ret.size
+          @received_size += size
+          @downlink_limit.inc size
+          @downlink_limit.wait
+        end
         ret
       end
 

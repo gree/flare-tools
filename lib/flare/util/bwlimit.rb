@@ -22,44 +22,44 @@ module Flare
       Byte = 8
 
       def initialize(bwlimit)
-        @bps = Bwlimit.bps(bwlimit)
+        @limit = Bwlimit.bps(bwlimit)
         @basetime = @starttime = Time.now
         @duration = 1.0
-        @received_size = 0
         @history = []
         @minwait = 0.01
         @speed = 0
-        @sentbytes = 0
+        @bytes = 0
+        @totalbytes = 0
+        @thresh = 10*Ki
       end
 
       def limit=(bwlimit)
-        @bps = Bwlimit.bps(bwlimit)
+        @limit = Bwlimit.bps(bwlimit)
+      end
+
+      def limit
+        @limit
       end
 
       def bps
-        @bps
+        @limit
       end
 
-      def start
+      def reset
         @basetime = @starttime = Time.now
       end
       
-      def iterate(&block)
-        block.call
-      end
-
       def inc(bytes)
-        @received_size += bytes
-        @sentbytes += bytes
+        @bytes += bytes
+        @totalbytes += bytes
       end
 
       def time_to_wait(now = Time.now)
         waitsec = 0
-        limit = @bps/Byte
-        receivable_size = (now-@basetime)*limit
-        if @received_size > receivable_size
-          debug "received_size=#{@received_size} receivable_size=#{receivable_size}"
-          waitsec = ((@received_size-receivable_size).to_f/limit)
+        limit = @limit/Byte
+        allowed = (now-@basetime)*limit
+        if @bytes > allowed
+          waitsec = ((@bytes-allowed).to_f/limit)
         end
         unless waitsec > 0
           waitsec = @minwait if waitsec < @minwait
@@ -73,14 +73,14 @@ module Flare
 
       def wait
         waitsec = 0
-        if @bps > 0
+        if @limit > 0 && @bytes > @thresh
           now = Time.now
           sleep time_to_wait(now)
           diff = pasttime(now)
           if diff > @duration
-            @speed = @received_size*Byte/diff
+            @speed = @bytes*Byte/diff
             debug "#{@speed} bps"
-            @received_size = 0
+            @bytes = 0
             @basetime = now
             @history << {:time => now-@starttime, :speed => @speed}
           end
@@ -96,25 +96,26 @@ module Flare
         @speed
       end
 
-      def sentbytes
-        @sentbytes
+      def totalbytes
+        @totalbytes
       end
       
       def self.bps(bw)
+        return 0 if bw.nil?
         case bw
         when /^(\d+)$/
           $1.to_i*Bit
         when /^(\d+)B$/
           $1.to_i*Byte
-        when /^(\d+)kb$/
+        when /^(\d+)k$/
           $1.to_i*Ki*Bit
         when /^(\d+)kB$/
           $1.to_i*Ki*Byte
-        when /^(\d+)Mb$/
+        when /^(\d+)M$/
           $1.to_i*Mi*Bit
         when /^(\d+)MB$/
           $1.to_i*Mi*Byte
-        when /^(\d+)Gb$/
+        when /^(\d+)G$/
           $1.to_i*Gi*Bit
         when /^(\d+)GB$/
           $1.to_i*Gi*Byte

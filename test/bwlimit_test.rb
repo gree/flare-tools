@@ -16,9 +16,9 @@ class BwlimitTest < Test::Unit::TestCase
 
   def bps(s, scale)
     assert_equal(0, Bwlimit.bps("#{s}B"), "#{s}B")
-    assert_equal(100*scale, Bwlimit.bps("100#{s}b"), "100#{s}b")
+    assert_equal(100*scale, Bwlimit.bps("100#{s}"), "100#{s}")
     assert_equal(100*scale*8, Bwlimit.bps("100#{s}B"), "100#{s}B")
-    assert_equal(10000*scale, Bwlimit.bps("10000#{s}b"), "10000#{s}b")
+    assert_equal(10000*scale, Bwlimit.bps("10000#{s}"), "10000#{s}")
     assert_equal(10000*scale*8, Bwlimit.bps("10000#{s}B"), "10000#{s}B")
   end
 
@@ -34,13 +34,12 @@ class BwlimitTest < Test::Unit::TestCase
     size = 100
     total = size*1024*duration
     bwlimit = Bwlimit.new("#{size}kB")
-    bwlimit.start
     assert_nothing_raised {
       timeout(duration*1.5) {
-        while bwlimit.sentbytes < total
+        while bwlimit.totalbytes < total
           bwlimit.inc((1500*(rand+1)).to_i)
           bwlimit.wait
-          # puts "#{bwlimit.speed} bps, #{bwlimit.sentbytes}/#{total} bytes"
+          # puts "#{bwlimit.speed} bps, #{bwlimit.totalbytes}/#{total} bytes"
         end
       }
     }

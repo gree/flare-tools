@@ -13,10 +13,6 @@ module Flare
     # 
     class Node < Stats
       
-      def initialize(host, port, tout)
-        super(host, port, tout)
-      end
-
       # (host, port, state)
       defcmd :set_state, 'node state %s %s %s\r\n' do |resp|
         resp

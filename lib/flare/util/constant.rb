@@ -18,6 +18,8 @@ module Flare
       DefaultNodePort        = 12121
       # the default timeout of client connections (sec.)
       DefaultTimeout         = 10
+      # the default bandwidth limit (bps)
+      DefalutBwlimit         = 0 # unlimited
     end
   end
 end
