@@ -30,7 +30,7 @@ module Flare
         @speed = 0
         @bytes = 0
         @totalbytes = 0
-        @thresh = 10*Ki
+        @thresh = 1*Ki
       end
 
       def limit=(bwlimit)
