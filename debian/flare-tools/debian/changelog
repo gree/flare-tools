@@ -1,32 +1,39 @@
+flare-tools (0.2.7) unstable; urgency=low
+
+  * added flare-keydump command for checking key distribution among nodes.
+  * added bandwidth limit function to Flare::Net::Connection class.
+
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Fri, 20 Jan 2012 11:45:09 +0900
+
 flare-tools (0.2.6-2) unstable; urgency=low
 
   * changed dependency of debian package.
 
- -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Fri, 13 Jan 2012 10:16:55 +0900
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Fri, 13 Jan 2012 10:16:55 +0900
 
 flare-tools (0.2.6-1) unstable; urgency=low
 
   * added 'dump' and 'dumpkey' subcommands.
 
- -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Thu, 12 Jan 2012 19:13:44 +0900
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Thu, 12 Jan 2012 19:13:44 +0900
 
 flare-tools (0.2.5-1) unstable; urgency=low
 
   * added various options to 'deploy' subcommand.
 
- -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Fri, 06 Jan 2012 17:39:15 +0900
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Fri, 06 Jan 2012 17:39:15 +0900
 
 flare-tools (0.2.4-1) unstable; urgency=low
 
   * added activate subcommand.
 
- -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Thu, 22 Dec 2011 19:11:21 +0900
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Thu, 22 Dec 2011 19:11:21 +0900
 
 flare-tools (0.2.3-4) unstable; urgency=low
 
   * fixed top level script files.
 
- -- Kiyoshi Ikehara <kiyoshi-ikehara@gree.co.jp>  Mon, 05 Dec 2011 21:47:24 +0900
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Mon, 05 Dec 2011 21:47:24 +0900
 
 flare-tools (0.2.3-3) unstable; urgency=low
 

@@ -1,4 +1,8 @@
-:title: History of flare-tools
+=== 0.2.7 / 2012-01-20
+* Major Enhancements
+  * Added flare-keydump command for checking key distribution among nodes.
+* Minor Enhancements
+  * Added bandwidth limit function to Flare::Net::Connection class.
 
 === 0.2.6 / 2012-01-06
 * Major Enhancements
