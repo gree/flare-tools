@@ -3,6 +3,7 @@ task :default => [:test]
 
 tests = ["daemon", "stats", "cluster", "logger", "node", "cli", "util", "partition", "bwlimit"]
 envargs = "-u FLARE_INDEX_SERVER -u FLARE_INDEX_SERVER_PORT"
+envargs = ""
 
 if ENV.has_key? "TESTS"
   tests = ENV["TESTS"].split(' ')

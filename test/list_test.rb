@@ -1,7 +1,6 @@
 #!/usr/bin/ruby
 # -*- coding: utf-8; -*- 
 
-$LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.dirname(__FILE__)+"/../lib")
 
 require 'test/unit'
@@ -46,7 +45,7 @@ class ListTest < Test::Unit::TestCase
       value = "v#{i}"
       npush.x_list_push(key, value)
       count = 0
-      nget.x_list_get(key, i, i+1) do |v, k, f|
+      nget.x_list_get(key, i, i+1) do |v, k, rel, abs, flag, len, version, expire|
         assert_equal(key, k)
         assert_equal(value, v)
         count += 1
@@ -64,7 +63,7 @@ class ListTest < Test::Unit::TestCase
       npush.x_list_push(key, value)
     end
     count = 0
-    nget.x_list_get(key, 0, size) do |v, k, f|
+    nget.x_list_get(key, 0, size) do |v, k, rel, abs, f|
       value = "v#{count}"
       assert_equal(key, k)
       assert_equal(value, v)
