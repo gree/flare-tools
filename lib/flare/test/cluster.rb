@@ -41,7 +41,7 @@ module Flare
         @indexport
       end
       
-      def create_node(name)
+      def create_node(name, config = {}, executable = Daemon::Flared)
         daemon = Daemon.instance
         serverport = daemon.assign_port
 
@@ -54,7 +54,7 @@ module Flare
                                      'server-name' => servername,
                                      'server-port' => serverport,
                                      'data-dir' => datadir,
-                                   })
+                                   }, executable)
         hostname_port = "#{servername}:#{serverport}"
         node = @nodes[hostname_port] = Node.new(hostname_port, pid)
         node

@@ -82,6 +82,7 @@ EOS
 </node_map>
 <thread_type>#{thread_type}</thread_type>
 </boost_serialization>
+
 EOS
             if @output.nil?
               info output

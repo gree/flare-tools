@@ -33,7 +33,7 @@ module Flare
         node_remove_(host, port)
       end
 
-      defcmd :node_remove_, 'node remove %s %s' do |resp|
+      defcmd :node_remove_, 'node remove %s %s\r\n' do |resp|
         resp
       end
 

@@ -66,7 +66,7 @@ module Flare
         port
       end
 
-      def invoke_flarei(name, config)
+      def invoke_flarei(name, config, executable = Flarei)
         config = Flare::Util::FlareiConf.new(config)
         conf = "/tmp/flarei.#{name}.#{config.server_port}.conf"
         open(conf, "w") do |f|
@@ -76,7 +76,7 @@ module Flare
         if pid.nil?
           deleteall(config.data_dir)
           Dir.mkdir(config.data_dir)
-          exec Flarei, "-f", conf
+          exec executable, "-f", conf
           exit 1
         else
           @flarei << pid
@@ -86,7 +86,7 @@ module Flare
         pid
       end
 
-      def invoke_flared(name, config)
+      def invoke_flared(name, config, executable = Flared)
         config = Flare::Util::FlaredConf.new(config)
         conf = "/tmp/flared.#{name}.#{config.server_port}.conf"
         open(conf, "w") do |f|
@@ -96,7 +96,7 @@ module Flare
         if pid.nil?
           deleteall(config.data_dir)
           Dir.mkdir(config.data_dir)
-          exec Flared, "-f", conf
+          exec executable, "-f", conf
           exit 1
         else
           @flared << pid

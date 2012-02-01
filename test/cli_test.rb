@@ -208,13 +208,25 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, index())
   end
 
+  def remove_boostheader(s)
+    lines = s.split("\n")
+    h1 = lines.shift
+    h2 = lines.shift
+    lines.shift
+    lines.unshift(h2)
+    lines.unshift(h1)
+    lines.join("\n")
+  end
+
   def test_index_output_ident1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 10)
     args = ["--output=flare.xml"]
     assert_equal(S_OK, index(*args))
     assert_equal(true, File.exist?("flare.xml"))
-    assert_equal(@flare_cluster.index, open("flare.xml").read)
+    flarexml = remove_boostheader(open("flare.xml").read)
+    indexxml = remove_boostheader(@flare_cluster.index)
+    assert_equal(flarexml, indexxml)
     File.delete("flare.xml")
   end
 

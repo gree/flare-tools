@@ -98,7 +98,7 @@ module Flare
 
       def self.defcmd_generic(method_symbol, command_template, parser, timeout, &default_processor)
         @@parsers[method_symbol] = parser
-        @@processors[method_symbol] = default_processor
+        @@processors[method_symbol] = default_processor || proc { false }
         timeout_expr = if timeout then "@tout" else "nil" end
         self.class_eval %{
           def #{method_symbol.to_s}(*args, &processor)
@@ -111,7 +111,7 @@ module Flare
       end
 
       def self.defcmd(method_symbol, command_template, &default_processor)
-        parser = Proc.new do |conn, processor|
+        parser = lambda {|conn,processor|
           resp = ""
           answers = [Ok, End, Stored, Deleted, NotFound].map {|x| Flare::Util::Result.string_of_result(x)}
           errors = [Error, ServerError, ClientError].map {|x| Flare::Util::Result.string_of_result(x)}
@@ -129,34 +129,22 @@ module Flare
               resp += x
             end
           end
-          if resp 
-            if processor.nil?
-              resp
-            else
-              processor.call(resp)
-            end
-          else
-            false
-          end
-        end
+          return processor.call(resp) if resp 
+          return false
+        }
         defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
       end
 
       def self.defcmd_noreply(method_symbol, command_template, &default_processor)
         parser = lambda {|conn,processor|
-          processor.call() unless processor.nil?
+          return processor.call()
         }
         defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
       end
  
       def self.defcmd_oneline(method_symbol, command_template, &default_processor)
         parser = lambda {|conn,processor|
-          line = conn.getline
-          if processor.nil?
-            line
-          else
-            processor.call(line)
-          end
+          processor.call(conn.getline)
         }
         defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
       end
@@ -173,7 +161,6 @@ module Flare
                 rets << r if r
               end
             elsif elems[0] == "END"
-              return rets[0] if rets.size == 1
               return rets
             else
               info "error \"#{line.chomp}\""
@@ -191,10 +178,36 @@ module Flare
             line = conn.getline
             elems = line.split(' ')
             if elems[0] == "VALUE"
-              key, flag, len, version, expire = elems[1], elems[2].to_i, elems[3].to_i, elems[4], elems[5]
+              key, flag, len, version, expire = elems[1], elems[2].to_i, elems[3].to_i, elems[4].to_i, elems[5].to_i
               data = conn.read(len)
               unless processor.nil?
                 r = processor.call(data, key, flag, len, version, expire)
+                rets << r if r
+              end
+              conn.getline # skip
+            elsif elems[0] == "END"
+              return rets
+            else
+              info "error \"#{line.chomp}\""
+              return false
+            end
+          end
+        }
+        defcmd_generic(method_symbol, command_template, parser, false, &default_processor)
+      end
+
+      def self.defcmd_listelement(method_symbol, command_template, &default_processor)
+        parser = lambda {|conn,processor|
+          rets = []
+          while true
+            line = conn.getline
+            elems = line.split(' ')
+            if elems[0] == "LISTELEMENT"
+              key, rel, abs = elems[1], elems[2].to_i, elems[3].to_i
+              flag, len, version, expire = elems[4].to_i, elems[5].to_i, elems[6], elems[7]
+              data = conn.read(len)
+              unless processor.nil?
+                r = processor.call(data, key, rel, abs, flag, len, version, expire)
                 rets << r if r
               end
               conn.getline # skip

@@ -14,7 +14,7 @@ module Flare
     # 
     class Stats < Client
 
-      defcmd :stats_nodes, 'stats nodes' do |resp|
+      defcmd :stats_nodes, 'stats nodes\r\n' do |resp|
         result = {}
         resp.gsub(/STAT /, '').split("\r\n").each do |x|
           ip, port, stat = x.split(":", 3)
@@ -26,7 +26,7 @@ module Flare
         result
       end
 
-      defcmd :stats, 'stats' do |resp|
+      defcmd :stats, 'stats\r\n' do |resp|
         result = {}
         resp.gsub(/STAT /, '').split("\r\n").each do |x|
           key, val = x.split(" ", 2)
@@ -50,7 +50,7 @@ module Flare
         stats_threads_
       end
 
-      defcmd :stats_threads_, 'stats threads' do |resp|
+      defcmd :stats_threads_, 'stats threads\r\n' do |resp|
         threads = {}
         resp.gsub(/STAT /, '').split("\r\n").each do |x|
           thread_id, stat = x.split(":", 2)
@@ -61,11 +61,11 @@ module Flare
         threads
       end
 
-      defcmd :ping, 'ping' do |resp|
+      defcmd :ping, 'ping\r\n' do |resp|
         true if resp
       end
 
-      defcmd :quit, 'quit' do |resp|
+      defcmd :quit, 'quit\r\n' do |resp|
         true
       end
 

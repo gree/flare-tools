@@ -60,6 +60,10 @@ if bucket_file.nil? || (!input_file.nil? && File.exist?(input_file))
     buckets[prefix][hash.call(key)%virtual] += 1
     size += 1
   end
+  if File.exist? bucket_file
+    print "#{bucket_file} exists. overwrite? (y/n): "
+    exit unless gets.chomp.upcase == "Y"
+  end
   open(bucket_file, 'w') do |f|
     f.puts "# key, total, ..."
     prefixes.each do |k,total|
