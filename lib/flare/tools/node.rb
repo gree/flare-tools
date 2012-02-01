@@ -39,7 +39,9 @@ module Flare
       defcmd_noreply :set_noreply_, 'set %s %d %d %d noreply\r\n%s\r\n'
 
       def cas(k, v, casunique)
-        cas_(k.chomp, 0, 0, v.size, casunique, v)
+        r = cas_(k.chomp, 0, 0, v.size, casunique, v)
+        r = true if r == ""
+        r
       end
       defcmd :cas_, 'cas %s %d %d %d %d\r\n%s\r\n' do |resp| resp end
 

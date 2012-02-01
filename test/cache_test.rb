@@ -20,7 +20,7 @@ class CacheTest < Test::Unit::TestCase
     @flare_cluster = Flare::Test::Cluster.new('test')
     sleep 1 # XXX
     @node_servers = ['localmaster1', 'localproxy1', 'remoteproxy1'].map {|name|
-      @flare_cluster.create_node(name, {}, "/usr/local/proxy_cache/bin/flared")
+      @flare_cluster.create_node(name, { 'proxy-cache-size' => 1000, 'proxy-cache-expire' => 60 }, "/usr/local/proxy_cache/bin/flared")
     }
     sleep 1 # XXX
     @flare_cluster.wait_for_ready
@@ -67,6 +67,46 @@ class CacheTest < Test::Unit::TestCase
     @localmaster1.cas(key, "v2", version)
     value, version = @localmaster1.gets(key)
     assert_equal(2, version);
+    @localproxy1.cas(key, "v3", version)
+    value, version = @localproxy1.gets(key)
+    assert_equal(3, version);
+  end
+
+  class Client
+    def initialize(node)
+      @node = node
+    end
+    
+    def gets(*keys)
+      @node.gets(*keys)
+    end
+    
+    def cas(*keys)
+      @node.cas(*keys)
+    end
+  end
+
+  def test_proxy_gets_and_cas
+    @flare_cluster.prepare_master_and_slaves(@node_servers[0..0])
+    key = "hoge"
+
+    @localmaster1.set(key, "initial")
+
+    c0 = Client.new(@localmaster1)
+    c1 = Client.new(@remoteproxy1)
+    c2 = Client.new(@remoteproxy1)
+
+    v1,v1version = c1.gets(key)
+    v0,v0version = c0.gets(key)
+    v2,v2version = c2.gets(key)
+    
+    r0 = c0.cas(key, "client0", v0version)
+    r1 = c1.cas(key, "client1", v1version)
+    r2 = c2.cas(key, "client2", v2version)
+
+    assert_equal(true, r0)
+    assert_equal(false, r1)
+    assert_equal(false, r2)
   end
   
 end

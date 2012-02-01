@@ -114,12 +114,16 @@ module Flare
         parser = lambda {|conn,processor|
           resp = ""
           answers = [Ok, End, Stored, Deleted, NotFound].map {|x| Flare::Util::Result.string_of_result(x)}
+          fails = [Exists].map {|x| Flare::Util::Result.string_of_result(x)}
           errors = [Error, ServerError, ClientError].map {|x| Flare::Util::Result.string_of_result(x)}
           while x = conn.getline
             ans = x.chomp.split(' ', 2)
             ans = if ans.empty? then '' else ans[0] end
             case ans
             when *answers
+              break
+            when *fails
+              resp = false
               break
             when *errors
               warn "Failed command. server=[#{self}] sent=[#{conn.last_sent}] result=[#{x.chomp}]"
