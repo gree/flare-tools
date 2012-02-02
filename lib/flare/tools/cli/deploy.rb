@@ -60,6 +60,8 @@ module Flare
           opt.on('--mysql-replication-table=[NAME]',      "MySQL replication table (experimental)") {|v| @dconf["mysql-replication-table"] = v}
           opt.on('--proxy-prior-netmask=[SIZE]',          "proxy priority mask (ex. 24 for 255.255.255.0)") {|v| @dconf["proxy-prior-netmask"] = v}
           opt.on('--max-total-thread-queue=[SIZE]',       "max total thread queue"             ) {|v| @dconf["max-total-thread-queue"] = v}
+          opt.on('--proxy-cache-size=[SIZE]',             "proxy cache entry size (experimental)") {|v| @dconf["proxy-cache-size"] = v}
+          opt.on('--proxy-cache-expire=[SECOND]',         "cache life-time in second (experimental)") {|v| @dconf["proxy-cache-expire"] = v}
         end
 
         def initialize
