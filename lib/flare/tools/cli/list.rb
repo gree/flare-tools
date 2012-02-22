@@ -47,7 +47,7 @@ module Flare
           end
           
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
+            nodes = s.stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]}
           end
           
           puts format % header.map{|x| x[1]}.flatten

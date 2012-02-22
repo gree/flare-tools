@@ -72,7 +72,7 @@ module Flare
               error "Invalid index server."
               return S_NG
             end
-            nodes = nodes.sort_by{|key,val| [val['partition'], val['role'], key]}
+            nodes = nodes.sort_by{|key,val| [val['partition'].to_i, val['role'], key]}
             threads = s.stats_threads_by_peer
           end
 
@@ -157,7 +157,7 @@ module Flare
               error "Invalid index server."
               exit 1
             end
-            nodes = nodes.sort_by{|key,val| [val['partition'], val['role'], key]}
+            nodes = nodes.sort_by{|key,val| [val['partition'].to_i, val['role'], key]}
             threads = s.stats_threads_by_peer
 
             break unless @cont

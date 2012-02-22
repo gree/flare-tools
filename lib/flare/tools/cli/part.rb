@@ -59,11 +59,11 @@ module Flare
               partitions[partition] << "#{hostname}:#{port}:#{balance}:#{partition}"
             end
 
-            partitions.each do |p, nodes|
+            partitions.sort_by {|p,nodes| p.to_i }.each do |p,nodes|
               masters << nodes.shift
             end
 
-            partitions.each do |p, nodes|
+            partitions.each do |p,nodes|
               slaves.concat nodes
             end
           end
@@ -75,6 +75,7 @@ module Flare
             subc.setup(opt)
             args = masters
             args << "--force" if @force
+            args << "--activate"
             opt.parse!(args)
             subc.execute(config, *args)
           end
