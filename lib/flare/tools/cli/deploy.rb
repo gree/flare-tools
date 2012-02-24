@@ -41,6 +41,7 @@ module Flare
           opt.on('--monitor-interval=[SECOND]',           "monitor interval"                   ) {|v| @iconf["monitor-interval"] = v}
           opt.on('--monitor-read-timeout=[MILLISECOND]',  "monitor read timeout in millisecond") {|v| @iconf["monitor-read-timeout"] = v}
           opt.on('--partition-type=[NAME]',               "partition type(modular)"            ) {|v| @iconf["partition-type"] = v}
+          opt.on('--key-hash-algorithm=[NAME]'            "hash algorithm for key distribution") {|v| @iconf["key-hash-algorithm"] = v}
           opt.separator('flared options:')
           opt.on('--proxy-concurrency=[SIZE]',            "proxy concurrency"                  ) {|v| @dconf["proxy-concurrency"] = v}
           opt.on('--mutex-slot=[SIZE]',                   "mutex slot size"                    ) {|v| @dconf["mutex-slot"]= v}
@@ -121,7 +122,7 @@ module Flare
                                                  'server-name' => hostname,
                                                  'server-port' => port,
                                                  'data-dir' => datadir,
-                                               }.update(@iconf))
+                                               }.merge(@iconf))
             open(basedir+"/flarei.conf", "w") {|f| f.puts conf}
             Dir.mkdir(datadir) unless FileTest.exist?(datadir)
             output_scripts(basedir, datadir, "flarei", @flarei)
@@ -147,7 +148,7 @@ module Flare
                                                  'server-name' => hostname,
                                                  'server-port' => port,
                                                  'data-dir' => datadir,
-                                               }.update(@dconf))
+                                               }.merge(@dconf))
             open(basedir+"/flared.conf", "w") {|f| f.puts conf}
             Dir.mkdir(datadir) unless FileTest.exist?(datadir)
             output_scripts(basedir, datadir, "flared", @flared)
