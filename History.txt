@@ -1,3 +1,11 @@
+=== 0.3.0 / 2012-02-24
+* Major Enhancements
+  * Incremented the version number for internal release.
+* Minor Enhancements
+  * Fixed flare-part command to activate master nodes.
+  * Fixed node listing functions to sort by partition number.
+  * Added experimental options to flare-deploy command.
+
 === 0.2.7 / 2012-01-20
 * Major Enhancements
   * Added flare-keydump command for checking key distribution among nodes.
