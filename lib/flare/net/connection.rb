@@ -35,7 +35,7 @@ module Flare
       attr_reader :sent_size, :received_size
 
       def close
-        @socket.close
+        @socket.close unless @socket.closed?
       end
 
       def closed?
@@ -51,7 +51,7 @@ module Flare
       end
 
       def send(cmd)
-        # trace "send. server=[#{self}] cmd=[#{cmd}]"
+        # puts "send. server=[#{self}] cmd=[#{cmd.chomp}]"
         size = cmd.size
         @sent_size += size
         @socket.write cmd
@@ -66,23 +66,22 @@ module Flare
 
       def getline
         ret = @socket.gets
-        unless ret.nil?
-          size = ret.size
-          @received_size += size
-          @downlink_limit.inc size
-          @downlink_limit.wait
-        end
+        return nil if ret.nil?
+        # puts ret.chomp
+        size = ret.size
+        @received_size += size
+        @downlink_limit.inc size
+        @downlink_limit.wait
         ret
       end
 
       def read(length = nil)
         ret = @socket.read(length)
-        unless ret.nil?
-          size = ret.size
-          @received_size += size
-          @downlink_limit.inc size
-          @downlink_limit.wait
-        end
+        return nil if ret.nil?
+        size = ret.size
+        @received_size += size
+        @downlink_limit.inc size
+        @downlink_limit.wait
         ret
       end
 

@@ -32,6 +32,7 @@ class NodeTest < Test::Unit::TestCase
       Flare::Tools::Node.open(node.hostname, node.port, 10) do |n|
         n.set("incr", "0")
         n.set("decr", "9")
+        sleep 1
         assert_equal(0.to_s, n.get("incr"))
         assert_equal(9.to_s, n.get("decr"))
         n.set_noreply("incr_noreply", "0")
