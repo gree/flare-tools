@@ -22,12 +22,13 @@ module Flare
       include Flare::Util::Result
 
       def self.open(host, port, tout = DefaultTimeout, uplink_limit = DefalutBwlimit, downlink_limit = DefalutBwlimit, &block)
-        stats = self.new(host, port, tout, uplink_limit, downlink_limit)
-        return stats if block.nil?
-        return block.call(stats)
+        session = nil
+        session = self.new(host, port, tout, uplink_limit, downlink_limit)
+        return session if block.nil?
+        return block.call(session)
       ensure
-        unless stats.nil? # this might raise IOError
-          stats.close
+        unless session.nil?
+          session.close # this might raise IOError
         end
       end
 
@@ -36,6 +37,7 @@ module Flare
         timeout(tout) do
           @conn = Flare::Net::Connection.new(host, port, uplink_limit, downlink_limit)
         end
+        @server_name, @version = server_version
       rescue Errno::ECONNREFUSED
         debug "Connection refused. server=[#{@conn}]"
         raise
@@ -45,6 +47,15 @@ module Flare
       rescue SocketError
         debug "Connection error. server=[#{host}:#{port}]"
         raise
+      end
+
+      def required_version?(required_version, version = @version)
+        (0...required_version.size).each do |i|
+          n = if i < version.size then version[i] else 0 end
+          return true if n > required_version[i]
+          return false if n < required_version[i]
+        end
+        true
       end
 
       def host
@@ -225,6 +236,26 @@ module Flare
           end
         }
         defcmd_generic(method_symbol, command_template, parser, false, &default_processor)
+      end
+
+      def server_version
+        verstrings = version.split('-')
+        server = "flare"
+        server = verstrings.shift if verstrings.size > 1
+        version = verstrings[0].split('.').map {|v| v.to_i}
+        [server, version]
+      end
+
+      # we have two types of VERSION formats.
+      # VERSION flare-1.0.14
+      # VERSION 1.0.9
+      def version
+        version_
+      end
+      defcmd_oneline :version_, 'version\r\n' do |resp|
+        code, version = resp.chomp.split(' ')
+        return "0.0.0" if code != "VERSION"
+        version          
       end
 
     end

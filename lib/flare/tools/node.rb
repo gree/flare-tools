@@ -81,9 +81,12 @@ module Flare
       end
 
       def get(*keys, &block)
+        return false if keys.size == 0
         r = get_(keys.map{|x|x.chomp}.join(' '), &block)
-        return false if r == []
-        return r[0] if r.size == 1
+        if keys.size == 1
+          return false if r.size == 0
+          return r[0] if r.size == 1
+        end
         r
       end
       defcmd_value :get_, 'get %s\r\n' do |data, key, flag, len, version, expire|
@@ -91,9 +94,12 @@ module Flare
       end
 
       def gets(*keys, &block)
+        return false if keys.size == 0
         r = gets_(keys.map{|x|x.chomp}.join(' '), &block)
-        return false if r == []
-        return r[0] if r.size == 1
+        if keys.size == 1
+          return false if r.size == 0
+          return r[0] if r.size == 1
+        end
         r
       end
       defcmd_value :gets_, 'gets %s\r\n' do |data, key, flag, len, version, expire|

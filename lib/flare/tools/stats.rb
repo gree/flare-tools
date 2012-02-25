@@ -47,6 +47,7 @@ module Flare
       end
 
       def stats_threads
+        return {} unless required_version?([1, 0, 10])
         stats_threads_
       end
 

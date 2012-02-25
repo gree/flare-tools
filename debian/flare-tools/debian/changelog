@@ -1,14 +1,20 @@
+flare-tools (0.3.1) unstable; urgency=low
+
+  * fixed threads subcommand.
+
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Sat, 25 Feb 2012 16:06:44 +0900
+
 flare-tools (0.3.0) unstable; urgency=low
 
   * internal release
 
- -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Fri, 24 Feb 2012 19:58:03 +0900
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Fri, 24 Feb 2012 19:58:03 +0900
 
 flare-tools (0.2.7-1) unstable; urgency=low
 
   * added some extra tests for experimental features.
 
- -- Kiyoshi Ikehara <kiyoshi-ikehara@vmserver>  Thu, 02 Feb 2012 14:52:26 +0900
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>  Thu, 02 Feb 2012 14:52:26 +0900
 
 flare-tools (0.2.7) unstable; urgency=low
 
