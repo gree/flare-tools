@@ -239,8 +239,12 @@ module Flare
       end
 
       def server_version
-        server, verstring, rest = version.split('-')
-        version = verstring.split('.').map {|v| v.to_i}
+        verstrings = version.split('-')
+        server = "flare"
+        if verstrings.size > 1
+          server = verstrings.shift
+        end
+        version = verstrings[0].split('.').map {|v| v.to_i}
         [server, version]
       end
 
@@ -249,7 +253,9 @@ module Flare
       end
       defcmd_oneline :version_, 'version\r\n' do |resp|
         # VERSION flare-1.0.14
-        resp.chomp
+        code, version = resp.chomp.split(' ')
+        return "0.0.0" if code != "VERSION"
+        version          
       end
 
     end
