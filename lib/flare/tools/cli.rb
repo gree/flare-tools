@@ -22,6 +22,7 @@ module Flare
       autoload :Activate,    'flare/tools/cli/activate'
       autoload :Dump,        'flare/tools/cli/dump'
       autoload :Dumpkey,     'flare/tools/cli/dumpkey'
+      autoload :Verify,      'flare/tools/cli/verify'
     end
   end
 end

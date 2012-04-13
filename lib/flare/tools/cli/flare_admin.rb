@@ -30,7 +30,7 @@ end
 
 scname = ARGV[0].to_sym if ARGV.size > 0
 scclasses = [Cli::List, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Master, Cli::Threads, Cli::Ping, Cli::Remove, Cli::Index, Cli::Activate, Cli::Dump, Cli::Dumpkey]
-unsupported = [Cli::Stats, Cli::Deploy]
+unsupported = [Cli::Stats, Cli::Deploy, Cli::Verify]
 scclasses.concat unsupported
 
 subcommands = Hash[*scclasses.map {|x| [x.to_sym, x]}.flatten]
