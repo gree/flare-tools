@@ -82,8 +82,7 @@ module Flare
           nodes.each do |hostname_port,data|
             hostname, port = hostname_port.split(":", 2)
             queue[hostname_port] = SizedQueue.new(1)
-            worker_threads << Thread.new do
-              q = queue[hostname_port]
+            worker_threads << Thread.new(queue[hostname_port]) do |q|
               s = nil
               while @cont
                 stats_data = nil
