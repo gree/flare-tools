@@ -13,10 +13,11 @@ module Flare
     module Conversion
       def short_desc_of_second(second)
         second, unit = second.to_i, "s"
-        second, unit = second / 60, "m" if second >= 60
-        second, unit = second / 60, "h" if second >= 60
-        second, unit = second / 24, "d" if second >= 24
-        "#{second}#{unit}"
+        minute, second, unit = (second/60), (second%60), "m" if second >= 60
+        hour, minute, unit = (minute/60), (minute%60), "h" if minute && minute >= 60
+        day, hour, unit = (hour/24), (hour%24), "d" if hour && hour >= 24
+        n = (day || minute || hour || second)
+        "#{n}#{unit}"
       end
     end
   end
