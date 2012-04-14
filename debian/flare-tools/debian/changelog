@@ -1,3 +1,9 @@
+flare-tools (0.3.2) unstable; urgency=low
+
+  * added 'verify' subcommand.
+
+ -- Kiyoshi Ikehara <kiyoshi-ikehara@gree.net>  Sat, 14 Apr 2012 19:06:04 +0900
+
 flare-tools (0.3.1) unstable; urgency=low
 
   * fixed threads subcommand.
