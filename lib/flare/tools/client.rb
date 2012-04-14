@@ -34,7 +34,7 @@ module Flare
 
       def initialize(host, port, tout = DefaultTimeout, uplink_limit = DefalutBwlimit, downlink_limit = DefalutBwlimit)
         @tout = tout
-        timeout(tout) do
+        timeout(1) do
           @conn = Flare::Net::Connection.new(host, port, uplink_limit, downlink_limit)
         end
         @server_name, @version = server_version

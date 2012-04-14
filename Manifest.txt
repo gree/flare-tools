@@ -56,7 +56,9 @@ lib/flare/util/exception.rb
 lib/flare/util/filesystem.rb
 lib/flare/util/flared_conf.rb
 lib/flare/util/flarei_conf.rb
+lib/flare/util/hash_function.rb
 lib/flare/util/interruption.rb
+lib/flare/util/key_resolver.rb
 lib/flare/util/log4r_logger.rb
 lib/flare/util/logger.rb
 lib/flare/util/logging.rb

@@ -57,7 +57,9 @@ if bucket_file.nil? || (!input_file.nil? && File.exist?(input_file))
       buckets[prefix] = Array.new(virtual, 0)
     end
     prefixes[prefix] += 1
-    buckets[prefix][hash.call(key)%virtual] += 1
+    key_hash_value = [hash.call(key)].pack("l").unpack("L")[0]
+    key_hash_value = -key_hash_value if key_hash_value < 0
+    buckets[prefix][key_hash_value%virtual] += 1
     size += 1
   end
   if File.exist? bucket_file
