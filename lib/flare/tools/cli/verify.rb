@@ -36,9 +36,10 @@ module Flare
               exit
             end
           end
-          opt.on('--store-test-data',                      "store test data") {|v| @store_test_data = true}
+          opt.on('--use-test-data',                        "store test data") {|v| @use_test_data = true}
           opt.on('--debug',                                "debug mode") {|v| @debug = true}
           opt.on('--32bit',                                "32bit mode") {|v| @word_size = 32}
+          opt.on('--verbose',                              "verbose mode") {|v| @verbose = true}
         end
 
         def initialize
@@ -46,42 +47,56 @@ module Flare
           @machine_word_width
           @numeric_hosts = false
           @key_hash_algorithm = :simple
-          @store_test_data = false
+          @use_test_data = false
           @debug = false
           @word_size = 64
           @bwlimit = 0
+          @verbose = false
         end
 
+        S_ERROR = 1
+        S_OK = 0
+
         def execute(config, *args)
+          keys = {}
           cout = STDOUT
-          status = 0
+          status = S_OK
           cout.puts "setting up key resolver ..."
           resolver = Util::KeyResolver.new
           cout.puts "connecting to index ..."
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]}
+
+            # check node list size
+            if nodes.size == 0
+              cout.puts "no nodes"
+              return S_ERROR
+            end
+            hostname0, port0 = nodes[0][0].split(":", 2)
+
+            # partition size
             partition_size = 1+nodes.inject(-1) do |r,entry|
               node, val = entry
               i = val['partition'].to_i
               if i >= r then i else r end
             end
             if partition_size <= 0
-              puts "no need to verify."
-              return
+              cout.puts "no need to verify."
+              return S_ERROR
             end
-
             cout.puts "partition_size: #{partition_size}"
 
-            if @store_test_data && nodes.size > 0
+            if @use_test_data
               cout.puts "storing test data ..."
-              hostname, port = nodes[0][0].split(":", 2)
-              Flare::Tools::Node.open(hostname, port.to_i, config[:timeout]) do |n|
+              Flare::Tools::Node.open(hostname0, port0.to_i, config[:timeout]) do |n|
                 (1..100000).each do |i|
-                  n.set("KEY"+Digest::MD5.new.update(i.to_s).to_s, i.to_s)
+                  key = ".test."+Digest::MD5.new.update(i.to_s).to_s
+                  n.set(key, i.to_s)
+                  keys[key] = :not_found
                 end
               end
             end
-            
+
             nodes.each do |hostname_port,val|
               hostname, port = hostname_port.split(":", 2)
               partition = val['partition'].to_i
@@ -98,8 +113,10 @@ module Flare
                     count += 1
                     if p != partition then
                       cout.puts "failed: the partition for #{key} is #{p} but it was dumpped from #{partition}."
-                      status = 1
+                      status = S_ERROR
                       msg = "NG"
+                    else
+                      keys[key] = :found
                     end
                     false
                   end
@@ -113,18 +130,42 @@ module Flare
                     count += 1
                     if p != partition then
                       cout.puts "failed: the partition for #{key} is #{p} but it was dumpped from #{partition}."
-                      status = 1
+                      status = S_ERROR
                       msg = "NG"
                     end
                     false
                   end
                   cout.write "#{count} entries. "
-                end
+                end # interruptible
                 cout.write "#{msg}\n"
+              end # Node.open
+            end # nodes.each
+
+            if @use_test_data && keys.size > 0
+              # check total result
+              remain = 0
+              keys.each do |k,state|
+                if state != :found
+                  cout.puts "failed: not found '#{k}'" if @verbose
+                  remain += 1
+                end
+              end
+              cout.puts "failed: not found #{remain} keys" if remain > 0
+
+              # delete
+              Flare::Tools::Node.open(hostname0, port0.to_i, config[:timeout]) do |n|
+                keys.each do |k,v|
+                  n.delete(k)
+                end
               end
             end
-            
+
             # end of connection
+          end
+          if status == S_OK
+            cout.puts "OK"
+          else
+            cout.puts "NG"
           end
           status
         end

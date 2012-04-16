@@ -1,4 +1,4 @@
-=== 0.3.2 / 2012-04-14
+=== 0.3.2 / 2012-04-16
 * Major Enhancements
   * Added 'verify' subcommand for checking dump results.
 * Minor Enhancements
