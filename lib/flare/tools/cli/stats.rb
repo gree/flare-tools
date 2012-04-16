@@ -82,19 +82,12 @@ module Flare
           nodes.each do |hostname_port,data|
             hostname, port = hostname_port.split(":", 2)
             queue[hostname_port] = SizedQueue.new(1)
-            worker_threads << Thread.new do
-              q = queue[hostname_port]
+            worker_threads << Thread.new(queue[hostname_port]) do |q|
               s = nil
               while @cont
                 stats_data = nil
                 begin
-                  while s.nil? && @cont
-                    begin
-                      s = Flare::Tools::Stats.open(hostname, data['port'], config[:timeout])
-                    rescue => e
-                      sleep 1
-                    end
-                  end
+                  s = Flare::Tools::Stats.open(hostname, data['port'], config[:timeout])
                   stats = s.stats
                   time = Time.now
                   behind = threads[hostname_port].key?('behind') ? threads[hostname_port]['behind'] : "-"
@@ -127,12 +120,18 @@ module Flare
                     :cmd_set    => stats['cmd_set'],
                     :time       => time,
                   }
+                rescue Errno::ECONNREFUSED => e
                 rescue => e
                   begin
                     s.close unless s.nil?
                   rescue => close_error
                   end
                   s = nil
+                end
+                if stats_data.nil?
+                  stats_data = {
+                    :hostname_port => "#{hostname}:#{port}",
+                  }
                 end
                 q.push stats_data
               end
@@ -164,7 +163,7 @@ module Flare
             puts label
             nodes.each do |k, n|
               stats_data = queue[k].pop
-              next if stats_data.nil? || (args.size > 0 && !args.include?(k))
+              next if (args.size > 0 && !args.include?(k))
               stats_data[:state] = n['state']
               stats_data[:role] = n['role']
               stats_data[:partition] = n['partition']

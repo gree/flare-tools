@@ -18,7 +18,10 @@ module Flare
   
       Flarei = "/usr/local/bin/flarei"
       Flared = "/usr/local/bin/flared"
-      
+
+      FlareiVersion = `#{Flarei} -v`.chomp.split(' ')[-1]
+      FlaredVersion = `#{Flared} -v`.chomp.split(' ')[-1]
+
       def initialize
         @flared = []
         @flarei = []
@@ -57,6 +60,16 @@ module Flare
         @tempfiles.clear
       end
 
+      def required_version? required_version
+        version = FlareiVersion.split('.').map {|i| i.to_i}
+        (0...required_version.size).each do |i|
+          n = if i < version.size then version[i] else 0 end
+          return true if n > required_version[i]
+          return false if n < required_version[i]
+        end
+        true
+      end
+
       def assign_port
         port = 0
         @port_mutex.synchronize do
@@ -67,6 +80,7 @@ module Flare
       end
 
       def invoke_flarei(name, config, executable = Flarei)
+        config["key-hash-algorithm"] = "crc32" if required_version? [1, 0, 15]
         config = Flare::Util::FlareiConf.new(config)
         conf = "/tmp/flarei.#{name}.#{config.server_port}.conf"
         open(conf, "w") do |f|
@@ -76,8 +90,11 @@ module Flare
         if pid.nil?
           deleteall(config.data_dir)
           Dir.mkdir(config.data_dir)
-          exec executable, "-f", conf
-          exit 1
+          begin
+            exec executable, "-f", conf
+          rescue
+            exit 1
+          end
         else
           @flarei << pid
           @tempfiles << config.data_dir
@@ -96,8 +113,11 @@ module Flare
         if pid.nil?
           deleteall(config.data_dir)
           Dir.mkdir(config.data_dir)
-          exec executable, "-f", conf
-          exit 1
+          begin
+            exec executable, "-f", conf
+          rescue
+            exit 1
+          end
         else
           @flared << pid
           @tempfiles << config.data_dir

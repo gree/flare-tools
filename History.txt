@@ -1,3 +1,10 @@
+=== 0.3.2 / 2012-04-16
+* Major Enhancements
+  * Added 'verify' subcommand for checking dump results.
+* Minor Enhancements
+  * Fixed uptime column of 'stats' subcommand
+  * Fixed 'stats' subcommand not to block for down nodes.
+
 === 0.3.1 / 2012-02-25
 * Minor Enhancements
   * Fixed 'threads' subcommand not to work for flare-1.0.9 or earlier.

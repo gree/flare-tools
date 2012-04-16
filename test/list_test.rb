@@ -44,6 +44,7 @@ class ListTest < Test::Unit::TestCase
     (0...100).each do |i|
       value = "v#{i}"
       npush.x_list_push(key, value)
+      sleep 0.001
       count = 0
       nget.x_list_get(key, i, i+1) do |v, k, rel, abs, flag, len, version, expire|
         assert_equal(key, k)
@@ -58,9 +59,10 @@ class ListTest < Test::Unit::TestCase
     list if defined? DEBUG
     key = "k"
     size = 100
-    (0...size).each do |i|
-      value = "v#{i}"
-      npush.x_list_push(key, value)
+    range = (0...size)
+    expected = range.map {|i| "v#{i}"}
+    range.each do |i|
+      npush.x_list_push(key, expected[i])
     end
     count = 0
     nget.x_list_get(key, 0, size) do |v, k, rel, abs, f|
@@ -75,16 +77,13 @@ class ListTest < Test::Unit::TestCase
   def push_and_shift(npush, nshift)
     list if defined? DEBUG
     key = "k"
-    size = 100
-    (0...size).each do |i|
-      value = "v#{i}"
-      npush.x_list_push(key, "v#{i}")
+    range = (0...100)
+    expected = range.map {|i| "v#{i}"}
+    range.each do |i|
+      npush.x_list_push(key, expected[i])
     end
-    (0...size).each do |i|
-      value = "v#{i}"
-      v = nshift.x_list_shift(key)
-      assert_equal(value, v)
-    end
+    values = range.map {|i| nshift.x_list_shift(key)}
+    assert_equal(expected, values)
   end
 
   def self.deftest_allpair(name)

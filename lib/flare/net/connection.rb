@@ -51,7 +51,9 @@ module Flare
       end
 
       def send(cmd)
-        # puts "send. server=[#{self}] cmd=[#{cmd.chomp}]"
+        if $DEBUG
+          puts "send. server=[#{self}] cmd=[#{cmd.chomp}]"
+        end
         size = cmd.size
         @sent_size += size
         @socket.write cmd
@@ -67,7 +69,9 @@ module Flare
       def getline
         ret = @socket.gets
         return nil if ret.nil?
-        # puts ret.chomp
+        if $DEBUG
+          puts ret.chomp
+        end
         size = ret.size
         @received_size += size
         @downlink_limit.inc size
