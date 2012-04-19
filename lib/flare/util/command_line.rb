@@ -45,15 +45,21 @@ module Flare
         end
       end
 
+      S_OK = 0
+      S_NG = 1
+
       def execute(&block)
+        status = S_OK
         if block
           args = ARGV.dup
           ARGV.clear
-          block.call(args)
+          status = block.call(args)
         end
+        status
       rescue => e
         error e.to_s
         raise e if $DEBUG
+        S_NG
       end
 
     end

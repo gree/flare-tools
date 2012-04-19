@@ -37,6 +37,19 @@ module Flare
         resp
       end
 
+      def meta()
+        meta_()
+      end
+
+      defcmd :meta_, 'meta\r\n' do |resp|
+        meta = {}
+        resp.split('\n').each do |line|
+          cols = line.chomp.split(" ")
+          meta[cols[1]] = cols[2]
+        end
+        meta
+      end
+
     end
   end
 end

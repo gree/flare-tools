@@ -40,6 +40,7 @@ module Flare
           opt.on('--debug',                                "debug mode") {|v| @debug = true}
           opt.on('--32bit',                                "32bit mode") {|v| @word_size = 32}
           opt.on('--verbose',                              "verbose mode") {|v| @verbose = true}
+          opt.on('--meta',                                 "use meta command") {|v| @meta = true}
         end
 
         def initialize
@@ -52,10 +53,8 @@ module Flare
           @word_size = 64
           @bwlimit = 0
           @verbose = false
+          @meta = false
         end
-
-        S_ERROR = 1
-        S_OK = 0
 
         def execute(config, *args)
           keys = {}
@@ -67,10 +66,23 @@ module Flare
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]}
 
+            # meta
+            if @meta
+              meta = s.meta
+              kha = meta['key-hash-algorithm']
+              if kha
+                @key_hash_algorithm = :crc32 if kha == 'crc32'
+                @key_hash_algorithm = :simple if kha == 'simple'
+              else
+                @key_hash_algorithm = :simple
+              end
+              cout.puts "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
+            end
+
             # check node list size
             if nodes.size == 0
               cout.puts "no nodes"
-              return S_ERROR
+              return S_NG
             end
             hostname0, port0 = nodes[0][0].split(":", 2)
 
@@ -82,7 +94,7 @@ module Flare
             end
             if partition_size <= 0
               cout.puts "no need to verify."
-              return S_ERROR
+              return S_NG
             end
             cout.puts "partition_size: #{partition_size}"
 
@@ -112,8 +124,8 @@ module Flare
                     p = resolver.resolve(get_key_hash_value(key, type, @word_size), partition_size)
                     count += 1
                     if p != partition then
-                      cout.puts "failed: the partition for #{key} is #{p} but it was dumpped from #{partition}."
-                      status = S_ERROR
+                      cout.puts "failed: the partition for #{key} is #{p} but it was dumpped from #{partition}." if @debug
+                      status = S_NG
                       msg = "NG"
                     else
                       keys[key] = :found
@@ -129,8 +141,8 @@ module Flare
                     p = resolver.resolve(get_key_hash_value(key, type, @word_size), partition_size)
                     count += 1
                     if p != partition then
-                      cout.puts "failed: the partition for #{key} is #{p} but it was dumpped from #{partition}."
-                      status = S_ERROR
+                      cout.puts "failed: the partition for #{key} is #{p} but it was dumpped from #{partition}." if @debug
+                      status = S_NG
                       msg = "NG"
                     end
                     false

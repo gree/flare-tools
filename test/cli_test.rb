@@ -296,4 +296,37 @@ class CliTest < Test::Unit::TestCase
     # File.delete("keys.txt") if File.exist?("keys.txt")
   end
 
+  def test_verify1
+    args = @node_servers[0..0].map{|n| "#{n.hostname}:#{n.port}:1:0"}
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[1..1].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = ["--use-test-data", "--key-hash-algorithm=simple"]
+    assert_equal(S_OK, verify(*args))
+  end
+
+  def test_verify2
+    args = @node_servers[0..0].map{|n| "#{n.hostname}:#{n.port}:1:0"}
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[1..1].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = ["--use-test-data", "--key-hash-algorithm=crc32"]
+    assert_equal(S_NG, verify(*args))
+  end
+
+  def test_verify3
+    args = @node_servers[0..0].map{|n| "#{n.hostname}:#{n.port}:1:0"}
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[1..1].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = ["--use-test-data", "--meta"]
+    assert_equal(S_OK, verify(*args))
+  end
+
 end

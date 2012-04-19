@@ -1,8 +1,13 @@
+=== 0.3.3 / 2012-04-19
+* Minor Enhancements
+  * Suppressed vefiry error message of verify subcommand for each key.
+  * added --meta option to 'verify' subcommand.
+
 === 0.3.2 / 2012-04-16
 * Major Enhancements
   * Added 'verify' subcommand for checking dump results.
 * Minor Enhancements
-  * Fixed uptime column of 'stats' subcommand
+  * Fixed uptime column of 'stats' subcommand.
   * Fixed 'stats' subcommand not to block for down nodes.
 
 === 0.3.1 / 2012-02-25

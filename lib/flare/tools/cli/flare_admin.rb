@@ -62,7 +62,7 @@ setup do |opt|
   end
 end
 
-execute do |args|
+status = execute do |args|
   command = args.shift
   subc.execute({ :command => command,
                  :index_server_hostname => index_server_hostname,
@@ -71,3 +71,5 @@ execute do |args|
                  :timeout => timeout },
                *args) if subc
 end
+
+exit status
