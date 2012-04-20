@@ -24,6 +24,11 @@ class UtilTest < Test::Unit::TestCase
   def setup
     
   end
+
+  def test_pwd
+    system "pwd"
+    system "ls"
+  end
   
   def test_result1
     assert_equal("OK", Result.string_of_result(Result::Ok))
