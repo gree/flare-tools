@@ -69,6 +69,7 @@ module Flare
             # meta
             if @meta
               meta = s.meta
+              stats = s.stats
               kha = meta['key-hash-algorithm']
               if kha
                 @key_hash_algorithm = :crc32 if kha == 'crc32'
@@ -76,7 +77,11 @@ module Flare
               else
                 @key_hash_algorithm = :simple
               end
+              pointer_size = stats['pointer_size']
+              word_size = pointer_size.to_i if pointer_size
+              @word_size = word_size if !word_size.nil? && word_size > 0
               cout.puts "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
+              cout.puts "word_size = #{@word_size.to_s}"
             end
 
             # check node list size

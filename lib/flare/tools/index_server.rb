@@ -42,12 +42,12 @@ module Flare
       end
 
       defcmd :meta_, 'meta\r\n' do |resp|
-        meta = {}
-        resp.split('\n').each do |line|
-          cols = line.chomp.split(" ")
-          meta[cols[1]] = cols[2]
+        result = {}
+        resp.gsub(/META /, '').split("\r\n").each do |x|
+          key, val = x.split(" ", 2)
+          result[key] = val
         end
-        meta
+        result
       end
 
     end
