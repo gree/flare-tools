@@ -9,7 +9,7 @@ module Flare
           @hint = params[:hint] || 1
           @map = Array.new(@partition_size+1).map!{Array.new(@virtual, -1)}
           @next_calculate = 0
-          calculate 4096
+          calculate 1
         end
 
         def calculate psize
