@@ -1,7 +1,7 @@
 
 BINDIR=/usr/bin
 RUBYLIBDIR=/usr/lib/ruby/${RUBYVER}
-SRCDIR=../..
+SRCDIR=.
 
 install:
 	install -d ${DESTDIR}${BINDIR}
