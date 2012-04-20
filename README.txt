@@ -2,6 +2,8 @@
 
 = flare-tools
 
+http://labs.gree.jp/Top/OpenSource/Flare-en.html
+
 Flare-tools is a collection of command line tools to maintain a flare cluster.
 
 * flare-stats
