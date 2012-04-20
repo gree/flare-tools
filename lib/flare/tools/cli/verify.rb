@@ -82,9 +82,10 @@ module Flare
               pointer_size = stats['pointer_size']
               word_size = pointer_size.to_i if pointer_size
               @word_size = word_size if !word_size.nil? && word_size > 0
-              cout.puts "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
-              cout.puts "word_size = #{@word_size.to_s}"
             end
+
+            cout.puts "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
+            cout.puts "word_size = #{@word_size.to_s}"
 
             # check node list size
             if nodes.size == 0
