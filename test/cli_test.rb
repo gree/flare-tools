@@ -4,6 +4,8 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.dirname(__FILE__)+"/../lib")
 
+require 'rubygems'
+gem 'test-unit'
 require 'test/unit'
 require 'flare/tools'
 require 'flare/tools/cli'

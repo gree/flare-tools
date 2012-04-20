@@ -41,6 +41,7 @@ module Flare
           opt.on('--32bit',                                "32bit mode") {|v| @word_size = 32}
           opt.on('--verbose',                              "verbose mode") {|v| @verbose = true}
           opt.on('--meta',                                 "use meta command") {|v| @meta = true}
+          opt.on('--quiet',                                "quiet") {|v| @quiet = true}
         end
 
         def initialize
@@ -54,11 +55,12 @@ module Flare
           @bwlimit = 0
           @verbose = false
           @meta = false
+          @quiet = false
         end
 
         def execute(config, *args)
           keys = {}
-          cout = STDOUT
+          cout = STDERR
           status = S_OK
           cout.puts "setting up key resolver ..."
           resolver = Util::KeyResolver.new
@@ -106,7 +108,7 @@ module Flare
             if @use_test_data
               cout.puts "storing test data ..."
               Flare::Tools::Node.open(hostname0, port0.to_i, config[:timeout]) do |n|
-                (1..100000).each do |i|
+                (1..10000).each do |i|
                   key = ".test."+Digest::MD5.new.update(i.to_s).to_s
                   n.set(key, i.to_s)
                   keys[key] = :not_found
