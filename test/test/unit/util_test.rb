@@ -25,7 +25,8 @@ class UtilTest < Test::Unit::TestCase
     
   end
 
-  def test_pwd
+  def test_inspect_test_environment
+    system "printenv"
     system "pwd"
     system "ls"
   end
