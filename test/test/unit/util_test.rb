@@ -25,10 +25,15 @@ class UtilTest < Test::Unit::TestCase
     
   end
 
-  def test_inspect_test_environment
-    system "printenv"
-    system "pwd"
-    system "ls"
+  def test_inspect_test_environment1
+    open("environment.txt", "w") do |f|
+      f.puts('current direcoty:')
+      f.write(`pwd`);
+      f.puts('files:')
+      f.write(`ls`);
+      f.puts('environment:')
+      f.write(`printenv`);
+    end
   end
   
   def test_result1

@@ -306,7 +306,9 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, master(*args))
     args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
     assert_equal(S_OK, master(*args))
-    args = ["--use-test-data", "--key-hash-algorithm=simple"]
+    kha = if Flare::Test::Daemon.instance.required_version? [1, 0, 15] then "crc32" else "simple" end
+    args = ["--use-test-data", "--key-hash-algorithm=#{kha}"]
+    args << "--32bit" if %w(i386 i486 i586 i686).include?(`uname -m`.chomp)
     assert_equal(S_OK, verify(*args))
   end
 
@@ -317,7 +319,9 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, master(*args))
     args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
     assert_equal(S_OK, master(*args))
-    args = ["--use-test-data", "--key-hash-algorithm=crc32"]
+    kha = unless Flare::Test::Daemon.instance.required_version? [1, 0, 15] then "crc32" else "simple" end
+    args = ["--use-test-data", "--key-hash-algorithm=#{kha}"]
+    args << "--32bit" if %w(i386 i486 i586 i686).include?(`uname -m`.chomp)
     assert_equal(S_NG, verify(*args))
   end
 

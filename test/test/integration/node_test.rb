@@ -18,6 +18,10 @@ class NodeTest < Test::Unit::TestCase
     @flare_cluster.prepare_master_and_slaves(@node_servers)
   end
   
+  def teardown
+    @flare_cluster.shutdown
+  end
+
   def test_dummy
   end
 

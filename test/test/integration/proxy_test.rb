@@ -25,6 +25,10 @@ class ProxyTest < Test::Unit::TestCase
     }
   end
 
+  def teardown
+    @flare_cluster.shutdown
+  end
+
   def test_proxy1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     Flare::Tools::Node.open(@flare_cluster.indexname, @flare_cluster.indexport, 10) do |s|
