@@ -1,22 +1,20 @@
 
+require 'rake/testtask'
+require 'ci/reporter/rake/test_unit'
+
 task :default => [:test]
 
-tests = ["daemon", "stats", "cluster", "logger", "node", "cli", "util", "partition", "bwlimit"]
 envargs = "-u FLARE_INDEX_SERVER -u FLARE_INDEX_SERVER_PORT"
 envargs = ""
 
-if ENV.has_key? "TESTS"
-  tests = ENV["TESTS"].split(' ')
-end
+task :default => [:test]
 
-tests.each do |test|
-  task test.to_sym do |t|
-    options = "--verbose"
-    sh "env #{envargs} ruby #{t.name}_test.rb #{options}"
-  end
+Rake::TestTask.new do |test|
+  test.libs << '.'
+  test.test_files = Dir['test/unit/**/*_test.rb']
+  test.verbose = true
+  test.ruby_opts = ['-r', 'rubygems']
 end
-
-task :test => tests.map {|x| x.to_sym}
 
 task :stress do
   tests.each do |test|
