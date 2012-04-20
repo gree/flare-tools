@@ -59,6 +59,11 @@ module Flare
         node = @nodes[hostname_port] = Node.new(hostname_port, pid)
         node
       end
+      
+      def shutdown
+        daemon = Daemon.instance
+        daemon.shutdown
+      end
 
       def nodes
         @nodes.values
