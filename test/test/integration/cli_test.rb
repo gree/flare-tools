@@ -35,6 +35,7 @@ class CliTest < Test::Unit::TestCase
   end
 
   def teardown
+    @flare_cluster.shutdown
   end
 
   def test_ping_simple_call1
