@@ -308,7 +308,6 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, master(*args))
     kha = if Flare::Test::Daemon.instance.required_version? [1, 0, 15] then "crc32" else "simple" end
     args = ["--use-test-data", "--key-hash-algorithm=#{kha}"]
-    args << "--32bit" if %w(i386 i486 i586 i686).include?(`uname -m`.chomp)
     assert_equal(S_OK, verify(*args))
   end
 
@@ -321,7 +320,6 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, master(*args))
     kha = unless Flare::Test::Daemon.instance.required_version? [1, 0, 15] then "crc32" else "simple" end
     args = ["--use-test-data", "--key-hash-algorithm=#{kha}"]
-    args << "--32bit" if %w(i386 i486 i586 i686).include?(`uname -m`.chomp)
     assert_equal(S_NG, verify(*args))
   end
 
