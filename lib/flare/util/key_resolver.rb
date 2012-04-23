@@ -24,14 +24,14 @@ module Flare
               (0...@virtual).each do |j|
                 if i <= @hint
                   @map[i][j] = j % i
-                  next
-                end
-                k = @map[i-1][j]
-                counter[k] += 1
-                if (counter[k] % i) == (i - 1)
-                  @map[i][j] = i - 1
                 else
-                  @map[i][j] = @map[i-1][j]
+                  k = @map[i-1][j]
+                  counter[k] += 1
+                  if (counter[k] % i) == (i - 1)
+                    @map[i][j] = i - 1
+                  else
+                    @map[i][j] = @map[i-1][j]
+                  end
                 end
               end
             end
