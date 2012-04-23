@@ -16,6 +16,10 @@ class StatsTest < Test::Unit::TestCase
     sleep 1
     @flare_cluster.prepare_master_and_slaves(@node_servers)
   end
+
+  def teardown
+    @flare_cluster.shutdown
+  end
   
   def test_index_cluster_info
     hostname = @flare_cluster.indexname

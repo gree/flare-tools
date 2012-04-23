@@ -38,8 +38,10 @@ module Flare
           end
           opt.on('--use-test-data',                        "store test data") {|v| @use_test_data = true}
           opt.on('--debug',                                "debug mode") {|v| @debug = true}
-          opt.on('--32bit',                                "32bit mode") {|v| @word_size = 32}
+          opt.on('--64bit',                                "64bit mode (for ILP64)") {|v| @word_size = 64}
           opt.on('--verbose',                              "verbose mode") {|v| @verbose = true}
+          opt.on('--meta',                                 "use meta command") {|v| @meta = true}
+          opt.on('--quiet',                                "quiet") {|v| @quiet = true}
         end
 
         def initialize
@@ -49,17 +51,16 @@ module Flare
           @key_hash_algorithm = :simple
           @use_test_data = false
           @debug = false
-          @word_size = 64
+          @word_size = 32
           @bwlimit = 0
           @verbose = false
+          @meta = false
+          @quiet = false
         end
-
-        S_ERROR = 1
-        S_OK = 0
 
         def execute(config, *args)
           keys = {}
-          cout = STDOUT
+          cout = STDERR
           status = S_OK
           cout.puts "setting up key resolver ..."
           resolver = Util::KeyResolver.new
@@ -67,10 +68,25 @@ module Flare
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]}
 
+            # meta
+            if @meta
+              meta = s.meta
+              stats = s.stats
+              kha = meta['key-hash-algorithm']
+              if kha
+                @key_hash_algorithm = :crc32 if kha == 'crc32'
+                @key_hash_algorithm = :simple if kha == 'simple'
+              else
+                @key_hash_algorithm = :simple
+              end
+              pointer_size = stats['pointer_size']
+            end
+            cout.puts "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
+
             # check node list size
             if nodes.size == 0
               cout.puts "no nodes"
-              return S_ERROR
+              return S_NG
             end
             hostname0, port0 = nodes[0][0].split(":", 2)
 
@@ -82,14 +98,14 @@ module Flare
             end
             if partition_size <= 0
               cout.puts "no need to verify."
-              return S_ERROR
+              return S_NG
             end
             cout.puts "partition_size: #{partition_size}"
 
             if @use_test_data
               cout.puts "storing test data ..."
               Flare::Tools::Node.open(hostname0, port0.to_i, config[:timeout]) do |n|
-                (1..100000).each do |i|
+                (1..10000).each do |i|
                   key = ".test."+Digest::MD5.new.update(i.to_s).to_s
                   n.set(key, i.to_s)
                   keys[key] = :not_found
@@ -109,11 +125,12 @@ module Flare
                   n.dumpkey(partition, partition_size) do |key|
                     next if key.nil?
                     type = @key_hash_algorithm
-                    p = resolver.resolve(get_key_hash_value(key, type, @word_size), partition_size)
+                    hash = get_key_hash_value(key, type, @word_size)
+                    p = resolver.resolve(hash, partition_size)
                     count += 1
                     if p != partition then
-                      cout.puts "failed: the partition for #{key} is #{p} but it was dumpped from #{partition}."
-                      status = S_ERROR
+                      cout.puts "keydump failed: the partition for #{key}(#{hash}) is #{p} but it was dumpped from #{partition}." if @debug
+                      status = S_NG
                       msg = "NG"
                     else
                       keys[key] = :found
@@ -126,11 +143,12 @@ module Flare
                   n.dump(0, partition, partition_size, @bwlimit) do |data, key, flag, len, version, expire|
                     next if key.nil?
                     type = @key_hash_algorithm
-                    p = resolver.resolve(get_key_hash_value(key, type, @word_size), partition_size)
+                    hash = get_key_hash_value(key, type, @word_size)
+                    p = resolver.resolve(hash, partition_size)
                     count += 1
                     if p != partition then
-                      cout.puts "failed: the partition for #{key} is #{p} but it was dumpped from #{partition}."
-                      status = S_ERROR
+                      cout.puts "dump failed: the partition for #{key}(#{hash}) is #{p} but it was dumpped from #{partition}." if @debug
+                      status = S_NG
                       msg = "NG"
                     end
                     false

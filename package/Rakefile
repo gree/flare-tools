@@ -22,6 +22,18 @@ task :change do
   sh "(cd #{flaretools} && dch -i)"
 end
 
+def previous version
+  prev = version.split('.').map{|v| v.to_i}
+  prev[2] -= 1
+  prev.join('.')
+end
+
+task :autochange do
+  v = Flare::Tools::VERSION
+  since = previous(v)
+  sh "git-dch --debian-branch='(no branch)' --new-version #{version} --since=#{since}"
+end
+
 task :clean => [:debclean] do
   sh "rm -f *.dsc *.tar.gz *.build *.changes"
 end

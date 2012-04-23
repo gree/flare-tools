@@ -6,6 +6,7 @@ $LOAD_PATH.unshift File.dirname(__FILE__)+"/../lib"
 require 'test/unit'
 require 'flare/util/result.rb'
 require 'flare/util/interruption'
+require 'flare/util/key_resolver'
 
 class UtilTest < Test::Unit::TestCase
   Result = Flare::Util::Result
@@ -23,6 +24,17 @@ class UtilTest < Test::Unit::TestCase
   def setup
     
   end
+
+  def test_inspect_test_environment1
+    open("environment.txt", "w") do |f|
+      f.puts('current direcoty:')
+      f.write(`pwd`);
+      f.puts('files:')
+      f.write(`ls`);
+      f.puts('environment:')
+      f.write(`printenv`);
+    end
+  end
   
   def test_result1
     assert_equal("OK", Result.string_of_result(Result::Ok))
@@ -33,6 +45,17 @@ class UtilTest < Test::Unit::TestCase
     obj = Interruption.new
     assert_raise InterruptionTestException do
       Process.kill :INT, Process.pid
+    end
+  end
+
+  def test_key_resolver1
+    partition_size = 1024
+    virtual = 4096
+    krm = Flare::Util::KeyResolver::Modular.new({:partition_size => partition_size, :virtual => virtual, :hint => 1})
+    (0...100).each do |p|
+      (0...virtual).each do |v|
+        assert_not_equal(-1, krm.map(p, v))
+      end
     end
   end
 end

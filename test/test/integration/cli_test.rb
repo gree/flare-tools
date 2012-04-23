@@ -4,6 +4,8 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.dirname(__FILE__)+"/../lib")
 
+require 'rubygems'
+gem 'test-unit'
 require 'test/unit'
 require 'flare/tools'
 require 'flare/tools/cli'
@@ -33,6 +35,7 @@ class CliTest < Test::Unit::TestCase
   end
 
   def teardown
+    @flare_cluster.shutdown
   end
 
   def test_ping_simple_call1
@@ -294,6 +297,41 @@ class CliTest < Test::Unit::TestCase
     args = @node_servers[0..2].map{|n| "#{n.hostname}:#{n.port}"} << "--bwlimit=800k" << "--output=keys.txt"
     assert_equal(S_OK, dumpkey(*args))
     # File.delete("keys.txt") if File.exist?("keys.txt")
+  end
+
+  def test_verify1
+    args = @node_servers[0..0].map{|n| "#{n.hostname}:#{n.port}:1:0"}
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[1..1].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    kha = if Flare::Test::Daemon.instance.required_version? [1, 0, 15] then "crc32" else "simple" end
+    args = ["--use-test-data", "--key-hash-algorithm=#{kha}"]
+    assert_equal(S_OK, verify(*args))
+  end
+
+  def test_verify2
+    args = @node_servers[0..0].map{|n| "#{n.hostname}:#{n.port}:1:0"}
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[1..1].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    kha = unless Flare::Test::Daemon.instance.required_version? [1, 0, 15] then "crc32" else "simple" end
+    args = ["--use-test-data", "--key-hash-algorithm=#{kha}"]
+    assert_equal(S_NG, verify(*args))
+  end
+
+  def test_verify3
+    args = @node_servers[0..0].map{|n| "#{n.hostname}:#{n.port}:1:0"}
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[1..1].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = ["--use-test-data", "--meta"]
+    assert_equal(S_OK, verify(*args))
   end
 
 end

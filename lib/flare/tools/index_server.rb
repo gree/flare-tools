@@ -37,6 +37,19 @@ module Flare
         resp
       end
 
+      def meta()
+        meta_()
+      end
+
+      defcmd :meta_, 'meta\r\n' do |resp|
+        result = {}
+        resp.gsub(/META /, '').split("\r\n").each do |x|
+          key, val = x.split(" ", 2)
+          result[key] = val
+        end
+        result
+      end
+
     end
   end
 end

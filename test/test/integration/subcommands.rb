@@ -86,4 +86,10 @@ module Subcommands
     subc.execute(@config.merge({:command => 'dumpkey'}), *args)
   end
   
+  def verify(*args)
+    puts "args: "+args.join(' ')
+    subc = instantiate(Flare::Tools::Cli::Verify, args)
+    subc.execute(@config.merge({:command => 'verify'}), *args)
+  end
+  
 end

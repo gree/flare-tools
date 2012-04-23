@@ -105,6 +105,7 @@ class PartitionTest < Test::Unit::TestCase
 
   def teardown
     @nodes.map {|n| n.close}
+    @flare_cluster.shutdown
   end
 
   def test_dynamic_partition_creation1

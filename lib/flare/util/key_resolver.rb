@@ -7,30 +7,46 @@ module Flare
           @partition_size = params[:partition_size] || 1024
           @virtual = params[:virtual] || 4096
           @hint = params[:hint] || 1
+          @map = Array.new(@partition_size+1).map!{Array.new(@virtual, -1)}
+          @next_calculate = 0
+          calculate 1
+        end
 
-          @map = Array.new(@partition_size).map!{Array.new(@virtual, 0)}
-
-          (0...@partition_size).each do |i|
-            next if i == 0
-            counter = Array.new(@partition_size, 0)
-
-            (0...@virtual).each do |j|
-              if i <= @hint
-                @map[i][j] = j % i
-                next
+        def calculate psize
+          return if psize < @next_calculate
+          (@next_calculate..psize).each do |i|
+            if i == 0
+              (0...@virtual).each do |j|
+                @map[i][j] = 0
               end
-              k = @map[i-1][j]
-              counter[k] += 1
-              if (counter[k] % i) == (i - 1)
-                @map[i][j] = i - 1
-              else
-                @map[i][j] = @map[i-1][j]
+            else
+              counter = Array.new(psize, 0)
+              (0...@virtual).each do |j|
+                if i <= @hint
+                  @map[i][j] = j % i
+                else
+                  k = @map[i-1][j]
+                  counter[k] += 1
+                  if (counter[k] % i) == (i - 1)
+                    @map[i][j] = i - 1
+                  else
+                    @map[i][j] = @map[i-1][j]
+                  end
+                end
               end
             end
           end
+          @next_calculate = psize+1
         end
+
         def resolve key_hash_value, partition_size
+          calculate partition_size
           @map[partition_size][key_hash_value % @virtual]
+        end
+
+        def map partition_size, virtual
+          calculate partition_size
+          @map[partition_size][virtual]
         end
       end
 
