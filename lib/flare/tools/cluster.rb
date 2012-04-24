@@ -99,6 +99,14 @@ module Flare
         @nodes.keys
       end
 
+      def master_node_list
+        ret = []
+        @nodes.each do |k,v|
+          ret << k if v['role'] == RoleMaster
+        end
+        ret
+      end
+
       def node_stat(hostname_port)
         @nodes[hostname_port]
       end
