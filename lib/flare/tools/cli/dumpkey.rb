@@ -31,7 +31,7 @@ module Flare
           opt.on('-f', '--format=[FORMAT]',          "output format [csv]") {|v| @format = v}
           opt.on('-p', '--partition=[NUMBER]',       "partition number") {|v| @part = v.to_i if v.to_i >= 0}
           opt.on('-s', '--partition-size=[SIZE]',    "partition size") {|v| @partsize = v.to_i if v.to_i > 0}
-          opt.on(      '--bwlimit=[BANDWIDTH]',      "(experimental) bandwidth limit (bps)") {|v| @bwlimit = v if v.to_i > 0}
+          opt.on(      '--bwlimit=[BANDWIDTH]',      "bandwidth limit (bps)") {|v| @bwlimit = v if v.to_i > 0}
         end
 
         def initialize

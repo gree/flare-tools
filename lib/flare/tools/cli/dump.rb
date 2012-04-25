@@ -13,93 +13,95 @@ require 'csv'
 
 begin
   require 'tokyocabinet'
-  USE_TOKYOCABINET = true
+  USE_TOKYOCABINET = true unless defined? USE_TOKYOCABINET
 rescue => e
-  USE_TOKYOCABINET = false
+  USE_TOKYOCABINET = false unless defined? USE_TOKYOCABINET
 end
 
 module Flare
   module Tools
     module Cli
-
-      class DumpIterator
-        attr_reader :name
-        def iterate data, key, flag, len, version, expire
-          raise "internal error"
-        end
-        def close
-          raise "internal error"
-        end
-      end
-
-      class DefaultIt < DumpIterator
-        def self.myname
-          "default"
-        end
-        def initialize filepath_or_writable
-          @output = if filepath_or_writable.kind_of?(String)
-                      open(filepath_or_writable, 'w') 
-                    else
-                      filepath_or_writable
-                    end
-        end
-        def iterate data, key, flag, len, version, expire
-          @output.puts "#{key} #{flag} #{len} #{version} #{expire} '#{data}'"
-        end
-        def close
-          @output.close unless @output == STDOUT || @output == STDERR
-        end
-      end
-
-      class CsvIt < DumpIterator
-        def self.myname
-          "csv"
-        end
-        def initialize filepath_or_writable
-          @output = if filepath_or_writable.kind_of?(String)
-                      open(filepath_or_writable, 'w')
-                    else
-                      filepath_or_writable
-                    end
-          @output.puts "# key, flag, len, version, expire, data"
-          @writer = CSV::Writer.generate(@output, ',')
-        end
-        def iterate data, key, flag, len, version, expire
-          @writer << [key, flag, len, version, expire, data]
-        end
-        def close
-          @output.close unless @output == STDOUT || @output == STDERR
-        end
-      end
-
-      class TchIt < DumpIterator
-        def self.myname
-          "tch"
-        end
-        def initialize filepath
-          raise "output file not specified." if filepath.nil?
-          raise "#{filepath} isn't a path." unless filepath.kind_of?(String)
-          @hdb = TokyoCabinet::HDB.new
-          @hdb.open(filepath, TokyoCabinet::HDB::OCREAT|TokyoCabinet::HDB::OWRITER)
-        end
-        def iterate data, key, flag, size, version, expire
-          # uint32_t flag -> L    // uint32_t
-          # time_t   expire -> Q  // unsigned long
-          # uint64_t size -> Q    // uint64_t
-          # uint64_t version -> Q // uint64_t
-          # uint32_t option -> L  // uint32_t
-          value = [flag, expire, size, version].pack("LQQQ")+data
-          @hdb.put(key, value)
-        end
-        def close
-          @hdb.close
-        end
-      end
       
       class Dump < SubCommand
+
+        class DumpIterator
+          attr_reader :name
+          def write data, key, flag, len, version, expire
+            raise "internal error"
+          end
+          def close
+            raise "internal error"
+          end
+        end
+
+        class DefaultIt < DumpIterator
+          def self.myname
+            "default"
+          end
+          def initialize filepath_or_writable
+            @output = if filepath_or_writable.kind_of?(String)
+                        open(filepath_or_writable, 'w') 
+                      else
+                        filepath_or_writable
+                      end
+          end
+          def write data, key, flag, len, version, expire
+            @output.puts "#{key} #{flag} #{len} #{version} #{expire} '#{data}'"
+          end
+          def close
+            @output.close unless @output == STDOUT || @output == STDERR
+          end
+        end
+
+        class CsvIt < DumpIterator
+          def self.myname
+            "csv"
+          end
+          def initialize filepath_or_writable
+            @output = if filepath_or_writable.kind_of?(String)
+                        open(filepath_or_writable, 'w')
+                      else
+                        filepath_or_writable
+                      end
+            @output.puts "# key, flag, len, version, expire, data"
+            @writer = CSV::Writer.generate(@output, ',')
+          end
+          def write data, key, flag, len, version, expire
+            @writer << [key, flag, len, version, expire, data]
+          end
+          def close
+            @output.close unless @output == STDOUT || @output == STDERR
+          end
+        end
+
+        class TchIt < DumpIterator
+          def self.myname
+            "tch"
+          end
+          def initialize filepath
+            raise "output file not specified." if filepath.nil?
+            raise "#{filepath} isn't a path." unless filepath.kind_of?(String)
+            @hdb = TokyoCabinet::HDB.new
+            @hdb.open(filepath, TokyoCabinet::HDB::OCREAT|TokyoCabinet::HDB::OWRITER)
+          end
+          def write data, key, flag, size, version, expire
+            # uint32_t flag -> L    // uint32_t
+            # time_t   expire -> Q  // unsigned long
+            # uint64_t size -> Q    // uint64_t
+            # uint64_t version -> Q // uint64_t
+            # uint32_t option -> L  // uint32_t
+            value = [flag, expire, size, version].pack("LQQQ")+data
+            @hdb.put(key, value)
+          end
+          def close
+            @hdb.close
+          end
+        end
+
         Iterators = [DefaultIt, CsvIt]
         Iterators << TchIt if USE_TOKYOCABINET
         Formats = Iterators.map {|n| n.myname}
+        SizeOfByte = 8
 
         include Flare::Util::Conversion
         include Flare::Util::Constant
@@ -112,7 +114,7 @@ module Flare
         def setup(opt)
           opt.on('-o', '--output=[FILE]',            "outputs to file") {|v| @output = v}
           opt.on('-f', '--format=[FORMAT]',          "output format [#{Formats.join(',')}]") {|v| @format = v}
-          opt.on('--bwlimit=[BANDWIDTH]',            "bandwidth limit (bytes/s)") {|v| @bwlimit = v}
+          opt.on('--bwlimit=[BANDWIDTH]',            "bandwidth limit (bps)") {|v| @bwlimit = v.to_i}
           opt.on('--all',                            "dump from all nodes") {|v| @all = true}
         end
 
@@ -165,9 +167,9 @@ module Flare
                    end
 
           hosts.each do |hostname,port|
-            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout]) do |n|
-              n.dump(@wait, @part, @partsize, @bwlimit) do |data, key, flag, len, version, expire|
-                dumper.iterate data, key, flag, len, version, expire
+            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], @bwlimit, @bwlimit) do |n|
+              n.dump(@wait, @part, @partsize, @bwlimit/SizeOfByte) do |data, key, flag, len, version, expire|
+                dumper.write data, key, flag, len, version, expire
                 false
               end
             end
