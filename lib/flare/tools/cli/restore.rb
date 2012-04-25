@@ -96,6 +96,7 @@ module Flare
               raise "#{v} isn't a valid regular expression."
             end
           }
+          opt.on('--print-keys',                     "enables key dump to console") {@print_key = true}
         end
 
         def initialize
@@ -108,19 +109,21 @@ module Flare
           @bwlimit = 0
           @include = nil
           @exclude = nil
+          @print_key = false
         end
 
         def execute(config, *args)
+          dry_run = config[:dry_run]
 
           unless @format.nil? || Formats.include?(@format)
-            puts "unknown format: #{@format}"
+            STDERR.puts "unknown format: #{@format}"
             return S_NG
           end
 
           hosts = args.map {|x| x.split(':')}
           hosts.each do |x|
             if x.size != 2
-              puts "invalid argument '#{x.join(':')}'."
+              STDERR.puts "invalid argument '#{x.join(':')}'."
               return S_NG
             end
           end
@@ -140,7 +143,8 @@ module Flare
           restorer.iterate do |key,data,flag,expire|
             if @include.nil? || @include =~ key
               next if @exclude && @exclude =~ key
-              nodes[0].set(key, data, flag, expire)
+              STDOUT.puts key if @print_key
+              nodes[0].set(key, data, flag, expire) unless dry_run
               count += 1
             end
           end
