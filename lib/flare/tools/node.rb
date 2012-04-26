@@ -18,28 +18,28 @@ module Flare
 
       defcmd :flush_all, 'flush_all\r\n' do |resp| resp end
 
-      def x_list_push(k, v)
-        x_list_push_(k.chomp, 0, 0, v.size, v)
+      def x_list_push(k, v, flag = 0, expire = 0)
+        x_list_push_(k.chomp, flag, expire, v.size, v)
       end
       defcmd :x_list_push_, 'list_push %s %d %d %d\r\n%s\r\n' do |resp| resp end
 
-      def x_list_unshift(k, v)
-        x_list_unshift_(k.chomp, 0, 0, v.size, v)
+      def x_list_unshift(k, v, flag = 0, expire = 0)
+        x_list_unshift_(k.chomp, flag, expire, v.size, v)
       end
       defcmd :x_list_unshift_, 'list_unshift %s %d %d %d\r\n%s\r\n' do |resp| resp end
 
-      def set(k, v)
-        set_(k.chomp, 0, 0, v.size, v)
+      def set(k, v, flag = 0, expire = 0)
+        set_(k.chomp, flag, expire, v.size, v)
       end
       defcmd :set_, 'set %s %d %d %d\r\n%s\r\n' do |resp| resp end
 
-      def set_noreply(k, v)
-        set_noreply_(k.chomp, 0, 0, v.size, v)
+      def set_noreply(k, v, flag = 0, expire = 0)
+        set_noreply_(k.chomp, flag, expire, v.size, v)
       end
       defcmd_noreply :set_noreply_, 'set %s %d %d %d noreply\r\n%s\r\n'
 
-      def cas(k, v, casunique)
-        r = cas_(k.chomp, 0, 0, v.size, casunique, v)
+      def cas(k, v, casunique, flag = 0, expire = 0)
+        r = cas_(k.chomp, flag, expire, v.size, casunique, v)
         r = true if r == ""
         r
       end
@@ -107,7 +107,7 @@ module Flare
       end
 
       def dump(wait = 0, part = 0, partsize = 1, bwlimit = 0, &block)
-        dump_(wait, part, partsize, bwlimit, &block)
+        dump_(wait, part, partsize, bwlimit.to_i, &block)
       end
       defcmd_value :dump_, 'dump %d %d %d %d\r\n' do |data, key, flag, len, version, expire|
         false

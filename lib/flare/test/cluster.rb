@@ -77,16 +77,18 @@ module Flare
 
       def prepare_master_and_slaves(nodes, partition = 0)
         Flare::Tools::IndexServer.open(indexname, indexport, 10) do |s|
-          role = 'master'
-          nodes.each do |n|
-            s.set_role(n.hostname, n.port, role, 1, partition)
-            role = 'slave'
-          end
-          role = 'master'
-          nodes.each do |n|
-            wait_for_slave_construction(s, "#{n.hostname}:#{n.port}", 10, true) if role == 'slave'
-            s.set_role(n.hostname, n.port, role, 1, partition)
-            role = 'slave'
+          slaves = nodes.dup
+          master = slaves.shift
+          
+          # master
+          s.set_role(master.hostname, master.port, 'master', 1, partition)
+          wait_for_master_construction(s, "#{master.hostname}:#{master.port}", 10)
+          s.set_state(master.hostname, master.port, 'active')
+          
+          # slave
+          slaves.each do |n|
+            s.set_role(n.hostname, n.port, 'slave', 1, partition)
+            wait_for_slave_construction(s, "#{n.hostname}:#{n.port}", 10, true)
           end
         end
       end
