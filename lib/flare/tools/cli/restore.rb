@@ -13,10 +13,9 @@ require 'csv'
 
 begin
   require 'tokyocabinet'
-  USE_TOKYOCABINET = true unless defined? USE_TOKYOCABINET
-rescue => e
-  USE_TOKYOCABINET = false unless defined? USE_TOKYOCABINET
+rescue LoadError => e
 end
+
 
 module Flare
   module Tools
@@ -24,7 +23,7 @@ module Flare
       
       class Restore < SubCommand
 
-        class RestoreIterator
+        class Restorer
           attr_reader :name
           def iterate &block
             raise "internal error"
@@ -34,7 +33,7 @@ module Flare
           end
         end
 
-        class TchIt < RestoreIterator
+        class TchRestorer < Restorer
           # uint32_t flag -> L    // uint32_t
           # time_t   expire -> Q  // unsigned long
           # uint64_t size -> Q    // uint64_t
@@ -64,9 +63,9 @@ module Flare
           end
         end
 
-        Iterators = []
-        Iterators << TchIt if USE_TOKYOCABINET
-        Formats = Iterators.map {|n| n.myname}
+        Restorers = []
+        Restorers << TchRestorer if defined? TokyoCabinet
+        Formats = Restorers.map {|n| n.myname}
 
         include Flare::Util::Conversion
         include Flare::Util::Constant
@@ -141,8 +140,8 @@ module Flare
           end
           
           restorer = case @format
-                     when TchIt.myname
-                       TchIt.new(@input)
+                     when TchRestorer.myname
+                       TchRestorer.new(@input)
                      else
                        raise "invalid format"
                      end

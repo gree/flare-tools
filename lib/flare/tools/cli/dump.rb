@@ -14,9 +14,7 @@ require 'csv'
 
 begin
   require 'tokyocabinet'
-  USE_TOKYOCABINET = true unless defined? USE_TOKYOCABINET
-rescue => e
-  USE_TOKYOCABINET = false unless defined? USE_TOKYOCABINET
+rescue LoadError => e
 end
 
 module Flare
@@ -25,7 +23,7 @@ module Flare
       
       class Dump < SubCommand
 
-        class DumpIterator
+        class Dumper
           attr_reader :name
           def write data, key, flag, len, version, expire
             raise "internal error"
@@ -35,7 +33,7 @@ module Flare
           end
         end
 
-        class DefaultIt < DumpIterator
+        class DefaultDumper < Dumper
           def self.myname
             "default"
           end
@@ -54,7 +52,7 @@ module Flare
           end
         end
 
-        class CsvIt < DumpIterator
+        class CsvDumper < Dumper
           def self.myname
             "csv"
           end
@@ -75,7 +73,7 @@ module Flare
           end
         end
 
-        class TchIt < DumpIterator
+        class TchDumper < Dumper
           def self.myname
             "tch"
           end
@@ -99,8 +97,8 @@ module Flare
           end
         end
 
-        Iterators = [DefaultIt, CsvIt]
-        Iterators << TchIt if USE_TOKYOCABINET
+        Iterators = [DefaultDumper, CsvDumper]
+        Iterators << TchDumper if defined? TokyoCabinet
         Formats = Iterators.map {|n| n.myname}
         SizeOfByte = 8
 
@@ -160,12 +158,12 @@ module Flare
           end
           
           dumper = case @format
-                   when CsvIt.myname
-                     CsvIt.new(@output || STDOUT)
-                   when TchIt.myname
-                     TchIt.new @output
+                   when CsvDumper.myname
+                     CsvDumper.new(@output || STDOUT)
+                   when TchDumper.myname
+                     TchDumper.new @output
                    else
-                     DefaultIt.new(@output || STDOUT)
+                     DefaultDumper.new(@output || STDOUT)
                    end
 
           hosts.each do |hostname,port|
