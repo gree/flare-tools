@@ -8,6 +8,7 @@ require 'flare/tools/index_server'
 require 'flare/tools/common'
 require 'flare/util/conversion'
 require 'flare/util/constant'
+require 'flare/util/bwlimit'
 require 'flare/tools/cli/sub_command'
 require 'csv'
 
@@ -114,7 +115,9 @@ module Flare
         def setup(opt)
           opt.on('-o', '--output=[FILE]',            "outputs to file") {|v| @output = v}
           opt.on('-f', '--format=[FORMAT]',          "output format [#{Formats.join(',')}]") {|v| @format = v}
-          opt.on('--bwlimit=[BANDWIDTH]',            "bandwidth limit (bps)") {|v| @bwlimit = v.to_i}
+          opt.on('--bwlimit=[BANDWIDTH]',            "bandwidth limit (bps)") {|v|
+            @bwlimit = Flare::Util::Bwlimit.bps(v)
+          }
           opt.on('--all',                            "dump from all nodes") {|v| @all = true}
         end
 
@@ -122,7 +125,6 @@ module Flare
           super
           @output = nil
           @format = nil
-          @wait = 0
           @part = 0
           @partsize = 1
           @bwlimit = 0
@@ -168,7 +170,9 @@ module Flare
 
           hosts.each do |hostname,port|
             Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], @bwlimit, @bwlimit) do |n|
-              n.dump(@wait, @part, @partsize, @bwlimit/SizeOfByte) do |data, key, flag, len, version, expire|
+              interval = 0
+              bwlimit = @bwlimit/1024/SizeOfByte
+              n.dump(interval, @part, @partsize, bwlimit) do |data, key, flag, len, version, expire|
                 dumper.write data, key, flag, len, version, expire
                 false
               end

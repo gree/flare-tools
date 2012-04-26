@@ -17,7 +17,7 @@ Hoe.plugin :newgem
 
 $hoe = Hoe.spec 'flare-tools' do
   self.version = Flare::Tools::VERSION
-  self.developer 'kikehara', 'kiyoshi.ikehara@gree.co.jp'
+  self.developer 'kikehara', 'kiyoshi.ikehara@gree.net'
   self.urls = ['http://github.com/gree/flare-tools']
   self.summary = "Management Tools for Flare"
   self.post_install_message = 'PostInstall.txt'

@@ -10,7 +10,7 @@ envargs = ""
 task :default => [:test]
 
 Rake::TestTask.new do |test|
-  test.libs << '.' << '../lib'
+  test.libs << './lib' << '../lib'
   test.test_files = Dir['test/unit/**/*_test.rb', 'test/integration/**/*_test.rb']
   test.verbose = true
   test.ruby_opts = ['-r', 'rubygems']

@@ -89,6 +89,9 @@ module Flare
               raise "#{v} isn't a valid regular expression."
             end
           }
+          opt.on('--prefix-include=[STRING]',        "prefix string") {|v|
+            @prefix_include = Regexp.new("^"+Regexp.escape(v))
+          }          
           opt.on('--exclude=[PATTERN]',              "exclude pattern") {|v|
             begin
               @exclude = Regexp.new(v)
@@ -108,6 +111,7 @@ module Flare
           @partsize = 1
           @bwlimit = 0
           @include = nil
+          @prefix_indluce = nil
           @exclude = nil
           @print_key = false
         end
@@ -118,6 +122,14 @@ module Flare
           unless @format.nil? || Formats.include?(@format)
             STDERR.puts "unknown format: #{@format}"
             return S_NG
+          end
+          
+          if @prefix_include
+            if @include
+              STDERR.puts "--include option is specified."
+              return S_NG
+            end
+            @include = @prefix_include
           end
 
           hosts = args.map {|x| x.split(':')}

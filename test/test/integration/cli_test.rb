@@ -16,9 +16,6 @@ class CliTest < Test::Unit::TestCase
   include Flare::Tools::Common
   include Subcommands
 
-  S_OK = 0
-  S_NG = 1
-  
   def setup
     @flare_cluster = Flare::Test::Cluster.new('test')
     sleep 1 # XXX
@@ -283,6 +280,7 @@ class CliTest < Test::Unit::TestCase
   end
 
   def test_dump1
+    
   end
 
   def test_dumpkey1
@@ -293,10 +291,9 @@ class CliTest < Test::Unit::TestCase
     args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
     assert_equal(S_OK, master(*args))
     @flare_cluster.prepare_data(@node_servers[0], "key", 10000)
-    puts "dumping keys..."
     args = @node_servers[0..2].map{|n| "#{n.hostname}:#{n.port}"} << "--bwlimit=800k" << "--output=keys.txt"
     assert_equal(S_OK, dumpkey(*args))
-    # File.delete("keys.txt") if File.exist?("keys.txt")
+    File.delete("keys.txt") if File.exist?("keys.txt")
   end
 
   def test_verify1

@@ -6,6 +6,9 @@ require 'flare/test/cluster'
 
 module Subcommands
 
+  S_OK = 0
+  S_NG = 1
+
   def instantiate(cls, args)
     opt = OptionParser.new
     subc = cls.new
@@ -90,6 +93,11 @@ module Subcommands
     puts "args: "+args.join(' ')
     subc = instantiate(Flare::Tools::Cli::Verify, args)
     subc.execute(@config.merge({:command => 'verify'}), *args)
+  end
+  
+  def restore(*args)
+    subc = instantiate(Flare::Tools::Cli::Restore, args)
+    subc.execute(@config.merge({:command => 'restore'}), *args)
   end
   
 end
