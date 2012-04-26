@@ -1,8 +1,13 @@
+=== 0.3.4 / 2012-04-26
+* Major Enhancements
+  * Added 'restore' sub command.
+  * Fixed --bwlimit option of 'dump' subcommand.
+
 === 0.3.3 / 2012-04-23
 * Minor Enhancements
   * Suppressed vefiry error message of verify subcommand for each key.
-  * added --meta option to 'verify' subcommand.
-  * removed prebuilt debian package files.
+  * Added --meta option to 'verify' subcommand.
+  * Removed prebuilt debian package files.
 
 === 0.3.2 / 2012-04-16
 * Major Enhancements
