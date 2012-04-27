@@ -27,11 +27,15 @@ module Flare
           p = node_stat['partition'].to_i
           max_partition = p if p > max_partition
         end
-        @partition = (0..max_partition).map {Hash.new}
+        @partition = if max_partition >= 0
+                       (0..max_partition).map {Hash.new}
+                     else
+                       []
+                     end
         @partition_size = max_partition+1
         nodes_stat.each do |hostname_port,node_stat|
           p = node_stat['partition'].to_i
-          @partition[p][hostname_port] = node_stat
+          @partition[p][hostname_port] = node_stat if p >= 0
         end
         @nodes = {}
         nodes_stat.each do |k,v|
