@@ -22,12 +22,13 @@ module Flare
         @index_server_hostname = index_server_hostname
         @index_server_port = index_server_port
         @nodes_stat = nodes_stat
-        max_partition = 0
+        max_partition = -1
         nodes_stat.each do |hostname_port,node_stat|
           p = node_stat['partition'].to_i
           max_partition = p if p > max_partition
         end
         @partition = (0..max_partition).map {Hash.new}
+        @partition_size = max_partition+1
         nodes_stat.each do |hostname_port,node_stat|
           p = node_stat['partition'].to_i
           @partition[p][hostname_port] = node_stat
@@ -113,6 +114,20 @@ module Flare
       
       def size
         @nodes.size
+      end
+
+      def partition_size
+        @partition_size
+      end
+
+      # proby -> -1
+      # not found -> nil
+      def partition_of_nodename node
+        @nodes
+        @nodes.each do |k,v|
+          return v['partition'].to_i if k == node
+        end
+        return nil
       end
       
     end

@@ -116,43 +116,62 @@ module Flare
           opt.on('--bwlimit=[BANDWIDTH]',            "bandwidth limit (bps)") {|v|
             @bwlimit = Flare::Util::Bwlimit.bps(v)
           }
-          opt.on('--all',                            "dump from all nodes") {|v| @all = true}
+          opt.on('--all',                            "dump from all master nodes") {|v| @all = true}
+          opt.on('--raw',                            "raw dump") {|v| @raw = true}
         end
 
         def initialize
           super
           @output = nil
           @format = nil
-          @part = 0
-          @partsize = 1
           @bwlimit = 0
           @all = false
+          @raw = false
+          @partition_size = 1
         end
 
         def execute(config, *args)
+          cluster = nil
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+          end
+          return S_NG if cluster.nil?
+
+          partition_size = cluster.partition_size
+
           if @all
             if args.size > 0
-              puts "don't specify any nodes with --all option."
+              STDERR.puts "don't specify any nodes with --all option."
               return S_NG
             else
-              Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-                cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
-                args = cluster.master_node_list
-              end
+              args = cluster.master_node_list
             end
           else
-            return S_NG if args.size == 0
+            if args.size == 0
+              STDERR.puts "please specify --all option to get complete dump."
+              return S_NG
+            end
           end
 
           if !@format.nil? && !Formats.include?(@format)
-            puts "unknown format: #{@format}"
+            STDERR.puts "unknown format: #{@format}"
             return S_NG
           end
 
           hosts = args.map {|x| x.split(':')}
           hosts.each do |x|
-            if x.size != 2
-              puts "invalid argument '#{x.join(':')}'."
+            if x.size == 2
+              x << cluster.partition_of_nodename("#{x[0]}:#{x[1]}")
+            elsif x.size == 4
+              if x[3] =~ /^\d+$/
+                STDERR.puts "invalid partition number '#{x.join(':')}'."
+                x[3] = x[3].to_i
+              else
+                STDERR.puts "invalid partition number '#{x.join(':')}'."
+                return S_NG
+              end
+            else
+              STDERR.puts "invalid argument '#{x.join(':')}'."
               return S_NG
             end
           end
@@ -166,14 +185,23 @@ module Flare
                      DefaultDumper.new(@output || STDOUT)
                    end
 
-          hosts.each do |hostname,port|
-            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], @bwlimit, @bwlimit) do |n|
+          hosts.each do |hostname,port,partition|
+            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], 0, @bwlimit) do |n|
               interval = 0
+              part, partsize = if @raw
+                                 [0, 1]
+                               else
+                                 [partition, partition_size]
+                               end
               bwlimit = @bwlimit/1024/SizeOfByte
-              n.dump(interval, @part, @partsize, bwlimit) do |data, key, flag, len, version, expire|
+              count = 0
+              STDERR.print "dumping from #{hostname}:#{port}::#{part} of #{partsize} partitions ... "
+              n.dump(interval, part, partsize, bwlimit) do |data, key, flag, len, version, expire|
                 dumper.write data, key, flag, len, version, expire
+                count += 1
                 false
               end
+              STDERR.puts "#{count}"
             end
           end
 
