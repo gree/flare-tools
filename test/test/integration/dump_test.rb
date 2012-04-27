@@ -36,8 +36,11 @@ class DumpTest < Test::Unit::TestCase
   end
 
   def dump_and_restore(range, prefixes, extra_dump_options, extra_restore_options, &check)
+    expected_data = [1, 2, 3, 4, 5, 6, 7, 8, 9].pack("c*")
+    expected_flag = 1234
+    expected_expire = 2000000000
     # prepare
-    ranges = [[0..1], [2..3], [4..5]]
+    ranges = [[0, 1], [2, 3], [4, 5]]
     src_cluster = Flare::Test::Cluster.new('src')
     puts "preparing src"
     src_nodes = prepare(src_cluster, [0], ranges)
@@ -45,7 +48,7 @@ class DumpTest < Test::Unit::TestCase
     range.each do |i|
       src_nodes[0].open do |n|
         prefixes.each do |prefix|
-          n.set("#{prefix}::#{i}", "data")
+          n.set("#{prefix}::#{i}", expected_data, expected_flag, expected_expire)
         end
       end
     end
@@ -75,12 +78,28 @@ class DumpTest < Test::Unit::TestCase
     args << "#{n.hostname}:#{n.port}"
     assert_equal(S_OK, restore(*args))
 
-    # check
+    # check - total number
     restored = [0, 2, 4].inject(0) do |r,i|
       dest_nodes[i].open do |n|
         r+n.stats["curr_items"].to_i
       end
     end
+
+    # check - flags
+    count = 0
+    (0..2).each do |partition|
+      dest_nodes[ranges[partition][0]].open do |n|
+        n.dump(0, partition, ranges.size, 0) do |data, key, flag, len, version, expire|
+          assert_equal(expected_data, data)
+          assert_equal(expected_flag, flag)
+          assert_equal(expected_expire, expire)
+          count += 1
+        end
+      end
+    end
+    assert_not_equal(0, count)
+
+    # check - call
     check.call(restored)
 
     # destroy
