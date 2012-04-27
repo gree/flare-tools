@@ -16,8 +16,8 @@ include Flare::Util::Logging
 include Flare::Util::Constant
 Cli = Flare::Tools::Cli
 
-index_server_hostname = DefaultIndexServerName
-index_server_port = DefaultIndexServerPort
+index_server_hostname = nil
+index_server_port = nil
 timeout = DefaultTimeout
 dry_run = false
 scname = ''
@@ -71,9 +71,16 @@ end
 
 status = execute do |args|
   command = args.shift
+  index_hostname, index_port = index_server_hostname.split(':')
+  index_hostname = index_hostname || DefaultIndexServerName
+  if index_port && index_server_port
+    raise "port oprtion isn't allowed when you specify nodename as an index server."
+  else
+    index_port = index_server_port || DefaultIndexServerPort if index_port.nil?
+  end
   subc.execute({ :command => command,
-                 :index_server_hostname => index_server_hostname,
-                 :index_server_port => index_server_port,
+                 :index_server_hostname => index_hostname,
+                 :index_server_port => index_port,
                  :dry_run => dry_run,
                  :timeout => timeout },
                *args) if subc
