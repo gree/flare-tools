@@ -34,6 +34,7 @@ lib/flare/tools/cli/part.rb
 lib/flare/tools/cli/ping.rb
 lib/flare/tools/cli/reconstruct.rb
 lib/flare/tools/cli/remove.rb
+lib/flare/tools/cli/restore.rb
 lib/flare/tools/cli/slave.rb
 lib/flare/tools/cli/stats.rb
 lib/flare/tools/cli/sub_command.rb

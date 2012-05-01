@@ -52,7 +52,7 @@ task :clean do
 end
 
 task :manifest_post do
-  sh "grep -v '^debian' Manifest.txt| grep -v '^test' | grep -v '#\$' > Manifest.tmp"
+  sh "grep -ve '^debian' Manifest.txt| grep -ve '^test' | grep -ve '^package' | grep -ve '^Makefile' | grep -v '#\$' > Manifest.tmp"
   sh "mv Manifest.tmp Manifest.txt"
 end
 
