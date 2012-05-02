@@ -37,11 +37,15 @@ module Flare
         def execute(config, *args)
           return S_NG if args.size < 1
           status = S_OK
-
+          
           hosts = args.map {|x| x.to_s.split(':')}
           hosts.each do |x|
             if x.size != 4
-              puts "invalid argument '#{x.join(':')}'."
+              error "invalid argument '#{x.join(':')}'."
+              return S_NG
+            end
+            if x[2].to_i <= 0
+              error "invalid balance '#{x.join(':')}'."
               return S_NG
             end
           end
@@ -67,12 +71,12 @@ module Flare
               exec = false
               if @force
                 exec = true
-              elsif node['role'].to_i == role
-                puts "no need to change the role of #{ipaddr}:#{port}."
+              elsif node['role'] == role
+                info "no need to change the role of #{ipaddr}:#{port}."
               elsif existing_master
-                puts "the partiton already has a master #{existing_master}."
+                info "the partiton already has a master #{existing_master}."
               else
-                print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
+                STDOUT.print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
                 exec = interruptible {(gets.chomp.upcase == "Y")}
               end
               if exec && !config[:dry_run]
@@ -81,12 +85,12 @@ module Flare
                 while resp == false && nretry < @retry
                   resp = s.set_role(hostname, port, role, balance, partition)
                   if resp
-                    puts "started constructing master node..."
+                    info "started constructing master node..."
                   else
                     nretry += 1
-                    puts "waiting #{nretry} sec..."
+                    info "waiting #{nretry} sec..."
                     sleep nretry
-                    puts "retrying..."
+                    info "retrying..."
                   end
                 end
                 if resp
@@ -94,8 +98,10 @@ module Flare
                   if @activate || partition == 0
                     unless @force || partition == 0
                       node = s.stats_nodes[hostname_port]
-                      print "changing node's state (node=#{ipaddr}:#{port}, state=#{node['state']} -> active) (y/n): "
-                      exec = interruptible {(gets.chomp.upcase == "Y")}
+                      STDOUT.print "changing node's state (node=#{ipaddr}:#{port}, state=#{node['state']} -> active) (y/n): "
+                      exec = interruptible {
+                        (gets.chomp.upcase == "Y")
+                      }
                     end
                     if exec
                       resp = s.set_state(hostname, port, 'active')
@@ -108,7 +114,7 @@ module Flare
                 end
               end
             end
-            puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
+            STDOUT.puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
 
           status

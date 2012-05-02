@@ -24,10 +24,10 @@ module Flare
         usage  "remove"
   
         def setup(opt)
-          opt.on('--force',            "commits changes without confirmation") {@force = true}
+          opt.on('--force',            "commits changes without confirmation")                  {@force = true}
           opt.on('--wait=[SECOND]',    "time to wait node for getting ready(default:#{@wait})") {|v| @wait = v.to_i}
-          opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})") {|v| @retry = v.to_i}
-          opt.on('--connection-threshold=[COUNT]',    "connection threashold(default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
+          opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})")                        {|v| @retry = v.to_i}
+          opt.on('--connection-threshold=[COUNT]', "connection threashold(default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
         end
 
         def initialize
@@ -48,27 +48,42 @@ module Flare
           end
           
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+
+            hosts.each do |hostname,port|
+              unless cluster.has_node? "#{hostname}:#{port}"
+                error "unknown node name: #{hostname}:#{port}"
+                return S_NG
+              end
+            end
 
             hosts.each do |hostname,port|
               exec = false
               Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
                 nwait = @wait
+                node = n.stats
+                cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
                 while nwait > 0
-                  node = n.stats
                   conn = node['curr_connections'].to_i
                   cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
                   role = cluster.node_stat("#{hostname}:#{port}")['role']
-                  info "waiting until #{hostname}:#{port}(role=#{role}, connections=#{conn}) is inactive..."
+                  info "waiting until #{hostname}:#{port} (role=#{role}, connections=#{conn}) is inactive..."
                   if conn <= @connection_threshold && role == 'proxy'
                     exec = true
                     break
                   end
                   interruptible {sleep 1}
                   nwait -= 1
+                  node = n.stats
                 end
                 unless @force
-                  print "turning node down (node=#{hostname}:#{port}, role=#{node['role']}) (y/n): "
-                  interruptible {exec = false if gets.chomp.upcase != "Y"}
+                  node_stat = cluster.node_stat("#{hostname}:#{port}")
+                  role = node_stat['role']
+                  state = node_stat['state']
+                  print "turning node down for removing this node (node=#{hostname}:#{port}, role=#{role}, state=#{state}) (y/n): "
+                  interruptible {
+                    exec = false if gets.chomp.upcase != "Y"
+                  }
                 end
               end
               if exec

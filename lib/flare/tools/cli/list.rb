@@ -20,6 +20,12 @@ module Flare
         myname :list
         desc   "show the list of nodes in a flare cluster."
         usage  "list"
+
+        HeaderConfig = [ ['%-32s', 'node'],
+                         ['%9s',   'partition'],
+                         ['%6s',   'role'],
+                         ['%6s',   'state'],
+                         ['%7s',   'balance'] ]
   
         def setup(opt)
           opt.on('--numeric-hosts',            "shows numerical host addresses") {@numeric_hosts = true}
@@ -28,51 +34,53 @@ module Flare
         def initialize
           super
           @numeric_hosts = false
+          @format = HeaderConfig.map {|x| x[0]}.join(' ')
+          @cout = STDOUT
+        end
+
+        def print_header
+          @cout.puts @format % HeaderConfig.map{|x| x[1]}.flatten
+          nil
+        end
+
+        def print_node *args
+          @cout.puts @format % args
+          nil
+        end
+        
+        def get_address_or_remain hostname
+          begin
+            Resolv.getaddress(hostname)
+          rescue Resolv::ResolvError
+            hostname
+          end
         end
 
         def execute(config, *args)
-          header = [ ['%-32s', 'node'],
-                     ['%9s', 'partition'],
-                     ['%6s', 'role'],
-                     ['%6s', 'state'],
-                     ['%7s', 'balance'] ]
-          format = header.map {|x| x[0]}.join(' ')
-          
-          nodes = {}
-          threads = {}
-
           if args.size > 0
             error "invalid arguments: "+args.join(' ')
-            return 1 
+            return S_NG
           end
           
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            nodes = s.stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]}
+          nodes = Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+            stats_nodes = s.stats_nodes
+            stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]} unless stats_nodes.nil?
+          end
+
+          if nodes.nil?
+            error "Invalid index server."
+            return S_NG
           end
           
-          puts format % header.map{|x| x[1]}.flatten
+          print_header
           nodes.each do |hostname_port,data|
-            ipaddr, port = hostname_port.split(":", 2)
-            hostname = ipaddr
-            
-            if @numeric_hosts
-              begin
-                hostname = Resolv.getaddress(hostname)
-              rescue Resolv::ResolvError
-              end
-            end
-            
-            partition = data['partition'] == "-1" ? "-" : data['partition']
-            
-            puts format % [
-                           "#{hostname}:#{port}",
-                           partition,
-                           data['role'],
-                           data['state'],
-                           data['balance'],
-                          ]
+            hostname, port = hostname_port.split(":", 2)
+            hostname = get_address_or_remain(hostname) if @numeric_hosts
+            partition = (data['partition'] == "-1") ? "-" : data['partition']
+            print_node "#{hostname}:#{port}", partition, data['role'], data['state'], data['balance']
           end
-          return 0
+
+          S_OK
         end
         
       end

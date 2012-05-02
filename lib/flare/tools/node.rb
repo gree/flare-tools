@@ -129,9 +129,9 @@ module Flare
       end
 
       def incr_noreply(k, v)
-        incr_noreply(k.chomp, v.to_s)
+        incr_noreply_(k.chomp, v.to_s)
       end
-      defcmd_noreply :incr_noreply, 'incr %s %s noreply\r\n'
+      defcmd_noreply :incr_noreply_, 'incr %s %s noreply\r\n'
 
       def incr(k, v)
         incr_(k.chomp, v.to_s)

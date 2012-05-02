@@ -124,14 +124,17 @@ module Flare
         @partition_size
       end
 
-      # proby -> -1
+      # proxy -> -1
       # not found -> nil
       def partition_of_nodename node
-        @nodes
         @nodes.each do |k,v|
           return v['partition'].to_i if k == node
         end
         return nil
+      end
+
+      def has_node?(hostname_port)
+        @nodes.has_key? hostname_port
       end
       
     end

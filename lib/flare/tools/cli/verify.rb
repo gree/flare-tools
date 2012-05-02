@@ -36,17 +36,16 @@ module Flare
               exit
             end
           end
-          opt.on('--use-test-data',                        "store test data") {|v| @use_test_data = true}
-          opt.on('--debug',                                "debug mode") {|v| @debug = true}
-          opt.on('--64bit',                                "64bit mode (for ILP64)") {|v| @word_size = 64}
-          opt.on('--verbose',                              "verbose mode") {|v| @verbose = true}
-          opt.on('--meta',                                 "use meta command") {|v| @meta = true}
-          opt.on('--quiet',                                "quiet") {|v| @quiet = true}
+          opt.on('--use-test-data',                        "store test data")           {|v| @use_test_data = true}
+          opt.on('--debug',                                "debug mode")                {|v| @debug = true}
+          opt.on('--64bit',                                "(experimental) 64bit mode") {|v| @word_size = 64}
+          opt.on('--verbose',                              "verbose mode")              {|v| @verbose = true}
+          opt.on('--meta',                                 "use meta command")          {|v| @meta = true}
+          opt.on('--quiet',                                "quiet")                     {|v| @quiet = true}
         end
 
         def initialize
           super
-          @machine_word_width
           @numeric_hosts = false
           @key_hash_algorithm = :simple
           @use_test_data = false
@@ -62,9 +61,9 @@ module Flare
           keys = {}
           cout = STDERR
           status = S_OK
-          cout.puts "setting up key resolver ..."
+          info "setting up key resolver ..."
           resolver = Util::KeyResolver.new
-          cout.puts "connecting to index ..."
+          info "connecting to index ..."
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]}
 
@@ -81,7 +80,7 @@ module Flare
               end
               pointer_size = stats['pointer_size']
             end
-            cout.puts "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
+            info "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
 
             # check node list size
             if nodes.size == 0
@@ -97,13 +96,13 @@ module Flare
               if i >= r then i else r end
             end
             if partition_size <= 0
-              cout.puts "no need to verify."
+              info "no need to verify."
               return S_NG
             end
-            cout.puts "partition_size: #{partition_size}"
+            info "partition_size: #{partition_size}"
 
             if @use_test_data
-              cout.puts "storing test data ..."
+              info "storing test data ..."
               Flare::Tools::Node.open(hostname0, port0.to_i, config[:timeout]) do |n|
                 (1..10000).each do |i|
                   key = ".test."+Digest::MD5.new.update(i.to_s).to_s
@@ -164,11 +163,11 @@ module Flare
               remain = 0
               keys.each do |k,state|
                 if state != :found
-                  cout.puts "failed: not found '#{k}'" if @verbose
+                  error "failed: not found '#{k}'" if @verbose
                   remain += 1
                 end
               end
-              cout.puts "failed: not found #{remain} keys" if remain > 0
+              error "failed: not found #{remain} keys" if remain > 0
 
               # delete
               Flare::Tools::Node.open(hostname0, port0.to_i, config[:timeout]) do |n|

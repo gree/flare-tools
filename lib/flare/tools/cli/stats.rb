@@ -25,11 +25,24 @@ module Flare
         desc   "show the statistics of a flare cluster."
         usage  "stats [hostname:port] ..."
 
+        HeaderConfig = [ ['%-25.25s', 'hostname:port'],
+                         ['%6s',      'state'],
+                         ['%6s',      'role'],
+                         ['%9s',      'partition'],
+                         ['%7s',      'balance'],
+                         ['%8.8s',    'items'],
+                         ['%4s',      'conn'],
+                         ['%6.6s',    'behind'],
+                         ['%3.3s',    'hit'],
+                         ['%4.4s',    'size'],
+                         ['%6.6s',    'uptime'],
+                         ['%7s',      'version'] ]
+
         def setup(opt)
-          opt.on("-q", '--qps', "show qps") {@qps = true}
-          opt.on("-w", '--wait=[SECOND]', "wait time for repeat(second)") {|v| @wait = v.to_i}
-          opt.on("-c", '--count=[REPEATTIME]', "repeat count") {|v| @count = v.to_i}
-          opt.on("-d", '--delimiter=[CHAR]', "delimiter") {|v| @delimiter = v}
+          opt.on("-q", '--qps',                "show qps")                     {@qps = true}
+          opt.on("-w", '--wait=[SECOND]',      "wait time for repeat(second)") {|v| @wait = v.to_i}
+          opt.on("-c", '--count=[REPEATTIME]', "repeat count")                 {|v| @count = v.to_i}
+          opt.on("-d", '--delimiter=[CHAR]',   "delimiter")                    {|v| @delimiter = v}
         end
 
         def initialize
@@ -49,18 +62,7 @@ module Flare
         def execute(config, *args)
           nodes = {}
           threads = {}
-          header = [ ['%-25.25s', 'hostname:port'],
-                     ['%6s', 'state'],
-                     ['%6s', 'role'],
-                     ['%9s', 'partition'],
-                     ['%7s', 'balance'],
-                     ['%8.8s', 'items'],
-                     ['%4s', 'conn'],
-                     ['%6.6s', 'behind'],
-                     ['%3.3s', 'hit'],
-                     ['%4.4s', 'size'],
-                     ['%6.6s', 'uptime'],
-                     ['%7s', 'version'] ]
+          header = HeaderConfig.dup
           header << ['%5.5s', 'qps'] << ['%5.5s', 'qps-r'] << ['%5.5s', 'qps-w'] if @qps
 
           format = header.map {|x| x[0]}.join(@delimiter)
@@ -148,8 +150,9 @@ module Flare
           s = Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout])
           unless s
             error "Couldn't connect to the index server."
-            exit 1
+            return S_NG
           end
+
           (0...@count).each do |i|
             nodes = s.stats_nodes
             unless nodes
@@ -192,9 +195,9 @@ module Flare
 
               puts format % output
             end
-            interruptible do
+            interruptible {
               wait_for_stats
-            end
+            }
           end
           s.close
 
@@ -204,11 +207,11 @@ module Flare
             q.clear
           end
           
-          interruptible do
+          interruptible {
             worker_threads.each do |t|
               t.join
             end
-          end
+          }
           
           S_OK
         end

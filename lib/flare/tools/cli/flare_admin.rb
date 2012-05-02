@@ -16,8 +16,8 @@ include Flare::Util::Logging
 include Flare::Util::Constant
 Cli = Flare::Tools::Cli
 
-index_server_hostname = nil
-index_server_port = nil
+index_server_hostname = DefaultIndexServerName
+index_server_port = DefaultIndexServerPort
 timeout = DefaultTimeout
 dry_run = false
 scname = ''

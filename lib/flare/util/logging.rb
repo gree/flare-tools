@@ -72,7 +72,7 @@ module Flare
       # This hides Kernel's puts()
       def puts(*args)
         Logging.set_logger if @@logger.nil?
-        return Kernel.puts *args if @@logger.console?
+        return Kernel.puts(*args) if @@logger.console?
         for msg in args
           info(msg)
         end
