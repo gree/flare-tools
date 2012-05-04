@@ -4,6 +4,8 @@
 # License::   NOTYET
 
 require 'flare/tools/index_server'
+require 'flare/tools/cluster'
+require 'flare/tools/common'
 require 'flare/util/conversion'
 require 'flare/tools/cli/sub_command'
 
@@ -16,6 +18,7 @@ module Flare
       # 
       class List < SubCommand
         include Flare::Util::Conversion
+        include Flare::Tools::Common
 
         myname :list
         desc   "show the list of nodes in a flare cluster."
@@ -62,22 +65,23 @@ module Flare
             return S_NG
           end
           
-          nodes = Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            stats_nodes = s.stats_nodes
-            stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]} unless stats_nodes.nil?
+          cluster = Flare::Tools::IndexServer.open(config[:index_server_hostname],
+                                                   config[:index_server_port], config[:timeout]) do |s|
+            Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
           end
 
-          if nodes.nil?
+          if cluster.nil?
             error "Invalid index server."
             return S_NG
           end
           
           print_header
-          nodes.each do |hostname_port,data|
-            hostname, port = hostname_port.split(":", 2)
+          cluster.nodekeys.each do |nodekey|
+            data = cluster.node_stat(nodekey)
+            hostname, port = nodekey.split(":", 2)
             hostname = get_address_or_remain(hostname) if @numeric_hosts
-            partition = (data['partition'] == "-1") ? "-" : data['partition']
-            print_node "#{hostname}:#{port}", partition, data['role'], data['state'], data['balance']
+            partition = (data.partition == -1) ? "-" : data.partition
+            print_node nodekey_of(hostname, port), partition, data.role, data.state, data.balance
           end
 
           S_OK

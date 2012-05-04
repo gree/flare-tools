@@ -14,13 +14,77 @@ module Flare
     # Cluster is a class that discribes a cluster information.
     class Cluster
       State = 'state'
-      Role = 'role'
-      StateActive = 'active'
-      StateDown   = 'down'
-      RoleProxy = 'proxy'
+      Role  = 'role'
+      StateActive  = 'active'
+      StateDown    = 'down'
+      StateReady   = 'ready'
+      StatePrepare = 'prepare'
+      RoleProxy  = 'proxy'
       RoleMaster = 'master'
-      RoleSlave = 'slave'
+      RoleSlave  = 'slave'
       StatPartition = 'partition'
+
+      class NodeStat
+        def initialize stat
+          @stat = stat.dup
+        end
+
+        def [](i)
+          @stat[i]
+        end
+
+        def []=(i, v)
+          @stat[i] = v.to_s
+        end
+
+        def master?
+          (role == RoleMaster)
+        end
+
+        def slave?
+          (role == RoleSlave)
+        end
+
+        def proxy?
+          (role == RoleProxy)
+        end
+
+        def active?
+          (state == StateActive)
+        end
+
+        def ready?
+          (state == StateReady)
+        end
+        
+        def down?
+          (state == StateDown)
+        end
+
+        def prepare?
+          (state == StatePrepare)
+        end
+
+        def partition
+          @stat['partition'].to_i
+        end
+
+        def thread_type
+          @stat['thread_type'].to_i
+        end
+
+        def balance
+          @stat['balance'].to_i
+        end
+        
+        def method_missing(action, *args)
+          if @stat.has_key? action.to_s
+            @stat[action.to_s]
+          else
+            @stat.__send__(action, *args)
+          end
+        end
+      end
 
       def initialize(index_server_hostname, index_server_port, nodes_stat)
         @index_server_hostname = index_server_hostname
@@ -43,7 +107,7 @@ module Flare
         end
         @nodes = {}
         nodes_stat.each do |k,v|
-          @nodes[k] = v
+          @nodes[k] = NodeStat.new(v)
         end
       end
 
@@ -113,14 +177,19 @@ module Flare
       end
       
       def nodekeys_(&block)
-        if block.nil?
-          @nodes.keys
-        else
-          ret = []
-          @nodes.each do |k,v|
-            ret << k if block.call(v)
-          end
-          ret
+        unordered = if block.nil?
+                      @nodes.keys
+                    else
+                      ret = []
+                      @nodes.each do |k,v|
+                        ret << k if block.call(v)
+                      end
+                      ret
+                    end
+        unordered.sort_by do |i|
+          p = @nodes[i].partition
+          p = @partition_size if p < 0
+          [p, @nodes[i].role, i]
         end
       end
       
