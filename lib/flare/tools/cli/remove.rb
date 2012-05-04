@@ -20,7 +20,7 @@ module Flare
         include Flare::Tools::Common
 
         myname :remove
-        desc   "show the list of nodes in a flare cluster."
+        desc   "remove a node."
         usage  "remove"
   
         def setup(opt)
@@ -48,11 +48,12 @@ module Flare
           end
           
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+            cluster = fetch_cluster(s)
 
             hosts.each do |hostname,port|
-              unless cluster.has_node? "#{hostname}:#{port}"
-                error "unknown node name: #{hostname}:#{port}"
+              nodekey = nodekey_of hostname, port
+              unless cluster.has_nodekey? nodekey
+                error "unknown node name: #{nodekey}"
                 return S_NG
               end
             end
@@ -65,7 +66,7 @@ module Flare
                 cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
                 while nwait > 0
                   conn = node['curr_connections'].to_i
-                  cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+                  cluster = fetch_cluster(s)
                   role = cluster.node_stat("#{hostname}:#{port}")['role']
                   info "waiting until #{hostname}:#{port} (role=#{role}, connections=#{conn}) is inactive..."
                   if conn <= @connection_threshold && role == 'proxy'

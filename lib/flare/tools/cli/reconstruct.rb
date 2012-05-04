@@ -41,13 +41,13 @@ module Flare
 
         def execute(config, *args)
           if @all
-            if args.size > 0
+            unless args.empty?
               puts "don't specify any nodes with --all option."
               return S_NG
             else
               Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
                 cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
-                args = cluster.node_list
+                args = cluster.master_and_slave_nodekeys
               end
             end
           else
@@ -65,35 +65,34 @@ module Flare
           status = S_OK
 
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
+            puts string_of_nodelist(s.stats_nodes, hosts.map {|x| nodekey_of(x[0], x[1])})
 
             hosts.each do |hostname,port|
-              hostname_port = "#{hostname}:#{port}"
-              nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
+              nodekey = nodekey_of hostname, port
               cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
               
-              unless node = cluster.node_stat(hostname_port)
-                puts "#{hostname_port} is not found in this cluster."
+              unless node = cluster.node_stat(nodekey)
+                puts "#{nodekey} is not found in this cluster."
                 return S_NG
               end
-              unless cluster.reconstructable? hostname_port
-                puts "#{hostname_port} is not reconstructable."
+              unless cluster.reconstructable? nodekey
+                puts "#{nodekey} is not reconstructable."
                 status = S_NG
                 next
               end
-              is_safe = cluster.safely_reconstructable? hostname_port
+              is_safe = cluster.safely_reconstructable? nodekey
               if @safe && !is_safe
-                puts "The partition needs one more slave to reconstruct #{hostname_port} safely."
+                puts "The partition needs one more slave to reconstruct #{nodekey} safely."
                 status = S_NG
                 next
               end
 
               exec = @force
               unless exec
-                puts "you are trying to reconstruct #{hostname_port} without redanduncy." unless is_safe
+                puts "you are trying to reconstruct #{nodekey} without redanduncy." unless is_safe
                 input = nil
                 while input.nil?
-                  print "reconstructing node (node=#{hostname_port}, role=#{node['role']}) (y/n/a/q/h:help): "
+                  print "reconstructing node (node=#{nodekey}, role=#{node['role']}) (y/n/a/q/h:help): "
                   input = interruptible do
                     gets.chomp.upcase
                   end
@@ -138,9 +137,9 @@ module Flare
                 end
                 balance = node['balance']
                 if resp
-                  wait_for_slave_construction(s, hostname_port, config[:timeout])
+                  wait_for_slave_construction(s, nodekey, config[:timeout])
                   unless @force
-                    print "changing node's balance (node=#{hostname_port}, balance=0 -> #{balance}) (y/n): "
+                    print "changing node's balance (node=#{nodekey}, balance=0 -> #{balance}) (y/n): "
                     exec = interruptible {(gets.chomp.upcase == "Y")}
                   end
                   s.set_role(hostname, port, 'slave', node['balance'], node['partition']) if exec

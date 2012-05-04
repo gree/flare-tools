@@ -19,6 +19,8 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
+
+        DefaultRetry = 10
         
         myname :slave
         desc   "construct slaves from proxy nodes."
@@ -33,12 +35,12 @@ module Flare
         def initialize
           super
           @force = false
-          @retry = 10
+          @retry = DefaultRetry
           @clean = false
         end
 
         def execute(config, *args)
-          return S_NG if args.size < 1
+          return S_NG if args.empty?
 
           hosts = args.map do |arg|
             hostname, port, balance, partition, rest = arg.split(':', 5)
@@ -46,29 +48,30 @@ module Flare
               error "invalid argument '#{arg}'. it must be hostname:port:balance:partition."
               return S_NG
             end
-            port = if port.empty? then DefaultNodePort else port.to_i end
             [hostname, port, balance.to_i, partition.to_i]
           end
           
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
+            cluster = fetch_cluster(s)
           
             hosts.each do |hostname,port,balance,partition|
-              hostname_port = "#{hostname}:#{port}"              
+              nodekey = nodekey_of hostname, port
 
-              unless node = nodes.inject(false) {|r,i| if i[0] == hostname_port then i[1] else r end}
-                error "invalid 'hostname:port' pair: #{hostname_port}"
+              unless cluster.has_nodekey? nodekey
+                error "invalid 'hostname:port' pair: #{nodekey}"
                 return S_NG
               end
 
+              node = cluster.node_stat(nodekey)
+
               if node['role'] != 'proxy'
-                puts "#{hostname_port} is not a proxy."
+                puts "#{nodekey} is not a proxy."
                 next
               end
               
               exec = @force
               unless exec
-                print "making node slave (node=#{hostname_port}, role=#{node['role']} -> slave) (y/n): "
+                STDERR.print "making node slave (node=#{nodekey}, role=#{node['role']} -> slave) (y/n): "
                 interruptible do
                   exec = true if gets.chomp.upcase == "Y"
                 end
@@ -94,10 +97,10 @@ module Flare
                   end
                 end
                 if resp
-                  wait_for_slave_construction(s, hostname_port, config[:timeout])
+                  wait_for_slave_construction(s, nodekey, config[:timeout])
                   if balance > 0
                     unless @force
-                      print "changing node's balance (node=#{hostname_port}, balance=0 -> #{balance}) (y/n): "
+                      STDERR.print "changing node's balance (node=#{nodekey}, balance=0 -> #{balance}) (y/n): "
                       exec = interruptible {(gets.chomp.upcase == "Y")}
                     end
                     if exec
@@ -110,7 +113,7 @@ module Flare
                 end
               end
             end
-            puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
+            STDOUT.puts string_of_nodelist(s.stats_nodes, hosts.map {|x| x[0..1].join(':')})
           end
           
           return S_OK

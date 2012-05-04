@@ -2,7 +2,7 @@
 # -*- coding: utf-8; -*- 
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
-$LOAD_PATH.unshift(File.dirname(__FILE__)+"/../lib")
+$LOAD_PATH.unshift(File.dirname(__FILE__)+"/../../../lib")
 
 require 'rubygems'
 gem 'test-unit'
@@ -292,6 +292,20 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, master(*args))
     @flare_cluster.prepare_data(@node_servers[0], "key", 10000)
     args = @node_servers[0..2].map{|n| "#{n.hostname}:#{n.port}"} << "--bwlimit=800k" << "--output=keys.txt"
+    assert_equal(S_OK, dumpkey(*args))
+    File.delete("keys.txt") if File.exist?("keys.txt")
+  end
+
+  def test_dumpkey2
+    args = @node_servers[0..0].map{|n| "#{n.hostname}:#{n.port}:1:0"}
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[1..1].map{|n| "#{n.hostname}:#{n.port}:1:1"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    args = @node_servers[2..2].map{|n| "#{n.hostname}:#{n.port}:1:2"} << "--activate"
+    assert_equal(S_OK, master(*args))
+    @flare_cluster.prepare_data(@node_servers[0], "key", 10000)
+    args = ["--all"]
+    args << "--bwlimit=800k" << "--output=keys.txt"
     assert_equal(S_OK, dumpkey(*args))
     File.delete("keys.txt") if File.exist?("keys.txt")
   end

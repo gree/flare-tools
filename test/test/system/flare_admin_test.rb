@@ -7,6 +7,8 @@ require 'test/unit'
 require 'flare/tools'
 require 'flare/test/cluster'
 
+ENV['FLARE_INDEX_SERVER'] = nil
+
 class KeycheckerTest < Test::Unit::TestCase
   Admin = "../bin/flare-admin"
   S_OK = 0
@@ -15,7 +17,7 @@ class KeycheckerTest < Test::Unit::TestCase
   def setup
     @flare_cluster = Flare::Test::Cluster.new('test')
     sleep 1 # XXX
-    @node_servers = ['node1', 'node2', 'node3'].map {|name| @flare_cluster.create_node(name)}
+    @datanodes = ['node1', 'node2', 'node3'].map {|name| @flare_cluster.create_node(name)}
     sleep 1 # XXX
     @flare_cluster.wait_for_ready
     @indexname = @flare_cluster.indexname
@@ -26,10 +28,18 @@ class KeycheckerTest < Test::Unit::TestCase
     @flare_cluster.shutdown
   end
 
+  def flare_admin_with_yes arg
+    cmd = "yes | #{Admin} #{arg}"
+    puts "> #{cmd}"
+    puts `#{cmd}`
+    $?.exitstatus
+  end
+
   def flare_admin arg
     cmd = "#{Admin} #{arg}"
     puts "> #{cmd}"
     puts `#{cmd}`
+    $?.exitstatus
   end
 
   def test_list_simple1
@@ -43,6 +53,22 @@ class KeycheckerTest < Test::Unit::TestCase
     assert_equal(S_NG, $?.exitstatus)
     flare_admin ""
     assert_equal(S_NG, $?.exitstatus)
+  end
+
+  def test_master_simple1
+    h = @datanodes[0].hostname
+    p = @datanodes[0].port
+    flare_admin_with_yes "master #{h}:#{p}:1:0"
+  end
+
+  def test_reconstruct_simple1
+    h = @datanodes[0].hostname
+    p = @datanodes[0].port
+    flare_admin_with_yes "master #{h}:#{p}:1:0"
+    h = @datanodes[1].hostname
+    p = @datanodes[1].port
+    flare_admin_with_yes "master #{h}:#{p}:1:0"
+    flare_admin_with_yes "reconstruct --all"
   end
 
 end

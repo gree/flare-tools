@@ -7,6 +7,7 @@ require 'flare/tools/stats'
 require 'flare/tools/node'
 require 'flare/tools/index_server'
 require 'flare/tools/common'
+require 'flare/tools/cluster'
 require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
@@ -18,6 +19,7 @@ module Flare
       class Activate < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::Constant
+        include Flare::Util::Logging
         include Flare::Tools::Common
         
         myname :activate
@@ -45,34 +47,54 @@ module Flare
           end
           
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
           
             hosts.each do |hostname,port|
-              hostname_port = "#{hostname}:#{port}"
-              port = if port.nil? then DefaultNodePort else port.to_i end
+              nodekey = nodekey_of hostname, port
               ipaddr = address_of_hostname(hostname)
           
-              unless node = nodes.inject(false) {|r,i| if i[0] == hostname_port then i[1] else r end}
-                error "invalid 'hostname:port' pair: #{hostname_port}"
+              unless cluster.has_nodekey? nodekey
+                error "invalid 'hostname:port' pair: #{nodekey}"
                 return S_NG
               end
+
+              node = cluster.node_stat(nodekey)
 
               exec = @force
               if exec
               elsif node['state'] == 'active'
-                puts "#{ipaddr}:#{port} is already active."
+                warn "#{ipaddr}:#{port} is already active."
               else
-                print "turning node up (node=#{ipaddr}:#{port}, state=#{node['state']} -> activate) (y/n): "
-                interruptible do
-                  exec = true if gets.chomp.upcase == "Y"
-                end
+                STDERR.print "turning node up (node=#{ipaddr}:#{port}, state=#{node['state']} -> activate) (y/n): "
+                exec = interruptible {
+                  (gets.chomp.upcase == "Y")
+                }
               end
-              if exec
-                s.set_state(hostname, port, 'active') unless config[:dry_run]
+              if exec && !config[:dry_run]
+                if @force
+                  begin
+                    s.set_state(hostname, port, 'active')
+                  rescue Timeout::Error => e
+                    error "failed to activate #{nodekey} (timeout)"
+                    raise e
+                  end
+                else
+                  resp = false
+                  until resp
+                    resp = s.set_state(hostname, port, 'active')
+                    unless resp
+                      STDERR.print "turning node up (node=#{ipaddr}:#{port}, state=#{node['state']} -> activate) (y/n): "
+                      exec = interruptible {
+                        (gets.chomp.upcase == "Y")
+                      }
+                    end
+                  end
+                end
               end
             end
 
-            puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
+            STDOUT.puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
           
           S_OK

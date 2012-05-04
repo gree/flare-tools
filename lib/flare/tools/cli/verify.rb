@@ -112,11 +112,11 @@ module Flare
               end
             end
 
-            nodes.each do |hostname_port,val|
-              hostname, port = hostname_port.split(":", 2)
+            nodes.each do |nodekey,val|
+              hostname, port = nodekey.split(":", 2)
               partition = val['partition'].to_i
               Flare::Tools::Node.open(hostname, port.to_i, config[:timeout]) do |n|
-                cout.write "checking #{hostname_port} ... "
+                cout.write "checking #{nodekey} ... "
                 msg = "OK"
                 interruptible do
                   count = 0

@@ -50,8 +50,7 @@ module Flare
           slaves = []
 
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            nodes_stats = s.stats_nodes
-            cluster = Flare::Tools::Cluster.new(s.host, s.port, nodes_stats)
+            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
 
             partitions = {}
             hosts.each do |hostname,port,balance,partition|

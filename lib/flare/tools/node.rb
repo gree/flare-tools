@@ -13,10 +13,15 @@ module Flare
     # 
     class Node < Stats
       
-      # (host, port, state)
-      defcmd :set_state, 'node state %s %s %s\r\n' do |resp| resp end
+      def set_state(host, port, state)
+        set_state_(host, port, state)
+      end
+      defcmd :set_state_, 'node state %s %s %s\r\n' do |resp| resp end
 
-      defcmd :flush_all, 'flush_all\r\n' do |resp| resp end
+      def flush_all
+        flush_all_
+      end
+      defcmd :flush_all_, 'flush_all\r\n' do |resp| resp end
 
       def x_list_push(k, v, flag = 0, expire = 0)
         x_list_push_(k.chomp, flag, expire, v.size, v)

@@ -32,6 +32,7 @@ module Flare
           opt.on('-p', '--partition=[NUMBER]',       "partition number") {|v| @part = v.to_i if v.to_i >= 0}
           opt.on('-s', '--partition-size=[SIZE]',    "partition size") {|v| @partsize = v.to_i if v.to_i > 0}
           opt.on(      '--bwlimit=[BANDWIDTH]',      "bandwidth limit (bps)") {|v| @bwlimit = v if v.to_i > 0}
+          opt.on(      '--all',                      "dump form all partitions") {@all = true}
         end
 
         def initialize
@@ -41,10 +42,29 @@ module Flare
           @part = nil
           @partsize = nil
           @bwlimit = nil
+          @all = false
         end
 
         def execute(config, *args)
-          return S_NG if args.size < 1
+          cluster = nil
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+          end
+          return S_NG if cluster.nil?
+
+          if @all
+            unless args.empty?
+              STDERR.puts "don't specify any nodes with --all option."
+              return S_NG
+            else
+              args = cluster.master_nodekeys
+            end
+          else
+            if args.empty?
+              STDERR.puts "please specify --all option to get complete dump."
+              return S_NG
+            end
+          end
 
           unless @format.nil?
             unless ["csv"].include? @format

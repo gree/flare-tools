@@ -15,6 +15,7 @@ require 'csv'
 begin
   require 'tokyocabinet'
 rescue LoadError => e
+  STDERR.puts "please install tokyocabinet via gem command."
 end
 
 module Flare
@@ -144,7 +145,7 @@ module Flare
               STDERR.puts "don't specify any nodes with --all option."
               return S_NG
             else
-              args = cluster.master_node_list
+              args = cluster.master_nodekeys
             end
           else
             if args.size == 0
@@ -153,7 +154,7 @@ module Flare
             end
           end
 
-          if !@format.nil? && !Formats.include?(@format)
+          unless Formats.include?(@format)
             STDERR.puts "unknown format: #{@format}"
             return S_NG
           end

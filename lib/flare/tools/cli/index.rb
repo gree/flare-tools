@@ -4,6 +4,8 @@
 # License::   NOTYET
 
 require 'flare/tools/stats'
+require 'flare/tools/common'
+require 'flare/tools/cluster'
 require 'flare/tools/cli/sub_command'
 require 'flare/util/conversion'
 

@@ -7,6 +7,7 @@ require 'flare/tools/stats'
 require 'flare/tools/node'
 require 'flare/tools/index_server'
 require 'flare/tools/common'
+require 'flare/tools/cluster'
 require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
@@ -45,18 +46,19 @@ module Flare
           end
           
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
+            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
           
             hosts.each do |hostname,port|
-              hostname_port = "#{hostname}:#{port}"
               down = 'down'
-              port = if port.nil? then DefaultNodePort else port.to_i end
+              nodekey = nodekey_of hostname, port
               ipaddr = address_of_hostname(hostname)
           
-              unless node = nodes.inject(false) {|r,i| if i[0] == hostname_port then i[1] else r end}
-                error "invalid 'hostname:port' pair: #{hostname_port}"
+              unless cluster.has_nodekey? nodekey
+                error "invalid 'hostname:port' pair: #{nodekey}"
                 return S_NG
               end
+
+              node = cluster.node_stat(nodekey)
 
               exec = @force
               if exec

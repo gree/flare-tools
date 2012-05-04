@@ -6,6 +6,7 @@
 require 'flare/tools/stats'
 require 'flare/tools/index_server'
 require 'flare/tools/common'
+require 'flare/tools/cluster'
 require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
@@ -19,7 +20,7 @@ module Flare
         include Flare::Tools::Common
 
         myname :master
-        desc   "construct a partition with a master."
+        desc   "construct a partition with a proxy node for master role."
         usage  "master [hostname:port:balance:partition] ..."
 
         def setup(opt)
@@ -35,9 +36,9 @@ module Flare
         end
   
         def execute(config, *args)
-          return S_NG if args.size < 1
           status = S_OK
-          
+
+          return S_NG if args.empty?
           hosts = args.map {|x| x.to_s.split(':')}
           hosts.each do |x|
             if x.size != 4
@@ -48,21 +49,27 @@ module Flare
               error "invalid balance '#{x.join(':')}'."
               return S_NG
             end
+            if nodekey_of(x[0..1]).nil?
+              error "invalid nodekey '#{x.join(':')}'."
+              return S_NG
+            end
           end
+          hosts = hosts.sort_by{|hostname,port,balance,partition| [partition]}
           
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
-            nodes = s.stats_nodes.sort_by{|key,val| [val['partition'], val['role'], key]}
+            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+
             hosts.each do |hostname,port,balance,partition|
-              cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
               role = 'master'
-              port = if port == '' then DefaultNodePort else port.to_i end
-              hostname_port = "#{hostname}:#{port}"
+              nodekey = nodekey_of hostname, port
               ipaddr = address_of_hostname(hostname)
           
-              unless node = nodes.inject(false) {|r,i| if i[0] == hostname_port then i[1] else r end}
-                error "unknown host: #{hostname_port}"
-                return S_NG
+              unless cluster.has_nodekey? nodekey
+                error "unknown host: #{nodekey}"
+                # return S_NG
               end
+
+              node = cluster.node_stat(nodekey)
 
               partition = if partition == '' then node['partition'].to_i else partition.to_i end
               balance = if balance == '' then node['balance'] else balance.to_i end
@@ -76,7 +83,7 @@ module Flare
               elsif existing_master
                 info "the partiton already has a master #{existing_master}."
               else
-                STDOUT.print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
+                STDERR.print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
                 exec = interruptible {(gets.chomp.upcase == "Y")}
               end
               if exec && !config[:dry_run]
@@ -85,7 +92,7 @@ module Flare
                 while resp == false && nretry < @retry
                   resp = s.set_role(hostname, port, role, balance, partition)
                   if resp
-                    info "started constructing master node..."
+                    info "started constructing the master node..."
                   else
                     nretry += 1
                     info "waiting #{nretry} sec..."
@@ -94,18 +101,26 @@ module Flare
                   end
                 end
                 if resp
-                  wait_for_master_construction(s, hostname_port, config[:timeout])
-                  if @activate || partition == 0
-                    unless @force || partition == 0
-                      node = s.stats_nodes[hostname_port]
-                      STDOUT.print "changing node's state (node=#{ipaddr}:#{port}, state=#{node['state']} -> active) (y/n): "
+                  state = wait_for_master_construction(s, nodekey, config[:timeout])
+                  if state == 'ready' && @activate
+                    unless @force
+                      node = s.stats_nodes[nodekey]
+                      STDERR.print "changing node's state (node=#{ipaddr}:#{port}, state=#{node['state']} -> active) (y/n): "
                       exec = interruptible {
                         (gets.chomp.upcase == "Y")
                       }
                     end
                     if exec
-                      resp = s.set_state(hostname, port, 'active')
-                      status = S_NG unless resp
+                      begin
+                        resp = s.set_state(hostname, port, 'active')
+                        unless resp
+                          error "failed to activate #{nodekey}"
+                          status = S_NG
+                        end
+                      rescue Timeout::Error
+                        error "failed to activate #{nodekey} (timeout)"
+                        status = S_NG
+                      end
                     end
                   end
                 else
@@ -114,6 +129,8 @@ module Flare
                 end
               end
             end
+
+            break if status == S_NG
             STDOUT.puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
 
