@@ -9,7 +9,7 @@ require 'flare/test/cluster'
 
 ENV['FLARE_INDEX_SERVER'] = nil
 
-class KeycheckerTest < Test::Unit::TestCase
+class FlareAdminTest < Test::Unit::TestCase
   Admin = "../bin/flare-admin"
   S_OK = 0
   S_NG = 1
