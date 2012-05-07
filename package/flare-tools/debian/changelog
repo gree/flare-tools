@@ -1,3 +1,10 @@
+flare-tools (0.3.5) unstable; urgency=low
+
+  * added --version option.
+  * added --raw option to 'dump' subcommand.
+
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>  Fri, 04 May 2012 22:19:52 +0900
+
 flare-tools (0.3.4) unstable; urgency=low
 
   * added 'restore' subcommand.
