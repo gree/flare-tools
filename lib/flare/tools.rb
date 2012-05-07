@@ -1,7 +1,7 @@
 # -*- coding: utf-8; -*-
-# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.co.jp>
-# Copyright:: Copyright (C) Gree,Inc. 2011. All Rights Reserved.
-# License::   NOTYET
+# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>
+# Copyright:: Copyright (C) Gree, Inc. 2011.
+# License::   MIT-style
 
 # 
 module Flare
@@ -10,7 +10,7 @@ module Flare
   module Tools
     # the version number of flare-tools
     VERSION = '0.3.5'
-    TITLE = "Flare-tools version #{VERSION} Copyright (C) GREE, Inc. 2011-2012"
+    TITLE = "Flare-tools version #{VERSION} Copyright (C) GREE, Inc. 2011"
     autoload :Common,      'flare/tools/common'
     autoload :Cluster,     'flare/tools/cluster'
     autoload :Stats,       'flare/tools/stats'

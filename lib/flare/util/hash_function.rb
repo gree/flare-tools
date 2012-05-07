@@ -1,3 +1,7 @@
+# -*- coding: utf-8; -*-
+# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>
+# Copyright:: Copyright (C) Gree, Inc. 2011.
+# License::   MIT-style
 
 require 'zlib'
 
