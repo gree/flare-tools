@@ -17,7 +17,7 @@ Flare-tools is a collection of command line tools to maintain a flare cluster.
 Management Tools for Flare
 
 Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>
-Copyright:: Copyright (C) Gree, Inc. 2011.
+Copyright:: Copyright (C) GREE, Inc. 2011.
 License::   MIT-style
 
 == SYNOPSIS:
