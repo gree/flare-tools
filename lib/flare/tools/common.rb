@@ -19,18 +19,22 @@ module Flare
         Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
       end
 
-      def confirm? opt = /^Y$/, &block
-        line = gets.chomp.upcase
-        ret = if block.nil?
-                opt =~ line
-              else
-                if opt.nil?
-                  block.call(line)
-                else
-                  block.call(line) if opt =~ line
-                end
-              end
-        ret
+      def user_confirmed opt = { true => /^Y$/, false => /^N$/ }, &block
+        ret = nil
+        while ret.nil?
+          line = gets.chomp.upcase
+          opt.each do |key,pattern|
+            if patterns =~ line
+              ret = key
+              break
+            end
+          end
+        end
+        if block.nil?
+          ret
+        else
+          block.call(ret)
+        end
       end
 
       def nodekey_of *args

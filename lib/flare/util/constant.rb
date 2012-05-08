@@ -14,7 +14,7 @@ module Flare
       DefaultIndexServerName = '127.0.0.1'
       # the default port number of flarei daemon
       DefaultIndexServerPort = 12120
-      # the default port number of flared
+      # the default port number of flared daemon
       DefaultNodePort        = 12121
       # the default timeout of client connections (sec.)
       DefaultTimeout         = 10

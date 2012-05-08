@@ -14,11 +14,18 @@ Rake::TestTask.new do |test|
   test.ruby_opts = ['-r', 'rubygems']
 end
 
-task :stress do
-  tests.each do |test|
-    options = "--verbose"
-    sh "env #{envargs} FLARE_TOOLS_STRESS_TEST=yes ruby #{test}_test.rb #{options}"
-  end
+task :help do
+  print <<EOS
+Examples:
+  run a specific test script
+  > rake TEST=testname_test.rb
+  run a specific test
+  > rake TESTOPTS=--name=test_mytest1
+  run tests with --verbose
+  > rake TESTOPTS=--verbose
+  run stress tests
+  > rake FLARE_TOOLS_STRESS_TEST=yes
+EOS
 end
 
 task :clean do

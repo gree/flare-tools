@@ -5,6 +5,7 @@
 
 require 'flare/tools/index_server'
 require 'flare/util/conversion'
+require 'flare/tools/common'
 require 'flare/tools/cli/sub_command'
 
 module Flare
@@ -12,6 +13,7 @@ module Flare
     module Cli
       class Threads < SubCommand
         include Flare::Util::Conversion
+        include Flare::Tools::Common
 
         myname :threads
         desc   "show the list of threads in a flare cluster."
@@ -33,16 +35,19 @@ module Flare
                    ]
           format = header.map {|x| x[0]}.join(' ')
 
-          if args.size > 1
-            error "invalid arguments: "+args.join(' ')
-            return S_NG
-          end
-
           hostname = config[:index_server_hostname]
           port = config[:index_server_port]
-          
+
           if args.size == 1
-            hostname, port = args[0].split(':')
+            nodekey = nodekey_of args[0]
+            if nodekey.nil?
+              error "invalid nodekey: "+args[0]
+              return S_NG
+            end
+            hostname, port = nodekey.split(':')
+          elsif args.size > 1
+            error "invalid arguments: "+args.join(' ')
+            return S_NG
           end
           
           threads = []

@@ -42,6 +42,13 @@ class FlareAdminTest < Test::Unit::TestCase
     $?.exitstatus
   end
 
+  def test_subc_simple1
+    flare_admin "help"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin ""
+    assert_equal(S_NG, $?.exitstatus)
+  end
+
   def test_list_simple1
     flare_admin "list"
     assert_equal(S_NG, $?.exitstatus)
@@ -49,10 +56,19 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_OK, $?.exitstatus)
     flare_admin "list --index-server=#{@indexname}:#{@indexport} --index-server-port=#{@indexport}"
     assert_equal(S_NG, $?.exitstatus)
-    flare_admin "help"
+  end
+
+  def test_thread_simple1
+    flare_admin "threads"
     assert_equal(S_NG, $?.exitstatus)
-    flare_admin ""
-    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "threads --index-server=#{@indexname}:#{@indexport}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "threads #{@indexname}:#{@indexport}"
+    assert_equal(S_OK, $?.exitstatus)
+    h = @datanodes[0].hostname
+    p = @datanodes[0].port
+    flare_admin "threads #{@h}:#{p}"
+    assert_equal(S_OK, $?.exitstatus)
   end
 
   def test_master_simple1

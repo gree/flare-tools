@@ -4,6 +4,7 @@
 # License::   MIT-style
 
 require 'optparse'
+require 'flare/util/logging'
 
 # 
 module Flare
@@ -29,6 +30,8 @@ module Flare
     # Plesase note that CommandLine includes Logging module.
     module CommandLine
       @@option = OptionParser.new
+      S_OK = 0
+      S_NG = 1
 
       def option(&block)
         block.call(@@option)
@@ -41,12 +44,9 @@ module Flare
         rescue OptionParser::ParseError => err
           puts err.message
           puts @@option.to_s
-          exit 1
+          exit S_NG
         end
       end
-
-      S_OK = 0
-      S_NG = 1
 
       def execute(&block)
         status = S_OK
@@ -57,7 +57,12 @@ module Flare
         end
         status
       rescue => e
-        error e.to_s
+        level = 1
+        Logging.logger.error(e.to_s)
+        e.backtrace.each do |line|
+          Logging.logger.error("  %3s: %s" % [level, line])
+          level += 1
+        end
         raise e if $DEBUG
         S_NG
       end

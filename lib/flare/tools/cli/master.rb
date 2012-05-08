@@ -137,10 +137,6 @@ module Flare
           status
         end # execute()
         
-        def stat_one_node(s)
-          
-        end
-
       end
     end
   end

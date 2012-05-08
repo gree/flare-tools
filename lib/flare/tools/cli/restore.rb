@@ -110,7 +110,7 @@ module Flare
           @partsize = 1
           @bwlimit = 0
           @include = nil
-          @prefix_indluce = nil
+          @prefix_include = nil
           @exclude = nil
           @print_key = false
         end
