@@ -25,10 +25,10 @@ module Flare
         usage "reconstruct [hostname:port] ..."
 
         def setup(opt)
-          opt.on('--force',            "commits changes without confirmation") {@force = true}
-          opt.on('--safe',             "reconstructs a node safely") {@safe = true}
-          opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})") {|v| @retry = v.to_i}
-          opt.on('--all',              "reconstructs all nodes") {@all = true}
+          opt.on('--force',            "commit changes without confirmation"    ) {@force = true}
+          opt.on('--safe',             "reconstruct a node safely"              ) {@safe = true}
+          opt.on('--retry=[COUNT]',    "specify retry count (default:#{@retry})") {|v| @retry = v.to_i}
+          opt.on('--all',              "reconstruct all nodes"                  ) {@all = true}
         end
 
         def initialize

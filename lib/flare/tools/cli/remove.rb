@@ -20,14 +20,14 @@ module Flare
         include Flare::Tools::Common
 
         myname :remove
-        desc   "remove a node."
+        desc   "remove a node. (experimental)"
         usage  "remove"
   
         def setup(opt)
-          opt.on('--force',            "commits changes without confirmation")                  {@force = true}
-          opt.on('--wait=[SECOND]',    "time to wait node for getting ready(default:#{@wait})") {|v| @wait = v.to_i}
+          opt.on('--force',            "commit changes without confirmation")                  {@force = true}
+          opt.on('--wait=[SECOND]',    "specify the time to wait node for getting ready (default:#{@wait})") {|v| @wait = v.to_i}
           opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})")                        {|v| @retry = v.to_i}
-          opt.on('--connection-threshold=[COUNT]', "connection threashold(default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
+          opt.on('--connection-threshold=[COUNT]', "specify connection threashold (default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
         end
 
         def initialize
@@ -81,19 +81,18 @@ module Flare
                   node_stat = cluster.node_stat("#{hostname}:#{port}")
                   role = node_stat['role']
                   state = node_stat['state']
-                  print "turning node down for removing this node (node=#{hostname}:#{port}, role=#{role}, state=#{state}) (y/n): "
+                  print "please shutdown the daemon and continue (node=#{hostname}:#{port}, role=#{role}, state=#{state}) (y/n): "
                   interruptible {
                     exec = false if gets.chomp.upcase != "Y"
                   }
                 end
               end
+              
               if exec
                 suc = false
                 nretry = @retry
                 while nretry > 0
                   resp = false
-                  info "turning down #{hostname}:#{port}."
-                  s.set_state(hostname, port, 'down') unless config[:dry_run]
                   info "removing #{hostname}:#{port}."
                   resp = s.node_remove(hostname, port) unless config[:dry_run]
                   if resp

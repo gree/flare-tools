@@ -19,12 +19,12 @@ module Flare
         include Flare::Util::FileSystem
 
         myname :deploy
-        desc "deploy."
+        desc "deploy for Debian-based system."
         usage "deploy [hostname:port:balance:partition] ..."
   
         def setup(opt)
-          opt.on('--deploy-index',                        "deploys index") {@deploy_index = true}
-          opt.on('--delete',                              "deletes existing contents before deploying") {@delete = true}
+          opt.on('--deploy-index',                        "deploy the index server") {@deploy_index = true}
+          opt.on('--delete',                              "delete existing contents before deploying") {@delete = true}
           opt.on('--flarei=[PATH]',                       "a path for flarei executable") {|v| @flarei = v}
           opt.on('--flared=[PATH]',                       "a path for flared executable") {|v| @flared = v}
           opt.separator('flarei/flared options:')

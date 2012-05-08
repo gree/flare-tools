@@ -243,61 +243,113 @@ This subcommand also display qps (query per second) statistics of each node.
 
 ==== flare-admin's options
 
- Usage: flare-admin [subcommand] [options] [arguments]
-     -h, --help                       shows this message
-     -d, --debug                      enables debug mode
-     -w, --warn                       turns on warnings
-     -n, --dry-run                    dry run
-     -i, --index-server=[HOSTNAME]    index server hostname(default:127.0.0.1)
-     -p, --index-server-port=[PORT]   index server port(default:12120)
- subcommands:
- [master] set the master of a partition.
-   Usage: flare-admin master [hostname:port:balance:partition] ...
-         --force                      commits changes without confirmation
- [reconstruct] reconstruct the database of nodes by copying.
-   Usage: flare-admin reconstruct [hostname:port] ...
-         --force                      commits changes without confirmation
-         --safe                       reconstructs a node safely
-         --all                        reconstructs all nodes
- [ping] ping
-   Usage: flare-admin ping [hostname:port] ...
-         --wait                       waits for alive
- [deploy] deploy.
-   Usage: flare-admin deploy [hostname:port:balance:partition] ...
-         --proxy-concurrency=[CONC]   proxy concurrency
-         --noreply-window-limit=[WINLIMIT]
-                                      noreply window limit
-         --thread-pool-size=[SIZE]    thread pool size
-         --deploy-index               deploys index
-         --delete                     deletes existing contents before deploying
- [slave] make proxy nodes slaves.
-   Usage: flare-admin slave [hostname:port:balance:partition] ...
-         --force                      commits changes without confirmation
-         --retry=[COUNT]              retry count(default:5)
- [balance] set the balance values of nodes.
-   Usage: flare-admin balance [hostname:port:balance] ...
-         --force                      commits changes without confirmation
- [list] show the list of nodes in a flare cluster.
-   Usage: flare-admin list
-         --numeric-hosts              shows numerical host addresses
- [threads] show the list of threads in a flare cluster.
-   Usage: flare-admin threads [hostname:port]
- [stats] show the statistics of a flare cluster.
-   Usage: flare-admin stats [hostname:port] ...
-     -q, --qps                        show qps
-     -w, --wait=[SECOND]              wait time for repeat(second)
-     -c, --count=[REPEATTIME]         repeat count
-     -d, --delimiter=[CHAR]           delimiter
- [index] print the index XML document from a cluster information.
-   Usage: flare-admin index
-     -t, --transitive                 outputs transitive xml
- [down] turn down nodes and destroy their data.
-   Usage: flare-admin down [hostname:port] ...
-         --force                      commits changes without confirmation
+Usage: flare-admin [subcommand] [options] [arguments]
+    -h, --help                       show this message
+    -d, --debug                      enable debug mode
+    -w, --warn                       turn on warnings
+    -n, --dry-run                    dry run
+    -i, --index-server=[HOSTNAME]    index server hostname(default:)
+    -p, --index-server-port=[PORT]   index server port(default:)
+        --log-file=[LOGFILE]         output log to LOGFILE
+subcommands:
 
-== LICENSE:
-* NOTYET
-* This version is for the internal use of GREE, Inc.
+[dumpkey] dump key from nodes.
+  Usage: flare-admin dumpkey [hostname:port] ...
+    -o, --output=[FILE]              output to file
+    -f, --format=[FORMAT]            output format [csv]
+    -p, --partition=[NUMBER]         partition number
+    -s, --partition-size=[SIZE]      partition size
+        --bwlimit=[BANDWIDTH]        bandwidth limit (bps)
+        --all                        dump form all partitions
+
+[master] construct a partition with a proxy node for master role.
+  Usage: flare-admin master [hostname:port:balance:partition] ...
+        --force                      commit changes without confirmation
+        --retry=[COUNT]              specify retry count (default:10)
+        --activate                   change node's state from ready to active
+
+[balance] set the balance values of nodes.
+  Usage: flare-admin balance [hostname:port:balance] ...
+        --force                      commit changes without confirmation
+
+[down] turn down nodes and move them to proxy state.
+  Usage: flare-admin down [hostname:port] ...
+        --force                      commit changes without confirmation
+
+[restore] restore data to nodes. (experimental)
+  Usage: flare-admin restore [hostname:port]
+    -i, --input=[FILE]               input from file
+    -f, --format=[FORMAT]            input format [tch]
+        --bwlimit=[BANDWIDTH]        bandwidth limit (bps)
+        --include=[PATTERN]          include pattern
+        --prefix-include=[STRING]    prefix string
+        --exclude=[PATTERN]          exclude pattern
+        --print-keys                 enables key dump to console
+
+[stats] show the statistics of a flare cluster.
+  Usage: flare-admin stats [hostname:port] ...
+    -q, --qps                        show qps
+    -w, --wait=[SECOND]              specify wait time for repeat(second)
+    -c, --count=[REPEATTIME]         specify repeat count
+    -d, --delimiter=[CHAR]           spedify delimiter
+
+[verify] verify the cluster. (experimental)
+  Usage: flare-admin verify
+        --key-hash-algorithm=[TYPE]  key hash algorithm
+        --use-test-data              store test data
+        --debug                      use debug mode
+        --64bit                      (experimental) 64bit mode
+        --verbose                    use verbose mode
+        --meta                       use meta command
+        --quiet                      use quiet mode
+
+[remove] remove a node. (experimental)
+  Usage: flare-admin remove
+        --force                      commit changes without confirmation
+        --wait=[SECOND]              specify the time to wait node for getting ready (default:30)
+        --retry=[COUNT]              retry count(default:5)
+        --connection-threshold=[COUNT]
+                                     specify connection threashold (default:2)
+
+[dump] dump data from nodes. (experimental)
+  Usage: flare-admin dump [hostname:port] ...
+    -o, --output=[FILE]              output to file
+    -f, --format=[FORMAT]            specify output format [default,csv,tch]
+        --bwlimit=[BANDWIDTH]        specify bandwidth limit (bps)
+        --all                        dump from all master nodes
+        --raw                        raw dump mode (for debugging)
+
+[threads] show the list of threads in a flare cluster.
+  Usage: flare-admin threads [hostname:port]
+
+[slave] construct slaves from proxy nodes.
+  Usage: flare-admin slave [hostname:port:balance:partition] ...
+        --force                      commit changes without confirmation
+        --retry=[COUNT]              specify retry count(default:10)
+        --clean                      clear datastore before construction
+
+[list] show the list of nodes in a flare cluster.
+  Usage: flare-admin list
+        --numeric-hosts              show numerical host addresses
+
+[activate] activate 
+  Usage: flare-admin down [hostname:port] ...
+        --force                      commit changes without confirmation
+
+[ping] ping
+  Usage: flare-admin ping [hostname:port] ...
+        --wait                       wait for OK responses from nodes
+
+[index] print the index XML document from a cluster information.
+  Usage: flare-admin index
+        --output=[FILE]              output index to a file
+
+[reconstruct] reconstruct the database of nodes by copying.
+  Usage: flare-admin reconstruct [hostname:port] ...
+        --force                      commit changes without confirmation
+        --safe                       reconstruct a node safely
+        --retry=[COUNT]              specify retry count (default:10)
+        --all                        reconstruct all nodes
 
 == THANKS:
 * Masaki FUJIMOTO  (the author of Flare)

@@ -22,11 +22,11 @@ module Flare
         include Flare::Tools::Common
         
         myname :down
-        desc   "turn down nodes and destroy their data."
+        desc   "turn down nodes and move them to proxy state."
         usage  "down [hostname:port] ..."
         
         def setup(opt)
-          opt.on('--force',            "commits changes without confirmation") {@force = true}
+          opt.on('--force',            "commit changes without confirmation") {@force = true}
         end
 
         def initialize

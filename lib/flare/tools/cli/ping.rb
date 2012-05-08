@@ -24,7 +24,7 @@ module Flare
         usage  "ping [hostname:port] ..."
         
         def setup(opt)
-          opt.on('--wait',            "waits for alive") {@wait = true}
+          opt.on('--wait',            "wait for OK responses from nodes") {@wait = true}
         end
         
         def initialize

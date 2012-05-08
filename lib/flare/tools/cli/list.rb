@@ -31,7 +31,7 @@ module Flare
                          ['%7s',   'balance'] ]
   
         def setup(opt)
-          opt.on('--numeric-hosts',            "shows numerical host addresses") {@numeric_hosts = true}
+          opt.on('--numeric-hosts',            "show numerical host addresses") {@numeric_hosts = true}
         end
 
         def initialize

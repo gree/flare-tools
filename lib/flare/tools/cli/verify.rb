@@ -24,7 +24,7 @@ module Flare
         include Flare::Util::HashFunction
 
         myname :verify
-        desc   "verify the cluster."
+        desc   "verify the cluster. (experimental)"
         usage  "verify"
   
         def setup(opt)
@@ -37,11 +37,11 @@ module Flare
             end
           end
           opt.on('--use-test-data',                        "store test data")           {|v| @use_test_data = true}
-          opt.on('--debug',                                "debug mode")                {|v| @debug = true}
+          opt.on('--debug',                                "use debug mode")            {|v| @debug = true}
           opt.on('--64bit',                                "(experimental) 64bit mode") {|v| @word_size = 64}
-          opt.on('--verbose',                              "verbose mode")              {|v| @verbose = true}
+          opt.on('--verbose',                              "use verbose mode")          {|v| @verbose = true}
           opt.on('--meta',                                 "use meta command")          {|v| @meta = true}
-          opt.on('--quiet',                                "quiet")                     {|v| @quiet = true}
+          opt.on('--quiet',                                "use quiet mode")            {|v| @quiet = true}
         end
 
         def initialize

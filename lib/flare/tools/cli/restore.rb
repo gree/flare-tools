@@ -72,7 +72,7 @@ module Flare
         include Flare::Tools::Common
         
         myname :restore
-        desc   "restore data to nodes."
+        desc   "restore data to nodes. (experimental)"
         usage  "restore [hostname:port]"
         
         def setup(opt)

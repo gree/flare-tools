@@ -23,7 +23,7 @@ module Flare
         Roles = { "master" => '0', "slave" => '1', "proxy" => '2' }
 
         def setup(opt)
-          opt.on('--output=[FILE]',            "outputs index to a file") {|v|@output = v}
+          opt.on('--output=[FILE]',            "output index to a file") {|v|@output = v}
         end
 
         def initialize

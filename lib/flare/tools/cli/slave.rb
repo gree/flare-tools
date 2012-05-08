@@ -27,9 +27,9 @@ module Flare
         usage  "slave [hostname:port:balance:partition] ..."
 
         def setup(opt)
-          opt.on('--force',            "commits changes without confirmation") {@force = true}
-          opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})") {|v| @retry = v.to_i}
-          opt.on('--clean',            "clears datastore before construction") {@clean = true}
+          opt.on('--force',            "commit changes without confirmation") {@force = true}
+          opt.on('--retry=[COUNT]',    "specify retry count(default:#{@retry})") {|v| @retry = v.to_i}
+          opt.on('--clean',            "clear datastore before construction") {@clean = true}
         end
 
         def initialize

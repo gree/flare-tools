@@ -34,7 +34,7 @@ setup do |opt|
   opt.on("-n",  '--dry-run',                  "dry run")                                                 {dry_run = true}
   opt.on("-i",  '--index-server=[HOSTNAME]',  "index server hostname(default:#{index_server_hostname})") {|v| index_server_hostname = v}
   opt.on("-p",  '--index-server-port=[PORT]', "index server port(default:#{index_server_port})")         {|v| index_server_port = v.to_i}
-  opt.on(       '--log-file=[LOGFILE]',       "outputs log to LOGFILE")                                  {|v| Flare::Util::Logging.set_logger(v)}
+  opt.on(       '--log-file=[LOGFILE]',       "output log to LOGFILE")                                  {|v| Flare::Util::Logging.set_logger(v)}
   
   preparsed = opt.order(ARGV)
   scname = preparsed.shift.to_sym if preparsed.size > 0

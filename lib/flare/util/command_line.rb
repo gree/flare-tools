@@ -26,8 +26,6 @@ module Flare
     #  execute do |args|
     #    ...
     #  end
-    #  
-    # Plesase note that CommandLine includes Logging module.
     module CommandLine
       @@option = OptionParser.new
       S_OK = 0
@@ -74,8 +72,8 @@ end
 extend Flare::Util::CommandLine
 
 option do |opt|
-  opt.on('-h',        '--help',     "shows this message") {puts opt.help; exit 1}
-  opt.on('-d',        '--debug',    "enables debug mode") {$DEBUG = true}
-  opt.on("-w",        '--warn',     "turns on warnings") {$-w = true}
+  opt.on('-h',        '--help',     "show this message") {puts opt.help; exit 1}
+  opt.on('-d',        '--debug',    "enable debug mode") {$DEBUG = true}
+  opt.on("-w",        '--warn',     "turn on warnings") {$-w = true}
 end
 

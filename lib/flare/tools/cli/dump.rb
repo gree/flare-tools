@@ -108,17 +108,17 @@ module Flare
         include Flare::Tools::Common
         
         myname :dump
-        desc   "dump data from nodes."
+        desc   "dump data from nodes. (experimental)"
         usage  "dump [hostname:port] ..."
         
         def setup(opt)
-          opt.on('-o', '--output=[FILE]',            "outputs to file") {|v| @output = v}
-          opt.on('-f', '--format=[FORMAT]',          "output format [#{Formats.join(',')}]") {|v| @format = v}
-          opt.on('--bwlimit=[BANDWIDTH]',            "bandwidth limit (bps)") {|v|
+          opt.on('-o', '--output=[FILE]',            "output to file") {|v| @output = v}
+          opt.on('-f', '--format=[FORMAT]',          "specify output format [#{Formats.join(',')}]") {|v| @format = v}
+          opt.on(      '--bwlimit=[BANDWIDTH]',      "specify bandwidth limit (bps)") {|v|
             @bwlimit = Flare::Util::Bwlimit.bps(v)
           }
           opt.on('--all',                            "dump from all master nodes") {|v| @all = true}
-          opt.on('--raw',                            "raw dump") {|v| @raw = true}
+          opt.on('--raw',                            "raw dump mode (for debugging)") {|v| @raw = true}
         end
 
         def initialize

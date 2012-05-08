@@ -58,6 +58,17 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_NG, $?.exitstatus)
   end
 
+  def test_ping_simple1
+    flare_admin "ping"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "ping #{@indexname}:#{@indexport}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "ping #{@datanodes[0].hostname}:#{@datanodes[0].port}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "ping #{@datanodes[0].hostname}:23"
+    assert_equal(S_NG, $?.exitstatus)
+  end
+
   def test_thread_simple1
     flare_admin "threads"
     assert_equal(S_NG, $?.exitstatus)
@@ -65,9 +76,7 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_OK, $?.exitstatus)
     flare_admin "threads #{@indexname}:#{@indexport}"
     assert_equal(S_OK, $?.exitstatus)
-    h = @datanodes[0].hostname
-    p = @datanodes[0].port
-    flare_admin "threads #{@h}:#{p}"
+    flare_admin "threads #{@datanodes[0].hostname}:#{@datanodes[0].port}"
     assert_equal(S_OK, $?.exitstatus)
   end
 

@@ -27,7 +27,7 @@ module Flare
         usage  "down [hostname:port] ..."
         
         def setup(opt)
-          opt.on('--force',            "commits changes without confirmation") {@force = true}
+          opt.on('--force',            "commit changes without confirmation") {@force = true}
         end
 
         def initialize
