@@ -1,0 +1,44 @@
+
+$LOAD_PATH.unshift(File.dirname(__FILE__)+"/../lib")
+
+require 'flare/tools'
+
+flaretools = "flare-tools"
+
+task :default => [:build]
+
+task :build do |t|
+  sh "(cd #{flaretools} && debuild -us -uc)"
+end
+
+task :debclean do
+  sh "(cd #{flaretools} && debclean)"
+end
+
+task :change do
+  puts "================================="
+  puts "  Flare::Tools::VERSION = #{Flare::Tools::VERSION}"
+  puts "================================="
+  sh "(cd #{flaretools} && dch -i)"
+end
+
+def previous version
+  prev = version.split('.').map{|v| v.to_i}
+  prev[2] -= 1
+  prev.join('.')
+end
+
+task :autochange do
+  v = Flare::Tools::VERSION
+  since = previous(v)
+  sh "git-dch --debian-branch='(no branch)' --new-version #{version} --since=#{since}"
+end
+
+task :clean => [:debclean] do
+  sh "rm -f *.dsc *.tar.gz *.build *.changes"
+end
+
+task :cleanall => [:clean] do
+  sh "rm -f flare-tools/debian/changelog.dch"
+end
+

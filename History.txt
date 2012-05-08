@@ -1,0 +1,90 @@
+=== 0.3.5 / 2012-05-04
+* Minor Enhancements
+  * Added --version option.
+  * Added --raw option to 'dump' subcommand.
+
+=== 0.3.4 / 2012-04-26
+* Major Enhancements
+  * Added 'restore' sub command.
+  * Fixed --bwlimit option of 'dump' subcommand.
+
+=== 0.3.3 / 2012-04-23
+* Minor Enhancements
+  * Suppressed vefiry error message of verify subcommand for each key.
+  * Added --meta option to 'verify' subcommand.
+  * Removed prebuilt debian package files.
+
+=== 0.3.2 / 2012-04-16
+* Major Enhancements
+  * Added 'verify' subcommand for checking dump results.
+* Minor Enhancements
+  * Fixed uptime column of 'stats' subcommand.
+  * Fixed 'stats' subcommand not to block for down nodes.
+
+=== 0.3.1 / 2012-02-25
+* Minor Enhancements
+  * Fixed 'threads' subcommand not to work for flare-1.0.9 or earlier.
+
+=== 0.3.0 / 2012-02-24
+* Major Enhancements
+  * Incremented the version number for internal release.
+* Minor Enhancements
+  * Fixed flare-part command to activate master nodes.
+  * Fixed node listing functions to sort by partition number.
+  * Added experimental options to flare-deploy command.
+
+=== 0.2.7 / 2012-01-20
+* Major Enhancements
+  * Added flare-keydump command for checking key distribution among nodes.
+* Minor Enhancements
+  * Added bandwidth limit function to Flare::Net::Connection class.
+
+=== 0.2.6 / 2012-01-06
+* Major Enhancements
+  * Added 'dump' subcommand for dumping data.
+  * Added 'dumpkey' subcommand for dumping keys.
+* Minor Enhancements
+  * Added experimental list operations to flare/tools/node.rb.
+
+=== 0.2.5 / 2011-12-29
+* Major Enhancements
+  * Added various options to 'deploy' subcommand.
+* Minor Enhancements
+  * Fixed 'master' subcommand to retry role change commands in case of failure.
+  * Changed default retry limit to 10 times for safety.
+  * Modified 'reconstruct' subcommand to ask before restoring a balance value.
+
+=== 0.2.4 / 2011-12-22
+* Major Enhancements
+  * Added 'activate' subcommand to flare-admin for activating a master node in ready state.
+* Minor Enhancements
+  * Removed --keep-ready option from 'master' subcommand. Now it's the default behavior.
+  * Added --activate option to activate a new master after its construction.
+
+=== 0.2.3 / 2011-11-30
+* Major Enhancements
+  * Added 'remove' subcommand to flare-admin for removing nodes from a cluster.
+* Minor Enhancements
+  * Aded --keep-ready option to 'master' subcommand, which is used for keeping 
+    the constructed master in ready state.
+  * Modified 'reconstruct' subcommand to skip when a node isn't ready for reconstruction.
+  * Added --clean option to 'slave' subcommand to rebuild database from scratch.
+  * Removed --transitive option from 'index' subcommand because it's the default behavior now.
+
+=== 0.2.2 / 2011-11-24
+* Minor Enhancements
+  * Introduced log4r.
+  * Implemented a reconnection routine of Connection class.
+  * Modified cli/reconstruct.rb to get out of confirmation skip mode when Ctrl+C is pressed.
+
+=== 0.2.1 / 2011-11-18
+* Minor Enhancements
+  * Added --all option to the 'reconstruct' subcommand to flush and reconstruct all 
+    the nodes in a cluster one by one.
+  * Improved the confirmation step of the reconstruct sumcommand.
+
+=== 0.2.0 / 2011-11-15
+
+* Major enhancements
+  * Initial release
+
