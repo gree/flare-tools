@@ -24,7 +24,7 @@ module Flare
         
         myname :activate
         desc   "activate "
-        usage  "down [hostname:port] ..."
+        usage  "activate [hostname:port] ..."
         
         def setup(opt)
           opt.on('--force',            "commit changes without confirmation") {@force = true}

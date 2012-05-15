@@ -92,7 +92,7 @@ module Flare
                 puts "you are trying to reconstruct #{nodekey} without redanduncy." unless is_safe
                 input = nil
                 while input.nil?
-                  print "reconstructing node (node=#{nodekey}, role=#{node['role']}) (y/n/a/q/h:help): "
+                  STDERR.print "reconstructing node (node=#{nodekey}, role=#{node['role']}) (y/n/a/q/h:help): "
                   input = interruptible do
                     gets.chomp.upcase
                   end
