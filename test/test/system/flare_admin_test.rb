@@ -83,17 +83,31 @@ class FlareAdminTest < Test::Unit::TestCase
   def test_master_simple1
     h = @datanodes[0].hostname
     p = @datanodes[0].port
-    flare_admin_with_yes "master #{h}:#{p}:1:0"
+    flare_admin_with_yes "master --index-server=#{@indexname}:#{@indexport} #{h}:#{p}:1:0"
+    assert_equal(S_OK, $?.exitstatus)
   end
 
   def test_reconstruct_simple1
     h = @datanodes[0].hostname
     p = @datanodes[0].port
-    flare_admin_with_yes "master #{h}:#{p}:1:0"
+    flare_admin_with_yes "master --index-server=#{@indexname}:#{@indexport} #{h}:#{p}:1:0"
+    assert_equal(S_OK, $?.exitstatus)
     h = @datanodes[1].hostname
     p = @datanodes[1].port
+    flare_admin_with_yes "slave --index-server=#{@indexname}:#{@indexport} #{h}:#{p}:1:0"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin_with_yes "reconstruct --index-server=#{@indexname}:#{@indexport} --all"
+    assert_equal(S_OK, $?.exitstatus)
+  end
+
+  def test_index_servers_env1
+    ENV["FLARE_INDEX_SERVERS"] = "clustername:#{@indexname}:#{@indexport}"
+    flare_admin "list"
+    assert_equal(S_NG, $?.exitstatus)
+    h = @datanodes[0].hostname
+    p = @datanodes[0].port
     flare_admin_with_yes "master #{h}:#{p}:1:0"
-    flare_admin_with_yes "reconstruct --all"
+    assert_equal(S_OK, $?.exitstatus)
   end
 
 end
