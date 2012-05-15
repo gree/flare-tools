@@ -34,19 +34,22 @@ module Flare
           if ENV.has_key? envname
             clusters = ENV[envname].split(';').map{|s| s.split(':')}
             clusters.each do |cluster_name,index_name,index_port|
-              Flare::Tools::IndexServer.open(index_name, index_port.to_i) do |s|
+              ret = Flare::Tools::IndexServer.open(index_name, index_port.to_i) do |s|
                 cluster_nodekeys = s.stats_nodes.map {|x| x[0]}
                 included = true
                 nodekeys.each do |nodekey|
                   included = false unless cluster_nodekeys.include? nodekey
                 end
-                return [index_name, index_port] if included
+                if included
+                  [index_name, index_port]
+                else
+                  nil
+                end
               end
+              return ret unless ret.nil?
             end
-            nil
-          else
-            nil
           end
+          nil
         rescue => e
           nil
         end

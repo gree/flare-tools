@@ -65,7 +65,7 @@ module Flare
               elsif node['state'] == down
                 puts "#{ipaddr}:#{port} is already down."
               else
-                print "turning node down (node=#{ipaddr}:#{port}, state=#{node['state']} -> #{down}) (y/n): "
+                STDERR.print "turning node down (node=#{ipaddr}:#{port}, state=#{node['state']} -> #{down}) (y/n): "
                 exec = interruptible {(gets.chomp.upcase == "Y")}
               end
               if exec

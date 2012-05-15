@@ -65,9 +65,9 @@ end
 
 status = execute do |args|
   command = args.shift
-  ihostname, iport = get_index_server_from_cluster(cluster) || get_index_server_from_nodekeys(args) || get_index_server_name_and_port(index_server_hostname, index_server_port)
-  p ihostname
-  p iport
+  ihostname, iport = get_index_server_from_nodekeys(args) ||
+    get_index_server_name_and_port(index_server_hostname, index_server_port)
+  ihostname, iport = get_index_server_from_cluster(cluster) unless cluster.nil?
   subc.execute({ :command => command,
                  :index_server_hostname => ihostname,
                  :index_server_port => iport,
