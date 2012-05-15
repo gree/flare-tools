@@ -110,5 +110,13 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_OK, $?.exitstatus)
   end
 
+  def test_index_servers_env2
+    ENV["FLARE_INDEX_SERVERS"] = "clustername:#{@indexname}:#{@indexport}"
+    flare_admin "list"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list --cluster=clustername"
+    assert_equal(S_OK, $?.exitstatus)
+  end
+
 end
 

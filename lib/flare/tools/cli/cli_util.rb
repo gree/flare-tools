@@ -9,8 +9,21 @@ module Flare
   module Tools
     module Cli
       module CliUtil
+        FLARE_INDEX_SERVERS = "FLARE_INDEX_SERVERS"
+        FLARE_INDEX_SERVER = "FLARE_INDEX_SERVER"
 
-        def get_index_server_from_nodekeys(dnodekeys, envname = "FLARE_INDEX_SERVERS")
+        def get_index_server_from_cluster(name, envname = FLARE_INDEX_SERVERS)
+          return nil if name.nil?
+          if ENV.has_key? envname
+            clusters = ENV[envname].split(';').map{|s| s.split(':')}
+            clusters.each do |cluster_name,index_name,index_port|
+              return [index_name, index_port] if cluster_name == name
+            end
+          end
+          return nil
+        end
+
+        def get_index_server_from_nodekeys(dnodekeys, envname = FLARE_INDEX_SERVERS)
           nodekeys = []
           return nil if dnodekeys.empty?
           dnodekeys.each do |n|
@@ -20,8 +33,7 @@ module Flare
           end
           if ENV.has_key? envname
             clusters = ENV[envname].split(';').map{|s| s.split(':')}
-            clusters.each do |cluster|
-              cluster_name, index_name, index_port = cluster
+            clusters.each do |cluster_name,index_name,index_port|
               Flare::Tools::IndexServer.open(index_name, index_port.to_i) do |s|
                 cluster_nodekeys = s.stats_nodes.map {|x| x[0]}
                 included = true
@@ -39,7 +51,7 @@ module Flare
           nil
         end
 
-        def get_index_server_name_and_port(index_server_hostname, index_server_port, envname = "FLARE_INDEX_SERVER")          
+        def get_index_server_name_and_port(index_server_hostname, index_server_port, envname = FLARE_INDEX_SERVER)
           env_ihostname = nil
           env_iport = nil
           if ENV.has_key? envname
@@ -54,6 +66,7 @@ module Flare
           end
           [ihostname, iport]
         end
+
       end
     end
   end
