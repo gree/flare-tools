@@ -116,6 +116,8 @@ module Flare
         end
 
         def execute(config, *args)
+          STDERR.puts "please install tokyocabinet via gem command." unless defined? TokyoCabinet
+
           dry_run = config[:dry_run]
 
           unless @format.nil? || Formats.include?(@format)

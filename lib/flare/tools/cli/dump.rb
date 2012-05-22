@@ -15,7 +15,6 @@ require 'csv'
 begin
   require 'tokyocabinet'
 rescue LoadError => e
-  STDERR.puts "please install tokyocabinet via gem command."
 end
 
 module Flare
@@ -132,6 +131,8 @@ module Flare
         end
 
         def execute(config, *args)
+          STDERR.puts "please install tokyocabinet via gem command." unless defined? TokyoCabinet
+
           cluster = nil
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
