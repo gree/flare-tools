@@ -58,6 +58,28 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_NG, $?.exitstatus)
   end
 
+  def test_list_short1
+    flare_admin "list"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list -i #{@indexname}:#{@indexport}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "list -i #{@indexname} -p #{@indexport}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "list -i #{@indexname}:#{@indexport} -p #{@indexport}"
+    assert_equal(S_NG, $?.exitstatus)
+  end
+
+  def test_log_file1
+    filename = "logfile.log"
+    exist = File.exist?(filename)
+    flare_admin "list --log-file=#{filename}"
+    assert_equal(S_NG, $?.exitstatus)
+    exist = File.exist?(filename)
+    assert_equal(true, exist)
+  ensure
+    File.delete(filename) if exist
+  end
+
   def test_ping_simple1
     flare_admin "ping"
     assert_equal(S_OK, $?.exitstatus)

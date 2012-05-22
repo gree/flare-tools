@@ -38,11 +38,11 @@ subc = eval "Flare::Tools::Cli::#{cliname.capitalize}.new"
 
 setup do |opt|
   opt.banner = "#{Flare::Tools::TITLE}\nUsage: flare-#{cliname} [options]"
-  opt.on('-n',             '--dry-run',                  "dry run") {dry_run = true}
-  opt.on('-i=[HOSTNAME]',  '--index-server=[HOSTNAME]',  "index server hostname(default:#{DefaultIndexServerName})") {|v| index_server_hostname = v}
-  opt.on('-p=[PORT]',      '--index-server-port=[PORT]', "index server port(default:#{DefaultIndexServerPort})") {|v| index_server_port = v.to_i}
-  opt.on(                  '--log-file=[LOGFILE]',       "output log to LOGFILE") {|v| Flare::Util::Logging.set_logger(v)}
-  opt.on(                  '--cluster=[NAME]',           "specify a cluster name") {|v| cluster = v}
+  opt.on('-n',          '--dry-run',                "dry run") {dry_run = true}
+  opt.on('-i HOSTNAME', '--index-server=HOSTNAME',  "index server hostname(default:#{DefaultIndexServerName})") {|v| index_server_hostname = v}
+  opt.on('-p PORT',     '--index-server-port=PORT', "index server port(default:#{DefaultIndexServerPort})") {|v| index_server_port = v.to_i}
+  opt.on(               '--log-file=LOGFILE',       "output log to LOGFILE") {|v| Flare::Util::Logging.set_logger(v)}
+  opt.on(               '--cluster=NAME',           "specify a cluster name") {|v| cluster = v}
 
   subc.setup(opt)
 end

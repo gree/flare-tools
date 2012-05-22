@@ -76,22 +76,22 @@ module Flare
         usage  "restore [hostname:port]"
         
         def setup(opt)
-          opt.on('-i', '--input=[FILE]',             "input from file") {|v| @input = v}
-          opt.on('-f', '--format=[FORMAT]',          "input format [#{Formats.join(',')}]") {|v|
+          opt.on('-i', '--input=FILE',             "input from file") {|v| @input = v}
+          opt.on('-f', '--format=FORMAT',          "input format [#{Formats.join(',')}]") {|v|
             @format = v
           }
-          opt.on('--bwlimit=[BANDWIDTH]',            "bandwidth limit (bps)") {|v| @bwlimit = v}
-          opt.on('--include=[PATTERN]',              "include pattern") {|v|
+          opt.on('--bwlimit=BANDWIDTH',            "bandwidth limit (bps)") {|v| @bwlimit = v}
+          opt.on('--include=PATTERN',              "include pattern") {|v|
             begin
               @include = Regexp.new(v)
             rescue RegexpError => e
               raise "#{v} isn't a valid regular expression."
             end
           }
-          opt.on('--prefix-include=[STRING]',        "prefix string") {|v|
+          opt.on('--prefix-include=STRING',        "prefix string") {|v|
             @prefix_include = Regexp.new("^"+Regexp.escape(v))
           }          
-          opt.on('--exclude=[PATTERN]',              "exclude pattern") {|v|
+          opt.on('--exclude=PATTERN',              "exclude pattern") {|v|
             begin
               @exclude = Regexp.new(v)
             rescue RegexpError => e
