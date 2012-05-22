@@ -31,16 +31,16 @@ default_bucket_file = "bucket.csv"
 
 # Options
 opt = OptionParser.new
-opt.on('-d', '--delimiter=[STRING]',        "delimiter (defalut #{delimiter})") {|v| delimiter = v; use_prefix = true }
-opt.on('-b', '--bucket-file=[CSVFILE]',     "bucket file (default #{default_bucket_file})") {|v| bucket_file = v; }
-opt.on('-i', '--input=[CSVFILE]',           "input file") {|v| input_file = v; }
-opt.on('-o', '--output=[CSVFILE]',          "output file") {|v| output_file = v; }
-opt.on('-s', '--partition-size=[SIZE]',     "max partition size (default #{partition_size})") {|v| partition_size = v.to_i }
-opt.on('-h', '--hash=[TYPE]',               "hash function (simple,bitshift,crc32)") {|v|
+opt.on('-d', '--delimiter=STRING',        "delimiter (defalut #{delimiter})") {|v| delimiter = v; use_prefix = true }
+opt.on('-b', '--bucket-file=CSVFILE',     "bucket file (default #{default_bucket_file})") {|v| bucket_file = v; }
+opt.on('-i', '--input=CSVFILE',           "input file") {|v| input_file = v; }
+opt.on('-o', '--output=CSVFILE',          "output file") {|v| output_file = v; }
+opt.on('-s', '--partition-size=SIZE',     "max partition size (default #{partition_size})") {|v| partition_size = v.to_i }
+opt.on('-h', '--hash=TYPE',               "hash function (simple,bitshift,crc32)") {|v|
   default_bucket_file = "bucket.#{v}.csv"
   hash = if hashfunc.has_key? v then hashfunc[v] else abort "invalid hash function." end
 }
-opt.on('-n', '--hint=[SIZE]',               "hint (default #{hint})") {|v| hint = v; }
+opt.on('-n', '--hint=SIZE',               "hint (default #{hint})") {|v| hint = v; }
 opt.parse!(ARGV)
 
 # Bucket

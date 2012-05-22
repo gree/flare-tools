@@ -39,10 +39,10 @@ module Flare
                          ['%7s',      'version'] ]
 
         def setup(opt)
-          opt.on("-q", '--qps',                "show qps")                             {@qps = true}
-          opt.on("-w", '--wait=[SECOND]',      "specify wait time for repeat(second)") {|v| @wait = v.to_i}
-          opt.on("-c", '--count=[REPEATTIME]', "specify repeat count")                 {|v| @count = v.to_i}
-          opt.on("-d", '--delimiter=[CHAR]',   "spedify delimiter")                    {|v| @delimiter = v}
+          opt.on("-q", '--qps',              "show qps")                             {|v| @qps = v}
+          opt.on("-w", '--wait=SECOND',      "specify wait time for repeat(second)") {|v| @wait = v.to_i}
+          opt.on("-c", '--count=REPEATTIME', "specify repeat count")                 {|v| @count = v.to_i}
+          opt.on("-d", '--delimiter=CHAR',   "spedify delimiter")                    {|v| @delimiter = v}
         end
 
         def initialize

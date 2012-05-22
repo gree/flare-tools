@@ -24,9 +24,9 @@ module Flare
         usage  "remove"
   
         def setup(opt)
-          opt.on('--force',            "commit changes without confirmation")                  {@force = true}
-          opt.on('--wait=[SECOND]',    "specify the time to wait node for getting ready (default:#{@wait})") {|v| @wait = v.to_i}
-          opt.on('--retry=[COUNT]',    "retry count(default:#{@retry})")                        {|v| @retry = v.to_i}
+          opt.on('--force',          "commit changes without confirmation")                  {@force = true}
+          opt.on('--wait=SECOND',    "specify the time to wait node for getting ready (default:#{@wait})") {|v| @wait = v.to_i}
+          opt.on('--retry=COUNT',    "retry count(default:#{@retry})")                        {|v| @retry = v.to_i}
           opt.on('--connection-threshold=[COUNT]', "specify connection threashold (default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
         end
 

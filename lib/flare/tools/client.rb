@@ -27,7 +27,9 @@ module Flare
         return session if block.nil?
         return block.call(session)
       ensure
-        unless session.nil?
+        if session.nil?
+          error "failed to open #{host}:#{port}."
+        else
           session.close # this might raise IOError
         end
       end

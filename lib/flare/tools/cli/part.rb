@@ -25,8 +25,8 @@ module Flare
         usage  "master [hostname:port:balance:partition] ..."
 
         def setup(opt)
-          opt.on('--force',            "commits changes without confirmation") {@force = true}
-          opt.on('--retry=[COUNT]',    "retry count"                         ) {|v| @retry = v.to_i}
+          opt.on('--force',          "commits changes without confirmation") {@force = true}
+          opt.on('--retry=COUNT',    "retry count"                         ) {|v| @retry = v.to_i}
         end
 
         def initialize

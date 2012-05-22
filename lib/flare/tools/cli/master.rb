@@ -24,9 +24,9 @@ module Flare
         usage  "master [hostname:port:balance:partition] ..."
 
         def setup(opt)
-          opt.on('--force',            "commit changes without confirmation"     ) {@force = true}
-          opt.on('--retry=[COUNT]',    "specify retry count (default:#{@retry})" ) {|v| @retry = v.to_i}
-          opt.on('--activate',         "change node's state from ready to active") {@activate = true}
+          opt.on('--force',          "commit changes without confirmation"     ) {@force = true}
+          opt.on('--retry=COUNT',    "specify retry count (default:#{@retry})" ) {|v| @retry = v.to_i}
+          opt.on('--activate',       "change node's state from ready to active") {@activate = true}
         end
 
         def initialize

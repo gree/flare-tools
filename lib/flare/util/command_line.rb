@@ -73,7 +73,7 @@ extend Flare::Util::CommandLine
 
 option do |opt|
   opt.on('-h',        '--help',     "show this message") {puts opt.help; exit 1}
-  opt.on('-d',        '--debug',    "enable debug mode") {$DEBUG = true}
-  opt.on("-w",        '--warn',     "turn on warnings") {$-w = true}
+  opt.on(             '--debug',    "enable debug mode") {$DEBUG = true}
+  opt.on(             '--warn',     "turn on warnings") {$-w = true}
 end
 
