@@ -6,6 +6,7 @@ SRCDIR=.
 install:
 	install -d ${DESTDIR}${BINDIR}
 	install -m 755 ${SRCDIR}/bin/* ${DESTDIR}${BINDIR}
+	find ${DESTDIR}${BINDIR} -type f -executable | xargs -n 1 sed -i 1c\#!/usr/bin/ruby${RUBYVER}
 	install -d ${DESTDIR}${RUBYLIBDIR}/flare
 	install -m 644 ${SRCDIR}/lib/flare/*.rb ${DESTDIR}${RUBYLIBDIR}/flare
 	install -d ${DESTDIR}${RUBYLIBDIR}/flare/tools
