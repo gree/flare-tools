@@ -81,7 +81,7 @@ module Flare
                   node_stat = cluster.node_stat("#{hostname}:#{port}")
                   role = node_stat['role']
                   state = node_stat['state']
-                  print "please shutdown the daemon and continue (node=#{hostname}:#{port}, role=#{role}, state=#{state}) (y/n): "
+                  STDERR.print "please shutdown the daemon and continue (node=#{hostname}:#{port}, role=#{role}, state=#{state}) (y/n): "
                   interruptible {
                     exec = false if gets.chomp.upcase != "Y"
                   }
