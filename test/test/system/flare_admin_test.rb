@@ -22,6 +22,7 @@ class FlareAdminTest < Test::Unit::TestCase
     @flare_cluster.wait_for_ready
     @indexname = @flare_cluster.indexname
     @indexport = @flare_cluster.indexport
+    @opt_index = "--index-server=#{@indexname}:#{@indexport}"
   end
 
   def teardown
@@ -49,17 +50,39 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_NG, $?.exitstatus)
   end
 
-  def test_list_simple1
-    flare_admin "list"
+  def test_common_option_long1
+    flare_admin "list --index-server"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list --index-server-port"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list --index-server --index-server-port"
     assert_equal(S_NG, $?.exitstatus)
     flare_admin "list --index-server=#{@indexname}:#{@indexport}"
     assert_equal(S_OK, $?.exitstatus)
+    flare_admin "list --index-server=#{@indexname} --index-server-port=#{@indexport}"
+    assert_equal(S_OK, $?.exitstatus)
     flare_admin "list --index-server=#{@indexname}:#{@indexport} --index-server-port=#{@indexport}"
     assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list --log-file"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list --log-file=/"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list --log-file=''"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list --log-file=''"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list #{@opt_index} --dry-run"
+    assert_equal(S_OK, $?.exitstatus)
   end
 
-  def test_list_short1
+  def test_common_option_short1
     flare_admin "list"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list -i"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list -i -p"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list -p"
     assert_equal(S_NG, $?.exitstatus)
     flare_admin "list -i #{@indexname}:#{@indexport}"
     assert_equal(S_OK, $?.exitstatus)
@@ -67,6 +90,17 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_OK, $?.exitstatus)
     flare_admin "list -i #{@indexname}:#{@indexport} -p #{@indexport}"
     assert_equal(S_NG, $?.exitstatus)
+  end
+
+  def test_list_simple1
+    flare_admin "list"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list --index-server=#{@indexname}:#{@indexport}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "list --index-server=#{@indexname}:#{@indexport} --index-server-port=#{@indexport}"
+    assert_equal(S_NG, $?.exitstatus)
+    flare_admin "list #{@opt_index} --numeric-hosts"
+    assert_equal(S_OK, $?.exitstatus)
   end
 
   def test_log_file1
@@ -89,6 +123,15 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_OK, $?.exitstatus)
     flare_admin "ping #{@datanodes[0].hostname}:23"
     assert_equal(S_NG, $?.exitstatus)
+  end
+
+  def test_ping_wait1
+    flare_admin "ping --wait"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "ping --wait #{@indexname}:#{@indexport}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "ping --wait #{@datanodes[0].hostname}:#{@datanodes[0].port}"
+    assert_equal(S_OK, $?.exitstatus)
   end
 
   def test_thread_simple1
