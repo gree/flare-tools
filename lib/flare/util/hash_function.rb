@@ -8,10 +8,10 @@ require 'zlib'
 module Flare
   module Util
     module HashFunction
-      def get_key_hash_value key, type, word_size = 64
+      def get_key_hash_value key, type, word_size = 32
         f = {
-          :simple => lambda {|k| r = 0; k.each_byte {|c| r += c }; r },
-          :bitshift => lambda {|k| r = 19790217; k.each_byte {|c| r = (r << 5) + (r << 2) + r + c }; r },
+          :simple => lambda {|k| r = 0; k.each_byte {|c| r += c }; r%word_size },
+          :bitshift => lambda {|k| r = 19790217; k.each_byte {|c| r = (r << 5) + (r << 2) + r + c }; r%word_size },
           :crc32 => lambda {|k| Zlib.crc32(k, 0) },
         }[type]
         return nil if f.nil?

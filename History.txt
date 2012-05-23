@@ -1,3 +1,7 @@
+=== 0.4.2 / 2012-05-23
+* Minor Enhancements
+  * Fixed option attributes for optparse.
+
 === 0.4.1 / 2012-05-15
 * Minor Enhancements
   * Added FLARE_INDEX_SERVER environment variable support.

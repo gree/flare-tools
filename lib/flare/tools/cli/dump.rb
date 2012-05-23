@@ -15,7 +15,6 @@ require 'csv'
 begin
   require 'tokyocabinet'
 rescue LoadError => e
-  STDERR.puts "please install tokyocabinet via gem command."
 end
 
 module Flare
@@ -112,9 +111,9 @@ module Flare
         usage  "dump [hostname:port] ..."
         
         def setup(opt)
-          opt.on('-o', '--output=[FILE]',            "output to file") {|v| @output = v}
-          opt.on('-f', '--format=[FORMAT]',          "specify output format [#{Formats.join(',')}]") {|v| @format = v}
-          opt.on(      '--bwlimit=[BANDWIDTH]',      "specify bandwidth limit (bps)") {|v|
+          opt.on('-o', '--output=FILE',            "output to file") {|v| @output = v}
+          opt.on('-f', '--format=FORMAT',          "specify output format [#{Formats.join(',')}]") {|v| @format = v}
+          opt.on(      '--bwlimit=BANDWIDTH',      "specify bandwidth limit (bps)") {|v|
             @bwlimit = Flare::Util::Bwlimit.bps(v)
           }
           opt.on('--all',                            "dump from all master nodes") {|v| @all = true}
@@ -132,6 +131,8 @@ module Flare
         end
 
         def execute(config, *args)
+          STDERR.puts "please install tokyocabinet via gem command." unless defined? TokyoCabinet
+
           cluster = nil
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)

@@ -28,7 +28,7 @@ module Flare
         usage  "verify"
   
         def setup(opt)
-          opt.on('--key-hash-algorithm=[TYPE]',            "key hash algorithm") do |v|
+          opt.on('--key-hash-algorithm=TYPE',              "key hash algorithm") do |v|
             case @key_hash_algorithm = v.to_sym
             when :simple, :crc32
             else
