@@ -3,6 +3,7 @@
 # Copyright:: Copyright (C) GREE, Inc. 2011.
 # License::   MIT-style
 
+require 'rexml/document'
 require 'flare/util/constant'
 require 'flare/tools/common'
 
@@ -13,6 +14,8 @@ module Flare
     # == Description
     # Cluster is a class that discribes a cluster information.
     class Cluster
+      include Flare::Util::Constant
+
       State = 'state'
       Role  = 'role'
       StateActive  = 'active'
@@ -241,7 +244,6 @@ module Flare
       def serialize
         thread_type = 0
 
-
         node_map_id = {"class_id"=>"0", "tracking_level"=>"0", "version"=>"0"}
         item_id = {"class_id"=>"1", "tracking_level"=>"0", "version"=>"0"}
         second_id = {"class_id"=>"2", "tracking_level"=>"0", "version"=>"0"}
@@ -288,7 +290,30 @@ EOS
         output
       end
 
+      def self.build flare_xml
+        doc = REXML::Document.new flare_xml
+        nodemap = doc.elements['/boost_serialization/node_map']
+        thread_type = doc.elements['/boost_serialization/thread_type']
+        count = nodemap.elements['count'].get_text.to_s.to_i
+        item_version = nodemap.elements['item_version'].get_text.to_s.to_i
+        nodestat = []
+        nodemap.elements.each('item') do |item|
+          nodekey = item.elements['first'].get_text.to_s
+          elem = item.elements['second'].elements
+          node = {
+            'server_name' => elem['node_server_name'].get_text.to_s,
+            'server_port' => elem['node_server_port'].get_text.to_s,
+            'role'        => elem['node_role'].get_text.to_s,
+            'state'       => elem['node_state'].get_text.to_s,
+            'partition'   => elem['node_partition'].get_text.to_s,
+            'balance'     => elem['node_balance'].get_text.to_s,
+            'thread_type' => elem['node_thread_type'].get_text.to_s
+          }
+          nodestat << [nodekey, node]
+        end
+        Cluster.new(DefaultIndexServerName, DefaultIndexServerPort, nodestat)
+      end
+
     end
   end
 end
-

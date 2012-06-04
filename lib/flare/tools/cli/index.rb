@@ -20,7 +20,7 @@ module Flare
         usage  "index"
 
         def setup(opt)
-          opt.on('--indexdb=URI',            "index database") {|v| @indexdb = v}
+          opt.on('--indexdb=URI',            "index database"        ) {|v| @indexdb = v}
           opt.on('--output=FILE',            "output index to a file") {|v| @output = v}
         end
 
@@ -30,26 +30,21 @@ module Flare
           @indexdb = nil
         end
 
-        def serattr(x)
-          return "" if x.nil?
-          " class_id=\"#{x['class_id']}\" tracking_level=\"#{x['tracking_level']}\" version=\"#{x['version']}\""
-        end
-  
         def execute(config, *args)
-          Flare::Tools::Stats.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          cluster = Flare::Tools::Stats.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
-            cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+            Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+          end
 
-            output = cluster.serialize
-            if @output.nil?
-              info output
-            else
-              open(@output, "w") do |f|
-                f.write(output)
-              end
+          output = cluster.serialize
+          if @output.nil?
+            info output
+          else
+            open(@output, "w") do |f|
+              f.write(output)
             end
           end
-        
+
           S_OK
         end
       end
