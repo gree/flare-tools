@@ -3,6 +3,7 @@
 # Copyright:: Copyright (C) GREE, Inc. 2011.
 # License::   MIT-style
 
+require 'rexml/document'
 require 'flare/util/constant'
 require 'flare/tools/common'
 
@@ -13,6 +14,8 @@ module Flare
     # == Description
     # Cluster is a class that discribes a cluster information.
     class Cluster
+      include Flare::Util::Constant
+
       State = 'state'
       Role  = 'role'
       StateActive  = 'active'
@@ -23,6 +26,9 @@ module Flare
       RoleMaster = 'master'
       RoleSlave  = 'slave'
       StatPartition = 'partition'
+
+      States = { "active" => '0', "prepare" => '1', "down" => '2', "ready" => '3' }
+      Roles = { "master" => '0', "slave" => '1', "proxy" => '2' }
 
       class NodeStat
         def initialize stat
@@ -230,7 +236,84 @@ module Flare
         @nodes.has_key? nodekey
       end
 
+      def serattr_ x
+        return "" if x.nil?
+        " class_id=\"#{x['class_id']}\" tracking_level=\"#{x['tracking_level']}\" version=\"#{x['version']}\""
+      end
+
+      def serialize
+        thread_type = 0
+
+        node_map_id = {"class_id"=>"0", "tracking_level"=>"0", "version"=>"0"}
+        item_id = {"class_id"=>"1", "tracking_level"=>"0", "version"=>"0"}
+        second_id = {"class_id"=>"2", "tracking_level"=>"0", "version"=>"0"}
+
+        output =<<"EOS"
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="4">
+<node_map#{serattr_(node_map_id)}>
+\t<count>#{@nodes.size}</count>
+\t<item_version>0</item_version>
+EOS
+        @nodes.each do |k,v|
+          node_server_name, node_server_port = k.split(':')
+          node_role = Roles[v['role']]
+          node_state = States[v['state']]
+          node_partition = v['partition']
+          node_balance = v['balance']
+          node_thread_type = v['thread_type'].to_i
+          
+          output +=<<"EOS"
+\t<item#{serattr_(item_id)}>
+\t\t<first>#{k}</first>
+\t\t<second#{serattr_(second_id)}>
+\t\t\t<node_server_name>#{node_server_name}</node_server_name>
+\t\t\t<node_server_port>#{node_server_port}</node_server_port>
+\t\t\t<node_role>#{node_role}</node_role>
+\t\t\t<node_state>#{node_state}</node_state>
+\t\t\t<node_partition>#{node_partition}</node_partition>
+\t\t\t<node_balance>#{node_balance}</node_balance>
+\t\t\t<node_thread_type>#{node_thread_type}</node_thread_type>
+\t\t</second>
+\t</item>
+EOS
+          item_id = nil
+          second_id  = nil
+          thread_type = node_thread_type+1 if node_thread_type >= thread_type
+        end
+        output +=<<"EOS"
+</node_map>
+<thread_type>#{thread_type}</thread_type>
+</boost_serialization>
+EOS
+        output
+      end
+
+      def self.build flare_xml
+        doc = REXML::Document.new flare_xml
+        nodemap = doc.elements['/boost_serialization/node_map']
+        thread_type = doc.elements['/boost_serialization/thread_type']
+        count = nodemap.elements['count'].get_text.to_s.to_i
+        item_version = nodemap.elements['item_version'].get_text.to_s.to_i
+        nodestat = []
+        nodemap.elements.each('item') do |item|
+          nodekey = item.elements['first'].get_text.to_s
+          elem = item.elements['second'].elements
+          node = {
+            'server_name' => elem['node_server_name'].get_text.to_s,
+            'server_port' => elem['node_server_port'].get_text.to_s,
+            'role'        => elem['node_role'].get_text.to_s,
+            'state'       => elem['node_state'].get_text.to_s,
+            'partition'   => elem['node_partition'].get_text.to_s,
+            'balance'     => elem['node_balance'].get_text.to_s,
+            'thread_type' => elem['node_thread_type'].get_text.to_s
+          }
+          nodestat << [nodekey, node]
+        end
+        Cluster.new(DefaultIndexServerName, DefaultIndexServerPort, nodestat)
+      end
+
     end
   end
 end
-

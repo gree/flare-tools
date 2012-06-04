@@ -7,9 +7,11 @@ require 'test/unit'
 require 'flare/util/result.rb'
 require 'flare/util/interruption'
 require 'flare/util/key_resolver'
+require 'flare/util/conversion'
 
 class UtilTest < Test::Unit::TestCase
   Result = Flare::Util::Result
+  Conversion = Flare::Util::Conversion
 
   class InterruptionTestException < Exception
   end
@@ -57,6 +59,12 @@ class UtilTest < Test::Unit::TestCase
         assert_not_equal(-1, krm.map(p, v))
       end
     end
+  end
+
+  def test_conversion1
+    self.extend(Conversion)
+    assert_equal("3h", short_desc_of_second(12913))
+    assert_equal("2d", short_desc_of_second(200000))
   end
 end
 

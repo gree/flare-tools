@@ -26,7 +26,7 @@ module Flare
         usage  "stats [hostname:port] ..."
 
         HeaderConfig = [ ['%-25.25s', 'hostname:port'],
-                         ['%6s',      'state'],
+                         ['%7s',      'state'],
                          ['%6s',      'role'],
                          ['%9s',      'partition'],
                          ['%7s',      'balance'],
@@ -62,11 +62,8 @@ module Flare
         def execute(config, *args)
           nodes = {}
           threads = {}
-          header = HeaderConfig.dup
+          header = Marshal.load(Marshal.dump(HeaderConfig))
           header << ['%5.5s', 'qps'] << ['%5.5s', 'qps-r'] << ['%5.5s', 'qps-w'] if @qps
-
-          format = header.map {|x| x[0]}.join(@delimiter)
-          label = format % header.map{|x| x[1]}.flatten
 
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes
@@ -92,7 +89,7 @@ module Flare
                   s = Flare::Tools::Stats.open(hostname, data['port'], config[:timeout])
                   stats = s.stats
                   time = Time.now
-                  behind = threads[hostname_port].key?('behind') ? threads[hostname_port]['behind'] : "-"
+                  behind = threads[hostname_port].has_key?('behind') ? threads[hostname_port]['behind'] : "-"
                   uptime_short = short_desc_of_second(stats['uptime'])
                   hit_rate = if stats.has_key?('cmd_get') && stats['cmd_get'] != "0"
                                cmd_get = stats['cmd_get'].to_f
@@ -163,6 +160,13 @@ module Flare
             threads = s.stats_threads_by_peer
 
             break unless @cont
+            max_nodekey_length = 25
+            nodes.each do |k, n|
+              max_nodekey_length = k.length if k.length > max_nodekey_length
+            end
+            header[0][0] = "%-#{max_nodekey_length}.#{max_nodekey_length}s"
+            format = header.map {|x| x[0]}.join(@delimiter)
+            label = format % header.map{|x| x[1]}.flatten
             puts label
             nodes.each do |k, n|
               stats_data = queue[k].pop
@@ -171,7 +175,7 @@ module Flare
               stats_data[:role] = n['role']
               stats_data[:partition] = n['partition']
               stats_data[:balance] = n['balance']
-              stats_data[:behind] = threads[k].key?('behind') ? threads[k]['behind'] : "-"
+              stats_data[:behind] = (threads.has_key?(k) || threads[k].has_key?('behind')) ? threads[k]['behind'] : "-"
               output = [:hostname_port, :state, :role, :partition, :balance, :items,
                         :conn, :behind, :hit_rate, :size, :uptime_short, :version].map {|x| stats_data[x]}
               if @qps
