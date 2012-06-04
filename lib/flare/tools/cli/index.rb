@@ -19,16 +19,15 @@ module Flare
         desc   "print the index XML document from a cluster information."
         usage  "index"
 
-        States = { "active" => '0', "prepare" => '1', "down" => '2', "ready" => '3' }
-        Roles = { "master" => '0', "slave" => '1', "proxy" => '2' }
-
         def setup(opt)
-          opt.on('--output=FILE',            "output index to a file") {|v|@output = v}
+          opt.on('--indexdb=URI',            "index database") {|v| @indexdb = v}
+          opt.on('--output=FILE',            "output index to a file") {|v| @output = v}
         end
 
         def initialize
           super
           @output = nil
+          @indexdb = nil
         end
 
         def serattr(x)
@@ -40,52 +39,8 @@ module Flare
           Flare::Tools::Stats.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
-            thread_type = 0
 
-            node_map_id = {"class_id"=>"0", "tracking_level"=>"0", "version"=>"0"}
-            item_id = {"class_id"=>"1", "tracking_level"=>"0", "version"=>"0"}
-            second_id = {"class_id"=>"2", "tracking_level"=>"0", "version"=>"0"}
-
-            output =<<"EOS"
-<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-<!DOCTYPE boost_serialization>
-<boost_serialization signature="serialization::archive" version="4">
-<node_map#{serattr(node_map_id)}>
-\t<count>#{nodes.size}</count>
-\t<item_version>0</item_version>
-EOS
-            nodes.each do |k,v|
-              node_server_name, node_server_port = k.split(':')
-              node_role = Roles[v['role']]
-              node_state = States[v['state']]
-              node_partition = v['partition']
-              node_balance = v['balance']
-              node_thread_type = v['thread_type'].to_i
-
-              output +=<<"EOS"
-\t<item#{serattr(item_id)}>
-\t\t<first>#{k}</first>
-\t\t<second#{serattr(second_id)}>
-\t\t\t<node_server_name>#{node_server_name}</node_server_name>
-\t\t\t<node_server_port>#{node_server_port}</node_server_port>
-\t\t\t<node_role>#{node_role}</node_role>
-\t\t\t<node_state>#{node_state}</node_state>
-\t\t\t<node_partition>#{node_partition}</node_partition>
-\t\t\t<node_balance>#{node_balance}</node_balance>
-\t\t\t<node_thread_type>#{node_thread_type}</node_thread_type>
-\t\t</second>
-\t</item>
-EOS
-              item_id = nil
-              second_id  = nil
-              thread_type = node_thread_type+1 if node_thread_type >= thread_type
-            end
-            output +=<<"EOS"
-</node_map>
-<thread_type>#{thread_type}</thread_type>
-</boost_serialization>
-
-EOS
+            output = cluster.serialize
             if @output.nil?
               info output
             else
