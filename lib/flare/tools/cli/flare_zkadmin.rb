@@ -14,6 +14,7 @@ path = nil
 indexdb_elements = []
 
 def init z, path
+  puts "initializing #{path}"
   path_cluster = ""
   path.split('/').each do |e|
     unless e.empty?
@@ -21,15 +22,34 @@ def init z, path
       z.create(:path => path_cluster)
     end
   end
-  z.create(:path => "#{path_cluster}/index")
-  z.create(:path => "#{path_cluster}/index/lock")
-  z.create(:path => "#{path_cluster}/index/primary")
-  z.create(:path => "#{path_cluster}/index/servers")
-  z.create(:path => "#{path_cluster}/index/nodemap")
-  z.create(:path => "#{path_cluster}/index/meta")
+  
+  path_index = "#{path_cluster}/index"
+  r = z.create(:path => "#{path_index}")
+  raise "already initialized." unless r[:rc] == 0
+
+  z.create(:path => "#{path_index}/lock")
+  z.create(:path => "#{path_index}/primary")
+  z.create(:path => "#{path_index}/servers")
+  z.create(:path => "#{path_index}/nodemap")
+
+  path_meta = "#{path_index}/meta"
+  z.create(:path => path_meta)
+  entries = [['partition-size', '1024'],
+             ['key-hash-algorithm', 'crc32'],
+             ['partition-type', 'modular'],
+             ['partition-modular-hint', '1'],
+             ['partition-modular-virtual', '65536']]
+  entries.each do |k,v|
+    r = z.create(:path => "#{path_meta}/#{k}", :data => v)
+  end
 end
 
-def init z, path
+def destroy z, path
+  result = z.get_children(:path => path)
+  raise "failed to fetch child nodes." if result[:rc] != 0
+  result[:children].each do |entry|
+    destroy z, "#{path}/#{entry}"
+  end
   z.delete(:path => path)
 end
 
@@ -55,18 +75,98 @@ def set_nodemap z, path
   raise "failed to set nodemap (#{rc})" if rc != 0
 end
 
+def servers z, path
+  result = z.get(:path => "#{path}/index/servers")
+  if result[:rc] == 0
+    puts result[:data].split(',').join(' ')
+  end
+end
+
+def set_servers z, path, *args
+  path_servers = "#{path}/index/servers"
+  result = z.set(:path => path_servers, :data => args.join(','))
+  rc = result[:rc]
+  raise "failed to set nodemap (#{rc})" if rc != 0
+end
+
+def show z, path
+  path_index = "#{path}/index"
+  path_lock = "#{path_index}/lock"
+  path_servers = "#{path_index}/servers"
+  path_nodemap = "#{path_index}/nodemap"
+  path_primary = "#{path_index}/primary"
+  path_meta = "#{path_index}/meta"
+  result = z.get_children(:path => path_index)
+  raise "failed to fetch child nodes." if result[:rc] != 0
+  result[:children].each do |entry|
+    puts "#{entry}:"
+    case entry
+    when "lock"
+      r = z.get_children(:path => path_lock)
+      if r[:rc] == 0
+        r[:children].each do |m|
+          r2 = z.get(:path => "#{path_lock}/#{m}")
+          if r2[:rc] == 0
+            puts "\t#{m}:#{r2[:data]}"
+          end
+        end
+      end
+    when "primary"
+      r = z.get(:path => path_primary)
+      if r[:rc] == 0 && !r[:data].nil?
+        puts "\t#{r[:data]}"
+      end
+    when "servers"
+      r = z.get(:path => path_servers)
+      if r[:rc] == 0 && !r[:data].nil?
+        puts "\t#{r[:data]}"
+      end
+    when "nodemap"
+      r = z.get(:path => path_nodemap)
+      if r[:rc] == 0
+        xml = r[:data]
+        unless xml.nil?
+          cluster = Flare::Tools::Cluster.build xml
+          cluster.nodekeys.each do |nodekey|
+            n = cluster.node_stat(nodekey)
+            p = if n.partition == -1 then "-" else n.partition end
+            m = "#{n.server_name}:#{n.server_port}:#{n.balance}:#{p}"
+            puts "\t#{m} #{n.role} #{n.state} #{n.thread_type}"
+          end
+        end
+      end
+    when "meta"
+      r = z.get_children(:path => path_meta)
+      if r[:rc] == 0
+        r[:children].each do |m|
+          r2 = z.get(:path => "#{path_meta}/#{m}")
+          if r2[:rc] == 0
+            puts "\t#{m} #{r2[:data]}"
+          end
+        end
+      end
+    else
+      puts "\tunknown entry"
+    end
+  end
+end
+
 def execute(subc, args, options)
   scheme, userinfo, host, port, registry, path, opaque, query, flagment = URI.split(options[:indexdb])
   # p scheme, userinfo, host, port, registry, path, opaque, query, flagment
 
   z = case scheme
       when "zookeeper"
-        z = Zookeeper.new("#{host}:#{port}")
+        Zookeeper.new("#{host}:#{port}")
       else
         raise "invalid scheme: #{scheme}"
       end
   
   case subc
+  when "set-servers"
+    set_servers z, path, *args
+  when "servers"
+    servers z, path
   when "set-nodemap"
     set_nodemap z, path
   when "nodemap"
@@ -75,6 +175,8 @@ def execute(subc, args, options)
     init z, path
   when "destroy"
     destroy z, path
+  when "show"
+    show z, path
   end
   z.close
 end
