@@ -13,6 +13,8 @@ uri = "zookeeper://localhost:2181/ckvs/clusters/mycluster"
 path = nil
 indexdb_elements = []
 
+ZOK = Zookeeper::ZOK
+
 def init z, path
   puts "initializing #{path}"
   path_cluster = ""
@@ -25,7 +27,7 @@ def init z, path
   
   path_index = "#{path_cluster}/index"
   r = z.create(:path => "#{path_index}")
-  raise "already initialized." unless r[:rc] == 0
+  raise "already initialized." unless r[:rc] == ZOK
 
   z.create(:path => "#{path_index}/lock")
   z.create(:path => "#{path_index}/primary")
@@ -46,7 +48,7 @@ end
 
 def destroy z, path
   result = z.get_children(:path => path)
-  raise "failed to fetch child nodes." if result[:rc] != 0
+  raise "failed to fetch child nodes." if result[:rc] != ZOK
   result[:children].each do |entry|
     destroy z, "#{path}/#{entry}"
   end
@@ -55,7 +57,7 @@ end
 
 def nodemap z, path
   result = z.get(:path => "#{path}/index/nodemap")
-  if result[:rc] == 0
+  if result[:rc] == ZOK
     xml = result[:data]
     unless xml.nil?
       cluster = Flare::Tools::Cluster.build xml
@@ -72,12 +74,12 @@ def set_nodemap z, path
   end
   result = z.set(:path => path_nodemap, :data => xml)
   rc = result[:rc]
-  raise "failed to set nodemap (#{rc})" if rc != 0
+  raise "failed to set nodemap (#{rc})" if rc != ZOK
 end
 
 def servers z, path
   result = z.get(:path => "#{path}/index/servers")
-  if result[:rc] == 0
+  if result[:rc] == ZOK
     puts result[:data].split(',').join(' ')
   end
 end
@@ -86,7 +88,7 @@ def set_servers z, path, *args
   path_servers = "#{path}/index/servers"
   result = z.set(:path => path_servers, :data => args.join(','))
   rc = result[:rc]
-  raise "failed to set nodemap (#{rc})" if rc != 0
+  raise "failed to set nodemap (#{rc})" if rc != ZOK
 end
 
 def show z, path
@@ -97,33 +99,28 @@ def show z, path
   path_primary = "#{path_index}/primary"
   path_meta = "#{path_index}/meta"
   result = z.get_children(:path => path_index)
-  raise "failed to fetch child nodes." if result[:rc] != 0
+  raise "failed to fetch child nodes." if result[:rc] != ZOK
   result[:children].each do |entry|
     puts "#{entry}:"
     case entry
     when "lock"
       r = z.get_children(:path => path_lock)
-      if r[:rc] == 0
-        r[:children].each do |m|
-          r2 = z.get(:path => "#{path_lock}/#{m}")
-          if r2[:rc] == 0
-            puts "\t#{m}:#{r2[:data]}"
-          end
+      if r[:rc] == ZOK
+        r[:children].sort_by {|n| n.split('-')[2]}.each do |m|
+          puts "\t#{m}"
         end
       end
     when "primary"
       r = z.get(:path => path_primary)
-      if r[:rc] == 0 && !r[:data].nil?
+      if r[:rc] == ZOK && !r[:data].nil?
         puts "\t#{r[:data]}"
       end
     when "servers"
       r = z.get(:path => path_servers)
-      if r[:rc] == 0 && !r[:data].nil?
-        puts "\t#{r[:data]}"
-      end
+      puts "\t#{r[:data]}" if r[:rc] == ZOK && !r[:data].nil?
     when "nodemap"
       r = z.get(:path => path_nodemap)
-      if r[:rc] == 0
+      if r[:rc] == ZOK
         xml = r[:data]
         unless xml.nil?
           cluster = Flare::Tools::Cluster.build xml
@@ -137,12 +134,10 @@ def show z, path
       end
     when "meta"
       r = z.get_children(:path => path_meta)
-      if r[:rc] == 0
+      if r[:rc] == ZOK
         r[:children].each do |m|
           r2 = z.get(:path => "#{path_meta}/#{m}")
-          if r2[:rc] == 0
-            puts "\t#{m} #{r2[:data]}"
-          end
+          puts "\t#{m} #{r2[:data]}" if r2[:rc] == ZOK
         end
       end
     else
@@ -182,7 +177,7 @@ def execute(subc, args, options)
 end
 
 options = {
-  :indexdb => 'zookeeper://localhost:2181/ckvs/cluster/mycluster'
+  :indexdb => 'zookeeper://localhost:2181/ckvs/clusters/mycluster'
 }
 
 opt = OptionParser.new
