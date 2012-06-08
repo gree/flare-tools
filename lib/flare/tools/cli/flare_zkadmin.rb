@@ -77,6 +77,28 @@ def set_nodemap z, path
   raise "failed to set nodemap (#{rc})" if rc != ZOK
 end
 
+def clear_nodemap z, path
+  path_nodemap = "#{path}/index/nodemap"
+  xml = <<EOS
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="4">
+<node_map class_id="0" tracking_level="0" version="0">
+	<count>0</count>
+	<item_version>0</item_version>
+</node_map>
+<thread_type>16</thread_type>
+</boost_serialization>
+EOS
+  STDOUT.print "do you really want to clear nodemap? (y/n):"
+  STDOUT.flush
+  if gets.chomp.upcase == 'Y'
+    result = z.set(:path => path_nodemap, :data => xml)
+    rc = result[:rc]
+    raise "failed to clear nodemap (#{rc})" if rc != ZOK
+  end
+end
+
 def servers z, path
   result = z.get(:path => "#{path}/index/servers")
   if result[:rc] == ZOK
@@ -164,6 +186,8 @@ def execute(subc, args, options)
     servers z, path
   when "set-nodemap"
     set_nodemap z, path
+  when "clear-nodemap"
+    clear_nodemap z, path
   when "nodemap"
     nodemap z, path
   when "init"
