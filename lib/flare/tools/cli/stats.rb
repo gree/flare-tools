@@ -171,7 +171,7 @@ module Flare
               stats_data[:role] = n['role']
               stats_data[:partition] = n['partition']
               stats_data[:balance] = n['balance']
-              stats_data[:behind] = threads[k].key?('behind') ? threads[k]['behind'] : "-"
+              stats_data[:behind] = (threads.has?(k) || threads[k].key?('behind')) ? threads[k]['behind'] : "-"
               output = [:hostname_port, :state, :role, :partition, :balance, :items,
                         :conn, :behind, :hit_rate, :size, :uptime_short, :version].map {|x| stats_data[x]}
               if @qps
