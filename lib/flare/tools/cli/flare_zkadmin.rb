@@ -44,6 +44,8 @@ def init z, path
   entries.each do |k,v|
     r = z.create(:path => "#{path_meta}/#{k}", :data => v)
   end
+
+  clear_nodemap z, path
 end
 
 def destroy z, path

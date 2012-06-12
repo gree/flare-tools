@@ -1,5 +1,6 @@
 Flare-tools.txt
 History.txt
+LICENSE
 Manifest.txt
 PostInstall.txt
 README.txt
@@ -12,6 +13,7 @@ bin/flare-keychecker
 bin/flare-part
 bin/flare-ping
 bin/flare-stats
+bin/flare-zkadmin
 lib/flare/net/connection.rb
 lib/flare/test/cluster.rb
 lib/flare/test/daemon.rb
@@ -20,6 +22,7 @@ lib/flare/tools.rb
 lib/flare/tools/cli.rb
 lib/flare/tools/cli/activate.rb
 lib/flare/tools/cli/balance.rb
+lib/flare/tools/cli/cli_util.rb
 lib/flare/tools/cli/deploy.rb
 lib/flare/tools/cli/down.rb
 lib/flare/tools/cli/dump.rb
@@ -27,6 +30,7 @@ lib/flare/tools/cli/dumpkey.rb
 lib/flare/tools/cli/flare_admin.rb
 lib/flare/tools/cli/flare_argv0.rb
 lib/flare/tools/cli/flare_keychecker.rb
+lib/flare/tools/cli/flare_zkadmin.rb
 lib/flare/tools/cli/index.rb
 lib/flare/tools/cli/list.rb
 lib/flare/tools/cli/master.rb
