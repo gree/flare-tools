@@ -92,7 +92,7 @@ module Flare
                   s = Flare::Tools::Stats.open(hostname, data['port'], config[:timeout])
                   stats = s.stats
                   time = Time.now
-                  behind = threads[hostname_port].key?('behind') ? threads[hostname_port]['behind'] : "-"
+                  behind = threads[hostname_port].has_key?('behind') ? threads[hostname_port]['behind'] : "-"
                   uptime_short = short_desc_of_second(stats['uptime'])
                   hit_rate = if stats.has_key?('cmd_get') && stats['cmd_get'] != "0"
                                cmd_get = stats['cmd_get'].to_f
@@ -171,7 +171,7 @@ module Flare
               stats_data[:role] = n['role']
               stats_data[:partition] = n['partition']
               stats_data[:balance] = n['balance']
-              stats_data[:behind] = (threads.has?(k) || threads[k].key?('behind')) ? threads[k]['behind'] : "-"
+              stats_data[:behind] = (threads.has_key?(k) || threads[k].has_key?('behind')) ? threads[k]['behind'] : "-"
               output = [:hostname_port, :state, :role, :partition, :balance, :items,
                         :conn, :behind, :hit_rate, :size, :uptime_short, :version].map {|x| stats_data[x]}
               if @qps
