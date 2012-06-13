@@ -65,9 +65,6 @@ module Flare
           header = HeaderConfig.dup
           header << ['%5.5s', 'qps'] << ['%5.5s', 'qps-r'] << ['%5.5s', 'qps-w'] if @qps
 
-          format = header.map {|x| x[0]}.join(@delimiter)
-          label = format % header.map{|x| x[1]}.flatten
-
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes
             unless nodes
@@ -163,6 +160,13 @@ module Flare
             threads = s.stats_threads_by_peer
 
             break unless @cont
+            format = header.map {|x| x[0]}.join(@delimiter)
+            max_nodekey_length = 25
+            nodes.each do |k, n|
+              max_nodekey_length = k.length if k.length > max_nodekey_length
+            end
+            format[0] = "%-#{max_nodekey_length}.#{max_nodekey_length}s"
+            label = format % header.map{|x| x[1]}.flatten
             puts label
             nodes.each do |k, n|
               stats_data = queue[k].pop
