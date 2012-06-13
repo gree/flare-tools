@@ -61,13 +61,13 @@ module Flare
           keys = {}
           cout = STDERR
           status = S_OK
-          info "setting up key resolver ..."
-          resolver = Util::KeyResolver.new
           info "connecting to index ..."
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]}
 
             # meta
+            info "setting up key resolver ..."
+            resolver = nil
             if @meta
               meta = s.meta
               stats = s.stats
@@ -80,12 +80,13 @@ module Flare
               end
               pointer_size = stats['pointer_size']
               option = {
-                :partition_size = meta['partition-size'],
-                :virtual => meta['virtual'],
-                :hint => meta['hint']
+                :partition_size => meta['partition-size'].to_i,
+                :virtual => meta['partition-modular-virtual'].to_i,
+                :hint => meta['partition-modular-hint'].to_i
               }
               resolver = Util::KeyResolver.new(option)
-
+            else
+              resolver = Util::KeyResolver.new
             end
             info "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
 
