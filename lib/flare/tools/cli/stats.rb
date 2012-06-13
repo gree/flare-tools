@@ -62,7 +62,7 @@ module Flare
         def execute(config, *args)
           nodes = {}
           threads = {}
-          header = HeaderConfig.dup
+          header = Marshal.load(Marshal.dump(HeaderConfig))
           header << ['%5.5s', 'qps'] << ['%5.5s', 'qps-r'] << ['%5.5s', 'qps-w'] if @qps
 
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
@@ -160,12 +160,12 @@ module Flare
             threads = s.stats_threads_by_peer
 
             break unless @cont
-            format = header.map {|x| x[0]}.join(@delimiter)
             max_nodekey_length = 25
             nodes.each do |k, n|
               max_nodekey_length = k.length if k.length > max_nodekey_length
             end
-            format[0] = "%-#{max_nodekey_length}.#{max_nodekey_length}s"
+            header[0][0] = "%-#{max_nodekey_length}.#{max_nodekey_length}s"
+            format = header.map {|x| x[0]}.join(@delimiter)
             label = format % header.map{|x| x[1]}.flatten
             puts label
             nodes.each do |k, n|
