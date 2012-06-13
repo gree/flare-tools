@@ -79,6 +79,13 @@ module Flare
                 @key_hash_algorithm = :simple
               end
               pointer_size = stats['pointer_size']
+              option = {
+                :partition_size = meta['partition-size'],
+                :virtual => meta['virtual'],
+                :hint => meta['hint']
+              }
+              resolver = Util::KeyResolver.new(option)
+
             end
             info "key_hash_algorithm = #{@key_hash_algorithm.to_s}"
 
