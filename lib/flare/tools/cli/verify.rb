@@ -84,7 +84,7 @@ module Flare
                 :virtual => meta['partition-modular-virtual'].to_i,
                 :hint => meta['partition-modular-hint'].to_i
               }
-              resolver = Util::KeyResolver.new(option)
+              resolver = Util::KeyResolver.new(:modular, option)
             else
               resolver = Util::KeyResolver.new
             end
