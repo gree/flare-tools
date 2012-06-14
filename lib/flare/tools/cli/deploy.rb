@@ -53,16 +53,18 @@ module Flare
           opt.on('--storage-compress=[NAME]',             "storage compress type(deflate|bz2|tcbs)") {|v| @dconf["storage-compress"] = v}
           opt.on('--storage-large',                       "strage large"                       ) {@dconf["storage-large"] = true}
           opt.on('--storage-type=[NAME]',                 "storage type"                       ) {|v| @dconf["storage-type"] = v}
+          opt.on('--proxy-prior-netmask=[SIZE]',          "proxy priority mask (ex. 24 for 255.255.255.0)") {|v| @dconf["proxy-prior-netmask"] = v}
+          opt.on('--max-total-thread-queue=[SIZE]',       "max total thread queue"             ) {|v| @dconf["max-total-thread-queue"] = v}
+          opt.on('--index-servers=[NAME]',                "index servers"                      ) {|v| @dconf["index-servers"] = v}
           opt.on('--noreply-window-limit=[SIZE]',         "noreply window limit (experimental)") {|v| @dconf["noreply-window-limit"] = v}
           opt.on('--mysql-replication',                   "MySQL replication (experimental)"   ) {@dconf["mysql-replication"] = true}
           opt.on('--mysql-replication-port=[PORT]',       "MySQL replication port (experimental)") {|v| @dconf["mysql-replication-port"] = v}
           opt.on('--mysql-replication-id=[ID]',           "MySQL replication ID (experimental)") {|v| @dconf["mysql-replication-id"] = v}
           opt.on('--mysql-replication-db=[NAME]',         "MySQL replication DB (experimental)") {|v| @dconf["mysql-replication-db"] = v}
           opt.on('--mysql-replication-table=[NAME]',      "MySQL replication table (experimental)") {|v| @dconf["mysql-replication-table"] = v}
-          opt.on('--proxy-prior-netmask=[SIZE]',          "proxy priority mask (ex. 24 for 255.255.255.0)") {|v| @dconf["proxy-prior-netmask"] = v}
-          opt.on('--max-total-thread-queue=[SIZE]',       "max total thread queue"             ) {|v| @dconf["max-total-thread-queue"] = v}
           opt.on('--proxy-cache-size=[SIZE]',             "proxy cache entry size (experimental)") {|v| @dconf["proxy-cache-size"] = v}
           opt.on('--proxy-cache-expire=[SECOND]',         "cache life-time in second (experimental)") {|v| @dconf["proxy-cache-expire"] = v}
+
         end
 
         def initialize
@@ -140,6 +142,11 @@ module Flare
               warn "directory already exists: #{basedir}"
             else
               Dir.mkdir(basedir)
+            end
+
+            if @dconf.has_key?("index-servers")
+              @dconf['index-server-name'] = nil
+              @dconf['index-server-port'] = nil
             end
 
             conf = Flare::Util::FlaredConf.new({
