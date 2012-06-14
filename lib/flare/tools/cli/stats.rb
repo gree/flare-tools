@@ -26,7 +26,7 @@ module Flare
         usage  "stats [hostname:port] ..."
 
         HeaderConfig = [ ['%-25.25s', 'hostname:port'],
-                         ['%6s',      'state'],
+                         ['%7s',      'state'],
                          ['%6s',      'role'],
                          ['%9s',      'partition'],
                          ['%7s',      'balance'],
