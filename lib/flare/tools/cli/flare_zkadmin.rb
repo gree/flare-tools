@@ -130,7 +130,7 @@ def show z, path
     when "lock"
       r = z.get_children(:path => path_lock)
       if r[:rc] == ZOK
-        r[:children].sort_by {|n| n.split('-')[2]}.each do |m|
+        r[:children].sort_by {|n| n.split('-').last}.each do |m|
           puts "\t#{m}"
         end
       end
