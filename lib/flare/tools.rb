@@ -17,5 +17,6 @@ module Flare
     autoload :Node,        'flare/tools/node'
     autoload :IndexServer, 'flare/tools/index_server'
     autoload :Cli,         'flare/tools/cli'
+    autoload :ZkUtil,      'flare/tools/zk_util'
   end
 end

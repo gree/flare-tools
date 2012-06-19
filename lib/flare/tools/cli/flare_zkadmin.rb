@@ -131,7 +131,12 @@ def show z, path
       r = z.get_children(:path => path_lock)
       if r[:rc] == ZOK
         r[:children].sort_by {|n| n.split('-').last}.each do |m|
-          puts "\t#{m}"
+          r2 = z.get(:path => "#{path_lock}/#{m}")
+          if r2[:rc] == ZOK
+            puts "\t#{m} #{r2[:data]}"
+          else
+            puts "\t#{m}"
+          end
         end
       end
     when "primary"
@@ -143,6 +148,8 @@ def show z, path
       r = z.get(:path => path_servers)
       puts "\t#{r[:data]}" if r[:rc] == ZOK && !r[:data].nil?
     when "nodemap"
+      role_to_s = ["master", "slave", "proxy"]
+      state_to_s = ["active", "prepare", "down", "ready"]
       r = z.get(:path => path_nodemap)
       if r[:rc] == ZOK
         xml = r[:data]
@@ -152,7 +159,7 @@ def show z, path
             n = cluster.node_stat(nodekey)
             p = if n.partition == -1 then "-" else n.partition end
             m = "#{n.server_name}:#{n.server_port}:#{n.balance}:#{p}"
-            puts "\t#{m} #{n.role} #{n.state} #{n.thread_type}"
+            puts "\t#{m} #{role_to_s[n.role.to_i]} #{state_to_s[n.state.to_i]} #{n.thread_type}"
           end
         end
       end
