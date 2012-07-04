@@ -16,7 +16,6 @@ module Flare
     #
     class Cluster
       include Flare::Tools::Common
-      include Flare::Tools::ZkUtil
 
       def initialize(name, option = {})
         if ENV.has_key?("FLARE_INDEX_DB") && !option.has_key?("index-db")
@@ -27,7 +26,7 @@ module Flare
           uri = URI.parse(option["index-db"])
           if uri.scheme == "zookeeper"
             z = ::Zookeeper.new("#{uri.host}:#{uri.port}")
-            clear_nodemap z, uri.path
+            Flare::Tools::ZkUtil.clear_nodemap z, uri.path
             z.close
           end
         end
