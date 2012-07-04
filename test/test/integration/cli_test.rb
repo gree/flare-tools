@@ -226,7 +226,7 @@ class CliTest < Test::Unit::TestCase
     assert_equal(true, File.exist?("flare.xml"))
     flarexml = remove_boostheader(open("flare.xml").read)
     indexxml = remove_boostheader(@flare_cluster.index)
-    assert_equal(flarexml, indexxml)
+    assert_equal(indexxml, flarexml)
     File.delete("flare.xml")
   end
 

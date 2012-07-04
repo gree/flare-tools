@@ -39,6 +39,7 @@ setup do |opt|
   opt.on("-p PORT",      '--index-server-port=PORT', "index server port(default:#{DefaultIndexServerPort})")     {|v| index_server_port = v.to_i}
   opt.on(                '--log-file=LOGFILE',       "output log to LOGFILE")                                    {|v| Flare::Util::Logging.set_logger(v)}
   opt.on(                '--cluster=NAME',           "specify a cluster name")                                   {|v| cluster = v}
+  opt.on(                '--timeout=SECOND',         "specify timeout")                                          {|v| timeout = v.to_i}
   
   preparsed = opt.order(ARGV)
   scname = preparsed.shift.to_sym if preparsed.size > 0
