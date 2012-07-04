@@ -50,6 +50,7 @@ lib/flare/tools/common.rb
 lib/flare/tools/index_server.rb
 lib/flare/tools/node.rb
 lib/flare/tools/stats.rb
+lib/flare/tools/zk_util.rb
 lib/flare/util.rb
 lib/flare/util/bwlimit.rb
 lib/flare/util/command_line.rb
