@@ -1,9 +1,15 @@
+flare-tools (0.4.4) unstable; urgency=low
+
+  * added 'summary' subcommand
+
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>  Wed, 01 Aug 2012 14:17:29 +0900
+
 flare-tools (0.4.3) unstable; urgency=low
 
   * added --option
   * fixed 'stats' subcommand
 
- -- Kiyoshi Ikehara <kiyoshi-ikehara@ike>  Wed, 04 Jul 2012 14:11:12 +0900
+ -- Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>  Wed, 04 Jul 2012 14:11:12 +0900
 
 flare-tools (0.4.2) unstable; urgency=low
 

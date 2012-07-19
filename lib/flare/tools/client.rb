@@ -162,7 +162,8 @@ module Flare
  
       def self.defcmd_oneline(method_symbol, command_template, &default_processor)
         parser = lambda {|conn,processor|
-          processor.call(conn.getline)
+          line = conn.getline
+          processor.call(line)
         }
         defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
       end
@@ -181,7 +182,7 @@ module Flare
             elsif elems[0] == "END"
               return rets
             else
-              info "error \"#{line.chomp}\""
+              info "key parser: error \"#{line.chomp}\""
               return false
             end
           end
@@ -206,7 +207,7 @@ module Flare
             elsif elems[0] == "END"
               return rets
             else
-              info "error \"#{line.chomp}\""
+              info "value parser: error \"#{line.chomp}\""
               return false
             end
           end

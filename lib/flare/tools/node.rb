@@ -88,7 +88,7 @@ module Flare
       def get(*keys, &block)
         return false if keys.size == 0
         r = get_(keys.map{|x|x.chomp}.join(' '), &block)
-        if keys.size == 1
+        if r && keys.size == 1
           return false if r.size == 0
           return r[0] if r.size == 1
         end
@@ -101,7 +101,7 @@ module Flare
       def gets(*keys, &block)
         return false if keys.size == 0
         r = gets_(keys.map{|x|x.chomp}.join(' '), &block)
-        if keys.size == 1
+        if r && keys.size == 1
           return false if r.size == 0
           return r[0] if r.size == 1
         end

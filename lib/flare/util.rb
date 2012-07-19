@@ -29,5 +29,6 @@ module Flare
     autoload :FlaredConf, 'flare/util/flared_conf'
     autoload :FlareiConf, 'flare/util/flarei_conf'
     autoload :FileSystem, 'flare/util/filesystem'
+    autoload :KeyResolver, 'flare/util/key_resolver'
   end
 end
