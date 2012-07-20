@@ -37,13 +37,12 @@ class DumpExpiredTest < Test::Unit::TestCase
     efmt = "key%05.5d"
     mfmt = "exp%05.5d"
     statsth = Thread.new do
-      stats('--qps', '--count=40')
+      stats('--count=40')
     end
     @flare_cluster.prepare_master_and_slaves(@node_servers)
     master = @node_servers[0]
     m = Flare::Tools::Node.open(master.hostname, master.port, 10)
     (0...1000).each do |i|
-      m.set(efmt % i, "ETERNAL", 0, 0)
       m.set(mfmt % i, "MORTAL", 0, 1)
     end
     sleep 3
@@ -63,16 +62,12 @@ class DumpExpiredTest < Test::Unit::TestCase
       end
       Flare::Tools::Node.open(master.hostname, master.port, 10) do |n|
         puts "SET START."
-        begin
-          flag = 0
-          expire = 3
-          timeout(100) do
-            (0...1000).each do |i|
-              n.set(mfmt % i, "MORTAL", flag, expire+rand(5))
-              n.get(mfmt % (rand(i)))
-            end
-          end
-        rescue Timeout::Error
+        flag = 0
+        expire = 3
+        (0...1000).each do |i|
+          m.set(efmt % i, "ETERNAL", 0, 0)
+          n.set(mfmt % i, "MORTAL", flag, expire+rand(3))
+          n.get(mfmt % (rand(i)))
         end
         puts "SET DONE."
       end
