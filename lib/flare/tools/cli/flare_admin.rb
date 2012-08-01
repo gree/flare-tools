@@ -26,7 +26,7 @@ cluster = nil
 scname = ''
 subc = nil
 
-scclasses = [Cli::List, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Master, Cli::Threads, Cli::Ping, Cli::Remove, Cli::Index, Cli::Activate, Cli::Dump, Cli::Dumpkey, Cli::Verify, Cli::Stats, Cli::Restore]
+scclasses = [Cli::List, Cli::Balance, Cli::Down, Cli::Slave, Cli::Reconstruct, Cli::Master, Cli::Threads, Cli::Ping, Cli::Remove, Cli::Index, Cli::Activate, Cli::Dump, Cli::Dumpkey, Cli::Verify, Cli::Stats, Cli::Restore, Cli::Summary]
 unsupported = [Cli::Deploy]
 scclasses.concat unsupported
 
@@ -73,7 +73,8 @@ status = execute do |args|
                  :index_server_hostname => ihostname,
                  :index_server_port => iport,
                  :dry_run => dry_run,
-                 :timeout => timeout },
+                 :timeout => timeout,
+                 :cluster => cluster },
                *args) if subc
 end
 

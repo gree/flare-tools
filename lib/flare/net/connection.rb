@@ -52,7 +52,7 @@ module Flare
 
       def send(cmd)
         if $DEBUG
-          puts "send. server=[#{self}] cmd=[#{cmd.chomp}]"
+          puts "--> server=[#{self}] cmd=[#{cmd.chomp}]"
         end
         size = cmd.size
         @sent_size += size
@@ -70,7 +70,7 @@ module Flare
         ret = @socket.gets
         return nil if ret.nil?
         if $DEBUG
-          puts ret.chomp
+          puts "<-- #{ret.chomp}"
         end
         size = ret.size
         @received_size += size
