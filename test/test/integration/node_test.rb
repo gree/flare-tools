@@ -16,7 +16,6 @@ class NodeTest < Test::Unit::TestCase
     @node_servers = ['node1', 'node2', 'node3'].map {|name| @flare_cluster.create_node(name)}
     sleep 1 # XXX
     @flare_cluster.wait_for_ready
-    @flare_cluster.prepare_master_and_slaves(@node_servers)
   end
   
   def teardown
@@ -24,9 +23,11 @@ class NodeTest < Test::Unit::TestCase
   end
 
   def test_dummy
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
   end
 
   def test_one_million_entry
+    @flare_cluster.prepare_master_and_slaves(@node_servers)
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000000)
   end if ENV['FLARE_TOOLS_STRESS_TEST']
 

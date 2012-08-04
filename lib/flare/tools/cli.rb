@@ -24,6 +24,7 @@ module Flare
       autoload :Dumpkey,     'flare/tools/cli/dumpkey'
       autoload :Verify,      'flare/tools/cli/verify'
       autoload :Restore,     'flare/tools/cli/restore'
+      autoload :Summary,     'flare/tools/cli/summary'
     end
   end
 end
