@@ -1,3 +1,10 @@
+flare-tools (0.4.3) unstable; urgency=low
+
+  * added --option
+  * fixed 'stats' subcommand
+
+ -- Kiyoshi Ikehara <kiyoshi-ikehara@ike>  Wed, 04 Jul 2012 14:11:12 +0900
+
 flare-tools (0.4.2) unstable; urgency=low
 
   * fixed short and long options with paramters. 

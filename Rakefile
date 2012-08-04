@@ -23,7 +23,7 @@ $hoe = Hoe.spec 'flare-tools' do
   self.post_install_message = 'PostInstall.txt'
   self.description = "Flare-tools is a collection of tools for Flare distributed key-value store."
   self.readme_file = "README.txt"
-  self.extra_deps = [['log4r', '>= 1.1.4']]
+  self.extra_deps = [['log4r', '>= 1.1.4'], ['zookeeper', '>= 1.2.6'], ['tokyocabinet', '>= 1.29']]
   self.rubyforge_name = 'flare-tools'
   self.extra_rdoc_files = []
 end

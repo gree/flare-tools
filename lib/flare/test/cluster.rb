@@ -3,6 +3,7 @@
 # Copyright:: Copyright (C) GREE, Inc. 2011.
 # License::   MIT-style
 
+require 'uri'
 require 'flare/tools'
 require 'flare/test/daemon'
 require 'flare/test/node'
@@ -16,7 +17,20 @@ module Flare
     class Cluster
       include Flare::Tools::Common
 
-      def initialize(name)
+      def initialize(name, option = {})
+        if ENV.has_key?("FLARE_INDEX_DB") && !option.has_key?("index-db")
+          option["index-db"] = ENV["FLARE_INDEX_DB"]
+        end
+
+        if option.has_key?("index-db")
+          uri = URI.parse(option["index-db"])
+          if uri.scheme == "zookeeper"
+            z = ::Zookeeper.new("#{uri.host}:#{uri.port}")
+            Flare::Tools::ZkUtil.clear_nodemap z, uri.path
+            z.close
+          end
+        end
+
         daemon = Daemon.instance
         @indexport = daemon.assign_port
         @workdir = Dir.pwd+"/work"
@@ -28,7 +42,7 @@ module Flare
                                             'server-name' => @indexname,
                                             'server-port' => @indexport,
                                             'data-dir' => @datadir,
-                                          })
+                                          }.merge(option))
         @flare_xml = [@datadir, "flare.xml"].join('/')
         sleep 1
       end

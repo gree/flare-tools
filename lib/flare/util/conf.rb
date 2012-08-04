@@ -34,7 +34,7 @@ module Flare
       def to_s
         conf = ""
         @config.each do |k,v|
-          conf += "#{k} = #{v}\n"
+          conf += "#{k} = #{v}\n" unless v.nil?
         end
         conf
       end
