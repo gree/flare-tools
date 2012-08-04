@@ -28,6 +28,8 @@ module Flare
         HeaderConfig = [ ['%-30.30s', '#cluster'],
                          ['%6s',      'part'],
                          ['%6s',      'node'],
+                         ['%7s',      'master'],
+                         ['%6s',      'slave'],
                          ['%16s',     'size'],
                          ['%13s',    'items'] ]
 
@@ -59,26 +61,30 @@ module Flare
                  end
 
           total_bytes = 0
-          total_parts = {}
+          total_parts = 0
           total_nodes = 0
           total_items = 0
+          total_masters = 0
+          total_slaves = 0
 
           nodes.each do |hostname_port,data|
             hostname, port = hostname_port.split(":", 2)
             Flare::Tools::Stats.open(hostname, data['port'], config[:timeout]) do |s|
               stats = s.stats
-              total_bytes += stats['bytes'].to_i
-              total_parts[stats['partitions']] = 0 unless total_parts.has_key?(stats['partitions'])
-              total_parts[stats['partitions']] += 1
+              p = data['partition'].to_i
+              total_parts = p+1 if p+1 > total_parts if data['role'] == 'master'
               total_nodes += 1
-              total_items += stats['curr_items'].to_i
+              total_masters += 1 if data['role'] == 'master'
+              total_slaves += 1 if data['role'] == 'slave'
+              total_bytes += stats['bytes'].to_i if data['role'] == 'master'
+              total_items += stats['curr_items'].to_i if data['role'] == 'master'
             end
           end
 
           format = header.map {|x| x[0]}.join(@delimiter)
           label = format % header.map{|x| x[1]}.flatten
           puts label
-          puts(format % [name, total_parts, total_nodes, total_bytes, total_items])
+          puts(format % [name, total_parts, total_nodes, total_masters, total_slaves, total_bytes, total_items])
           
           S_OK
         end
