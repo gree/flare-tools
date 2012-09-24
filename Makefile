@@ -2,11 +2,12 @@
 BINDIR=/usr/bin
 RUBYLIBDIR=/usr/lib/ruby/${RUBYVER}
 SRCDIR=.
+BINS=flare-admin flare-argv0 flare-deploy flare-keychecker flare-part flare-ping flare-stats flare-zkadmin
 
 install:
 	install -d ${DESTDIR}${BINDIR}
 	install -m 755 ${SRCDIR}/bin/* ${DESTDIR}${BINDIR}
-	find ${DESTDIR}${BINDIR} -type f -executable | xargs -n 1 sed -i 1c\#!/usr/bin/ruby${RUBYVER}
+	echo ${addprefix ${DESTDIR}${BINDIR}/,${BINS}} | xargs -n 1 sed -i 1c\#!/usr/bin/ruby${RUBYVER}
 	install -d ${DESTDIR}${RUBYLIBDIR}/flare
 	install -m 644 ${SRCDIR}/lib/flare/*.rb ${DESTDIR}${RUBYLIBDIR}/flare
 	install -d ${DESTDIR}${RUBYLIBDIR}/flare/tools
