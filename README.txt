@@ -2,7 +2,7 @@
 
 = flare-tools
 
-http://labs.gree.jp/Top/OpenSource/Flare-en.html
+https://github.com/gree/flare/wiki
 
 Flare-tools is a collection of command line tools to maintain a flare cluster.
 
@@ -38,7 +38,7 @@ License::   MIT-style
 
 * Install Flare
 
-Please see the web pages about {Flare}[http://labs.gree.jp/Top/OpenSource/Flare-en.html] in GREE Labs.
+Please see the web pages about {Flare}[https://github.com/gree/flare/wiki].
 
 * Install flare-tools
  # gem install flare-tools
