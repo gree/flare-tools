@@ -9,7 +9,7 @@ module Flare
   # flare-tools module.
   module Tools
     # the version number of flare-tools
-    VERSION = '0.4.5'
+    VERSION = '0.4.5.1'
     TITLE = "Flare-tools version #{VERSION} Copyright (C) GREE, Inc. 2011"
     autoload :Common,      'flare/tools/common'
     autoload :Cluster,     'flare/tools/cluster'
