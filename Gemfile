@@ -1,0 +1,10 @@
+source 'https://rubygems.org'
+
+gem 'log4r', '>=1.1.4'
+gem 'zookeeper', '>=1.2.6'
+gem 'tokyocabinet', '>=1.29'
+gem 'rdoc'
+gem 'hoe', '>=2.1.0'
+gem 'newgem'
+gem 'test-unit'
+gem 'ci_reporter'

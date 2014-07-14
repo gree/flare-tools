@@ -1,0 +1,40 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    RedCloth (4.2.9)
+    activesupport (2.3.18)
+    builder (3.2.2)
+    ci_reporter (1.9.1)
+      builder (>= 2.1.2)
+    hoe (3.12.0)
+      rake (>= 0.8, < 11.0)
+    json (1.8.0)
+    log4r (1.1.10)
+    newgem (1.5.3)
+      RedCloth (>= 4.1.1)
+      activesupport (~> 2.3.4)
+      hoe (>= 2.4.0)
+      rubigen (>= 1.5.3)
+      syntax (>= 1.0.0)
+    rake (10.3.2)
+    rdoc (4.1.1)
+      json (~> 1.4)
+    rubigen (1.5.8)
+      activesupport (>= 2.3.5, < 3.2.0)
+    syntax (1.2.0)
+    test-unit (2.5.5)
+    tokyocabinet (1.29.1)
+    zookeeper (1.4.8)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  ci_reporter
+  hoe (>= 2.1.0)
+  log4r (>= 1.1.4)
+  newgem
+  rdoc
+  test-unit
+  tokyocabinet (>= 1.29)
+  zookeeper (>= 1.2.6)
