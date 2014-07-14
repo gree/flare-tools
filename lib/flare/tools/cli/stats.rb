@@ -8,6 +8,7 @@ require 'flare/tools/index_server'
 require 'flare/tools/cli/sub_command'
 require 'flare/tools/common'
 require 'flare/util/conversion'
+require 'flare/util/pretty_table'
 
 # 
 module Flare
@@ -20,29 +21,37 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Logging
         include Flare::Tools::Common
+        include Flare::Util::PrettyTable
         
         myname :stats
         desc   "show the statistics of a flare cluster."
         usage  "stats [hostname:port] ..."
 
-        HeaderConfig = [ ['%-25.25s', 'hostname:port'],
-                         ['%7s',      'state'],
-                         ['%6s',      'role'],
-                         ['%9s',      'partition'],
-                         ['%7s',      'balance'],
-                         ['%8.8s',    'items'],
-                         ['%4s',      'conn'],
-                         ['%6.6s',    'behind'],
-                         ['%3.3s',    'hit'],
-                         ['%4.4s',    'size'],
-                         ['%6.6s',    'uptime'],
-                         ['%7s',      'version'] ]
+        HeaderConfigs = [
+          ['hostname:port', {}],
+          ['state', {}],
+          ['role', {}],
+          ['partition', {:align => :right}],
+          ['balance', {:align => :right}],
+          ['items', {:align => :right}],
+          ['conn', {:align => :right}],
+          ['behind', {:align => :right}],
+          ['hit', {:align => :right}],
+          ['size', {:align => :right}],
+          ['uptime', {:align => :right}],
+          ['version', {:align => :right}],
+        ]
+        HeaderConfigQpss = [
+          ['qps', {:align => :right}],
+          ['qps-r', {:align => :right}],
+          ['qps-w', {:align => :right}],
+        ]
 
         def setup(opt)
           opt.on("-q", '--qps',              "show qps")                             {|v| @qps = v}
           opt.on("-w", '--wait=SECOND',      "specify wait time for repeat(second)") {|v| @wait = v.to_i}
           opt.on("-c", '--count=REPEATTIME', "specify repeat count")                 {|v| @count = v.to_i}
-          opt.on("-d", '--delimiter=CHAR',   "spedify delimiter")                    {|v| @delimiter = v}
+          opt.on("-d", '--delimiter=CHAR',   "specify delimiter")                    {|v| @delimiter = v}
         end
 
         def initialize
@@ -53,7 +62,7 @@ module Flare
           @cont = true
           @delimiter = ' '
         end
-  
+
         def interrupt
           puts "INTERRUPTED"
           @cont = false
@@ -62,8 +71,8 @@ module Flare
         def execute(config, *args)
           nodes = {}
           threads = {}
-          header = Marshal.load(Marshal.dump(HeaderConfig))
-          header << ['%5.5s', 'qps'] << ['%5.5s', 'qps-r'] << ['%5.5s', 'qps-w'] if @qps
+          header_configs = Marshal.load(Marshal.dump(HeaderConfigs))
+          header_configs += Marshal.load(Marshal.dump(HeaderConfigQpss)) if @qps
 
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             nodes = s.stats_nodes
@@ -165,10 +174,8 @@ module Flare
             nodes.each do |k, n|
               max_nodekey_length = k.length if k.length > max_nodekey_length
             end
-            header[0][0] = "%-#{max_nodekey_length}.#{max_nodekey_length}s"
-            format = header.map {|x| x[0]}.join(@delimiter)
-            label = format % header.map{|x| x[1]}.flatten
-            puts label
+            table = Table.new
+            add_header_to_table(table, header_configs)
             nodes.each do |k, n|
               stats_data = queue[k].pop
               next if (args.size > 0 && !args.include?(k))
@@ -197,12 +204,12 @@ module Flare
                 end
                 query_prev[k] = query.dup
               end
-
-              puts format % output
+              add_record_to_table(table, header_configs, output)
             end
             interruptible {
               wait_for_stats
             }
+            puts table.prettify
           end
           s.close
 
@@ -230,7 +237,24 @@ module Flare
             end
           end
         end
-        
+
+        private
+
+        def add_header_to_table(table, header_configs)
+          row = Row.new(:separator => @delimiter)
+          header_configs.each do |header_config|
+            row.add_column(Column.new(header_config[0]))
+          end
+          table.add_row(row)
+        end
+
+        def add_record_to_table(table, header_configs, record)
+          row = Row.new(:separator => @delimiter)
+          header_configs.each_with_index do |header_config, index|
+            row.add_column(Column.new(record[index], header_config[1]))
+          end
+          table.add_row(row)
+        end
       end
     end
   end
