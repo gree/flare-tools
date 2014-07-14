@@ -124,6 +124,7 @@ module Flare
                   begin
                     s.close unless s.nil?
                   rescue => close_error
+                    error "Socket close failed: #{close_error.inspect}"
                   end
                   s = nil
                 end
