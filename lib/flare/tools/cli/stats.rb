@@ -197,10 +197,10 @@ module Flare
                   [:query, :query_r, :query_w].each do |x|
                     diff = (query[x]-query_prev[k][x]).to_f
                     qps = if diff > 0 then diff/duration else 0 end
-                    output << qps
+                    output << sprintf("%.1f", qps)
                   end
                 else
-                  output << 0 << 0 << 0
+                  output << '-' << '-' << '-'
                 end
                 query_prev[k] = query.dup
               end
