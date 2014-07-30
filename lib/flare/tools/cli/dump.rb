@@ -10,6 +10,7 @@ require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/util/bwlimit'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 require 'csv'
 
 begin
@@ -20,7 +21,7 @@ end
 module Flare
   module Tools
     module Cli
-      
+
       class Dump < SubCommand
 
         class Dumper
@@ -105,19 +106,22 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
-        
+        include Flare::Tools::Cli::IndexServerConfig
+
         myname :dump
         desc   "dump data from nodes. (experimental)"
         usage  "dump [hostname:port] ..."
-        
-        def setup(opt)
-          opt.on('-o', '--output=FILE',            "output to file") {|v| @output = v}
-          opt.on('-f', '--format=FORMAT',          "specify output format [#{Formats.join(',')}]") {|v| @format = v}
-          opt.on(      '--bwlimit=BANDWIDTH',      "specify bandwidth limit (bps)") {|v|
+
+        def setup
+          super
+          set_option_index_server
+          @optp.on('-o', '--output=FILE',            "output to file") {|v| @output = v}
+          @optp.on('-f', '--format=FORMAT',          "specify output format [#{Formats.join(',')}]") {|v| @format = v}
+          @optp.on(      '--bwlimit=BANDWIDTH',      "specify bandwidth limit (bps)") {|v|
             @bwlimit = Flare::Util::Bwlimit.bps(v)
           }
-          opt.on('--all',                            "dump from all master nodes") {|v| @all = true}
-          opt.on('--raw',                            "raw dump mode (for debugging)") {|v| @raw = true}
+          @optp.on('--all',                            "dump from all master nodes") {|v| @all = true}
+          @optp.on('--raw',                            "raw dump mode (for debugging)") {|v| @raw = true}
         end
 
         def initialize
@@ -130,7 +134,8 @@ module Flare
           @partition_size = 1
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
           STDERR.puts "please install tokyocabinet via gem command." unless defined? TokyoCabinet
 
           cluster = nil
@@ -177,7 +182,7 @@ module Flare
               return S_NG
             end
           end
-          
+
           dumper = case @format
                    when CsvDumper.myname
                      CsvDumper.new(@output || STDOUT)
@@ -208,7 +213,7 @@ module Flare
           end
 
           dumper.close
-          
+
           S_OK
         end # execute()
 

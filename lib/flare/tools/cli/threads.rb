@@ -7,6 +7,7 @@ require 'flare/tools/index_server'
 require 'flare/util/conversion'
 require 'flare/tools/common'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
 module Flare
   module Tools
@@ -14,18 +15,23 @@ module Flare
       class Threads < SubCommand
         include Flare::Util::Conversion
         include Flare::Tools::Common
+        include Flare::Tools::Cli::IndexServerConfig
 
         myname :threads
         desc   "show the list of threads in a flare cluster."
         usage  "threads [hostname:port]"
-  
-        def setup(opt)
+
+        def setup
+          super
+          set_option_index_server
         end
 
         def initialize
+          super
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
           header = [
                     ['%5s', 'id'],
                     ['%-32s', 'peer'],
@@ -49,14 +55,14 @@ module Flare
             error "invalid arguments: "+args.join(' ')
             return S_NG
           end
-          
+
           threads = []
-          
+
           Flare::Tools::Stats.open(hostname, port, config[:timeout]) do |s|
             threads = s.stats_threads
             threads = threads.sort_by{|key,val| [val['peer'], key]}
           end
-          
+
           puts format % header.map{|x| x[1]}.flatten
 
           threads.each do |thread_id, data|
@@ -68,10 +74,10 @@ module Flare
                            data['queue'],
                           ]
           end
-          
+
           S_OK
         end
-        
+
       end
     end
   end

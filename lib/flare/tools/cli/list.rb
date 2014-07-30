@@ -8,17 +8,16 @@ require 'flare/tools/cluster'
 require 'flare/tools/common'
 require 'flare/util/conversion'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
-# 
 module Flare
   module Tools
     module Cli
 
-      # == Description
-      # 
       class List < SubCommand
         include Flare::Util::Conversion
         include Flare::Tools::Common
+        include Flare::Tools::Cli::IndexServerConfig
 
         myname :list
         desc   "show the list of nodes in a flare cluster."
@@ -29,9 +28,11 @@ module Flare
                          ['%6s',   'role'],
                          ['%6s',   'state'],
                          ['%7s',   'balance'] ]
-  
-        def setup(opt)
-          opt.on('--numeric-hosts',            "show numerical host addresses") {@numeric_hosts = true}
+
+        def setup
+          super
+          set_option_index_server
+          @optp.on('--numeric-hosts',            "show numerical host addresses") {@numeric_hosts = true}
         end
 
         def initialize
@@ -50,7 +51,7 @@ module Flare
           @cout.puts @format % args
           nil
         end
-        
+
         def get_address_or_remain hostname
           begin
             Resolv.getaddress(hostname)
@@ -59,12 +60,13 @@ module Flare
           end
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
           if args.size > 0
             error "invalid arguments: "+args.join(' ')
             return S_NG
           end
-          
+
           cluster = Flare::Tools::IndexServer.open(config[:index_server_hostname],
                                                    config[:index_server_port], config[:timeout]) do |s|
             Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
@@ -74,7 +76,7 @@ module Flare
             error "Invalid index server."
             return S_NG
           end
-          
+
           print_header
           cluster.nodekeys.each do |nodekey|
             data = cluster.node_stat(nodekey)
@@ -86,7 +88,7 @@ module Flare
 
           S_OK
         end
-        
+
       end
     end
   end

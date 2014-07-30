@@ -9,26 +9,27 @@ require 'flare/util/conversion'
 require 'flare/util/key_resolver'
 require 'flare/util/hash_function'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 require 'digest/md5'
 
 
-# 
 module Flare
   module Tools
     module Cli
 
-      # == Description
-      # 
       class Verify < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::HashFunction
+        include Flare::Tools::Cli::IndexServerConfig
 
         myname :verify
         desc   "verify the cluster. (experimental)"
         usage  "verify"
-  
-        def setup(opt)
-          opt.on('--key-hash-algorithm=TYPE',              "key hash algorithm") do |v|
+
+        def setup
+          super
+          set_option_index_server
+          @optp.on('--key-hash-algorithm=TYPE',              "key hash algorithm") do |v|
             case @key_hash_algorithm = v.to_sym
             when :simple, :crc32
             else
@@ -36,12 +37,12 @@ module Flare
               exit
             end
           end
-          opt.on('--use-test-data',                        "store test data")           {|v| @use_test_data = true}
-          opt.on('--debug',                                "use debug mode")            {|v| @debug = true}
-          opt.on('--64bit',                                "(experimental) 64bit mode") {|v| @word_size = 64}
-          opt.on('--verbose',                              "use verbose mode")          {|v| @verbose = true}
-          opt.on('--meta',                                 "use meta command")          {|v| @meta = true}
-          opt.on('--quiet',                                "use quiet mode")            {|v| @quiet = true}
+          @optp.on('--use-test-data',                        "store test data")           {|v| @use_test_data = true}
+          @optp.on('--debug',                                "use debug mode")            {|v| @debug = true}
+          @optp.on('--64bit',                                "(experimental) 64bit mode") {|v| @word_size = 64}
+          @optp.on('--verbose',                              "use verbose mode")          {|v| @verbose = true}
+          @optp.on('--meta',                                 "use meta command")          {|v| @meta = true}
+          @optp.on('--quiet',                                "use quiet mode")            {|v| @quiet = true}
         end
 
         def initialize
@@ -57,7 +58,8 @@ module Flare
           @quiet = false
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
           keys = {}
           cout = STDERR
           status = S_OK
@@ -194,7 +196,7 @@ module Flare
           end
           status
         end
-        
+
       end
     end
   end

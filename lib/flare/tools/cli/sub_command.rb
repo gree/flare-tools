@@ -5,11 +5,14 @@
 
 require 'flare/util/logging'
 require 'flare/util/interruption'
+require 'flare/tools/cli/option'
 
 module Flare
   module Tools
     module Cli
       class SubCommand
+        include Flare::Tools::Cli::Option
+
         @@myname = {}
         @@desc = {}
         @@usage = {}
@@ -52,14 +55,22 @@ module Flare
           self.to_sym.to_s
         end
 
-        def initalize
+        def initialize
+          option_init
         end
 
-        def setup(opt)
-          raise "setup"
+        def setup
+          set_option_global
         end
-        
-        def execute(config, *args)
+
+        def execute_subcommand(config, args)
+          setup
+          rest_args = parse_options(config, args)
+
+          execute(config, rest_args)
+        end
+
+        def execute
           raise "execute"
         end
 

@@ -20,6 +20,9 @@ module Flare
       DefaultTimeout         = 10
       # the default bandwidth limit (bps)
       DefalutBwlimit         = 0 # unlimited
+
+      STATUS_OK = 0
+      STATUS_NG = 1
     end
   end
 end

@@ -20,7 +20,7 @@ end
 module Flare
   module Tools
     module Cli
-      
+
       class Restore < SubCommand
 
         class Restorer
@@ -70,35 +70,36 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
-        
+
         myname :restore
         desc   "restore data to nodes. (experimental)"
         usage  "restore [hostname:port]"
-        
-        def setup(opt)
-          opt.on('-i', '--input=FILE',             "input from file") {|v| @input = v}
-          opt.on('-f', '--format=FORMAT',          "input format [#{Formats.join(',')}]") {|v|
+
+        def setup
+          super
+          @optp.on('-i', '--input=FILE',             "input from file") {|v| @input = v}
+          @optp.on('-f', '--format=FORMAT',          "input format [#{Formats.join(',')}]") {|v|
             @format = v
           }
-          opt.on('--bwlimit=BANDWIDTH',            "bandwidth limit (bps)") {|v| @bwlimit = v}
-          opt.on('--include=PATTERN',              "include pattern") {|v|
+          @optp.on('--bwlimit=BANDWIDTH',            "bandwidth limit (bps)") {|v| @bwlimit = v}
+          @optp.on('--include=PATTERN',              "include pattern") {|v|
             begin
               @include = Regexp.new(v)
             rescue RegexpError => e
               raise "#{v} isn't a valid regular expression."
             end
           }
-          opt.on('--prefix-include=STRING',        "prefix string") {|v|
+          @optp.on('--prefix-include=STRING',        "prefix string") {|v|
             @prefix_include = Regexp.new("^"+Regexp.escape(v))
-          }          
-          opt.on('--exclude=PATTERN',              "exclude pattern") {|v|
+          }
+          @optp.on('--exclude=PATTERN',              "exclude pattern") {|v|
             begin
               @exclude = Regexp.new(v)
             rescue RegexpError => e
               raise "#{v} isn't a valid regular expression."
             end
           }
-          opt.on('--print-keys',                     "enables key dump to console") {@print_key = true}
+          @optp.on('--print-keys',                     "enables key dump to console") {@print_key = true}
         end
 
         def initialize
@@ -115,7 +116,7 @@ module Flare
           @print_key = false
         end
 
-        def execute(config, *args)
+        def execute(config, args)
           STDERR.puts "please install tokyocabinet via gem command." unless defined? TokyoCabinet
 
           dry_run = config[:dry_run]
@@ -124,7 +125,7 @@ module Flare
             STDERR.puts "unknown format: #{@format}"
             return S_NG
           end
-          
+
           if @prefix_include
             if @include
               STDERR.puts "--include option is specified."
@@ -140,7 +141,7 @@ module Flare
               return S_NG
             end
           end
-          
+
           restorer = case @format
                      when TchRestorer.myname
                        TchRestorer.new(@input)
@@ -168,7 +169,7 @@ module Flare
           end
 
           restorer.close
-          
+
           S_OK
         end # execute()
 

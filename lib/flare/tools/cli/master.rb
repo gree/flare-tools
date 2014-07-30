@@ -10,6 +10,7 @@ require 'flare/tools/cluster'
 require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
 module Flare
   module Tools
@@ -18,24 +19,29 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
+        include Flare::Tools::Cli::IndexServerConfig
 
         myname :master
         desc   "construct a partition with a proxy node for master role."
         usage  "master [hostname:port:balance:partition] ..."
 
-        def setup(opt)
-          opt.on('--force',          "commit changes without confirmation"     ) {@force = true}
-          opt.on('--retry=COUNT',    "specify retry count (default:#{@retry})" ) {|v| @retry = v.to_i}
-          opt.on('--activate',       "change node's state from ready to active") {@activate = true}
+        def setup
+          super
+          set_option_index_server
+          @optp.on('--force',          "commit changes without confirmation"     ) {@force = true}
+          @optp.on('--retry=COUNT',    "specify retry count (default:#{@retry})" ) {|v| @retry = v.to_i}
+          @optp.on('--activate',       "change node's state from ready to active") {@activate = true}
         end
 
         def initialize
+          super
           @force = false
           @retry = 10
           @activate = false
         end
-  
-        def execute(config, *args)
+
+        def execute(config, args)
+          parse_index_server(config, args)
           status = S_OK
 
           return S_NG if args.empty?
@@ -55,7 +61,7 @@ module Flare
             end
           end
           hosts = hosts.sort_by{|hostname,port,balance,partition| [partition]}
-          
+
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
 
@@ -63,7 +69,7 @@ module Flare
               role = 'master'
               nodekey = nodekey_of hostname, port
               ipaddr = address_of_hostname(hostname)
-          
+
               unless cluster.has_nodekey? nodekey
                 error "unknown host: #{nodekey}"
                 # return S_NG
@@ -136,7 +142,6 @@ module Flare
 
           status
         end # execute()
-        
       end
     end
   end

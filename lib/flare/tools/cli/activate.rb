@@ -11,23 +11,27 @@ require 'flare/tools/cluster'
 require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
 module Flare
   module Tools
     module Cli
-      
+
       class Activate < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Util::Logging
         include Flare::Tools::Common
-        
+        include Flare::Tools::Cli::IndexServerConfig
+
         myname :activate
         desc   "activate "
         usage  "activate [hostname:port] ..."
-        
-        def setup(opt)
-          opt.on('--force',            "commit changes without confirmation") {@force = true}
+
+        def setup
+          super
+          set_option_index_server
+          @optp.on('--force',            "commit changes without confirmation") {@force = true}
         end
 
         def initialize
@@ -35,7 +39,8 @@ module Flare
           @force = false
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
           return S_NG if args.size < 1
 
           hosts = args.map {|x| x.split(':')}
@@ -45,15 +50,15 @@ module Flare
               return S_NG
             end
           end
-          
+
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
-          
+
             hosts.each do |hostname,port|
               nodekey = nodekey_of hostname, port
               ipaddr = address_of_hostname(hostname)
-          
+
               unless cluster.has_nodekey? nodekey
                 error "invalid 'hostname:port' pair: #{nodekey}"
                 return S_NG
@@ -96,10 +101,10 @@ module Flare
 
             STDOUT.puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end
-          
+
           S_OK
         end # execute()
-        
+
       end
     end
   end

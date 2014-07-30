@@ -7,27 +7,28 @@ require 'flare/tools/index_server'
 require 'flare/util/conversion'
 require 'flare/tools/common'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
-# 
 module Flare
   module Tools
     module Cli
 
-      # == Description
-      # 
       class Remove < SubCommand
         include Flare::Util::Conversion
         include Flare::Tools::Common
+        include Flare::Tools::Cli::IndexServerConfig
 
         myname :remove
         desc   "remove a node. (experimental)"
         usage  "remove"
-  
-        def setup(opt)
-          opt.on('--force',          "commit changes without confirmation")                  {@force = true}
-          opt.on('--wait=SECOND',    "specify the time to wait node for getting ready (default:#{@wait})") {|v| @wait = v.to_i}
-          opt.on('--retry=COUNT',    "retry count(default:#{@retry})")                        {|v| @retry = v.to_i}
-          opt.on('--connection-threshold=[COUNT]', "specify connection threashold (default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
+
+        def setup
+          super
+          set_option_index_server
+          @optp.on('--force',          "commit changes without confirmation")                  {@force = true}
+          @optp.on('--wait=SECOND',    "specify the time to wait node for getting ready (default:#{@wait})") {|v| @wait = v.to_i}
+          @optp.on('--retry=COUNT',    "retry count(default:#{@retry})")                        {|v| @retry = v.to_i}
+          @optp.on('--connection-threshold=[COUNT]', "specify connection threashold (default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
         end
 
         def initialize
@@ -38,7 +39,9 @@ module Flare
           @connection_threshold = 2
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
+
           hosts = args.map {|x| x.split(':')}
           hosts.each do |x|
             if x.size != 2
@@ -46,7 +49,7 @@ module Flare
               return S_NG
             end
           end
-          
+
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             cluster = fetch_cluster(s)
 
@@ -87,7 +90,7 @@ module Flare
                   }
                 end
               end
-              
+
               if exec
                 suc = false
                 nretry = @retry
@@ -109,10 +112,9 @@ module Flare
             end
             puts string_of_nodelist(s.stats_nodes)
           end
-          
+
           S_OK
         end
-        
       end
     end
   end

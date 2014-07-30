@@ -9,6 +9,7 @@ require 'flare/tools/common'
 require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
 module Flare
   module Tools
@@ -17,20 +18,24 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
+        include Flare::Tools::Cli::IndexServerConfig
 
         myname :balance
         desc   "set the balance values of nodes."
         usage  "balance [hostname:port:balance] ..."
 
-        def setup(opt)
-          opt.on('--force',            "commit changes without confirmation") {@force = true}
+        def setup
+          super
+          @optp.on('--force',            "commit changes without confirmation") {@force = true}
         end
 
         def initialize
+          super
           @force = false
         end
-  
-        def execute(config, *args)
+
+        def execute(config, args)
+          parse_index_server(config, args)
           return S_NG if args.empty?
 
           hosts = args.map {|x| x.to_s.split(':')}
@@ -40,7 +45,7 @@ module Flare
               return S_NG
             end
           end
-          
+
           Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
 
@@ -48,7 +53,7 @@ module Flare
               balance = balance.to_i
               nodekey = nodekey_of hostname, port
               ipaddr = address_of_hostname(hostname)
-          
+
               unless cluster.has_nodekey? nodekey
                 error "unknown host: #{nodekey}"
                 return S_NG
