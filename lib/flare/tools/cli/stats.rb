@@ -262,8 +262,12 @@ module Flare
               duration = (time-query_prev[index][:time]).to_f
               [:query, :query_r, :query_w].each do |x|
                 diff = (query[x]-query_prev[index][x]).to_f
-                qps = if diff > 0 then diff/duration else 0 end
-                output << sprintf("%.1f", qps)
+                qps = if diff > 0
+                        sprintf("%.1f", diff/duration)
+                      else
+                        '-'
+                      end
+                output << qps
               end
             else
               output << '-' << '-' << '-'
