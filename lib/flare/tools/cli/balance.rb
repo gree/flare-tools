@@ -27,6 +27,7 @@ module Flare
         def setup
           super
           @optp.on('--force',            "commit changes without confirmation") {@force = true}
+          set_option_index_server
         end
 
         def initialize
