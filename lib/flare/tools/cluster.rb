@@ -128,8 +128,8 @@ module Flare
                   true
                 when RoleMaster
                   # if the partition has at least one active slave, one of the slaves will take over the master.
-                  slaves_in_partition(node[StatPartition]).inject(false) do |r,slave_nodekey|
-                    node_stat(slave_nodekey)[State] == StateActive
+                  slaves_in_partition(node[StatPartition]).inject(false) do |r, slave_nodekey|
+                    r || node_stat(slave_nodekey)[State] == StateActive
                   end
                 else
                   error "unknown role: #{node[Role]}"
