@@ -14,7 +14,7 @@ module Flare::Tools::Cli::IndexServerConfig
 
   def parse_index_server(config, rest)
     if @cluster
-      @index_server_entity = get_index_server_from_cluster(@cluster) if @cluster
+      @index_server_entity = get_index_server_from_cluster(@cluster)
     else
       @index_server_entity =
         get_index_server_from_nodekeys(rest) ||
