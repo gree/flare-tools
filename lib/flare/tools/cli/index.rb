@@ -24,7 +24,6 @@ module Flare
         def setup
           super
           set_option_index_server
-          @optp.on('--indexdb=URI',            "index database"        ) {|v| @indexdb = v}
           @optp.on('--output=FILE',            "output index to a file") {|v| @output = v}
         end
 
