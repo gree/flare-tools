@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- coding: utf-8; -*-
 
-$LOAD_PATH.unshift File.dirname(__FILE__)+"/../lib"
+$LOAD_PATH.unshift File.dirname(__FILE__)+"/../../../lib"
 
 require 'test/unit'
 require 'flare/util/result.rb'
@@ -44,9 +44,14 @@ class UtilTest < Test::Unit::TestCase
   end
 
   def test_interruption1
-    obj = Interruption.new
+    _ = Interruption.new
+
     assert_raise InterruptionTestException do
       Process.kill :INT, Process.pid
+
+      # sleep needed.
+      # https://github.com/ruby/ruby/blob/2ebafed88a665dcaaf4fb58b8c3fd0809db8fa2c/test/ruby/test_signal.rb#L21
+      sleep 0.1
     end
   end
 
