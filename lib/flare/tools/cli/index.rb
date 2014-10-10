@@ -30,12 +30,11 @@ module Flare
         def initialize
           super
           @output = nil
-          @indexdb = nil
         end
 
         def execute(config, args)
           parse_index_server(config, args)
-          cluster = Flare::Tools::Stats.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          cluster = Flare::Tools::Stats.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
             Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
           end

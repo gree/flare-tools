@@ -57,7 +57,6 @@ private
 
   def _main(subcommand_name, argv, as_subcommand)
     @subcommand_name = subcommand_name
-    timeout = DefaultTimeout
 
     subc = dispatch_subcommmand(@subcommand_name)
     unless subc
@@ -67,7 +66,6 @@ private
     set_banner subc.optp, as_subcommand
     config = {
       :command => File.basename($PROGRAM_NAME),
-      :timeout => timeout
     }
     subc.execute_subcommand(config, argv)
   end

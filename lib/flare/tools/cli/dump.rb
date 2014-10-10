@@ -139,7 +139,7 @@ module Flare
           STDERR.puts "please install tokyocabinet via gem command." unless defined? TokyoCabinet
 
           cluster = nil
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
           end
           return S_NG if cluster.nil?
@@ -193,7 +193,7 @@ module Flare
                    end
 
           hosts.each do |hostname,port,partition|
-            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], 0, @bwlimit) do |n|
+            Flare::Tools::Node.open(hostname, port.to_i, @timeout, 0, @bwlimit) do |n|
               interval = 0
               part, partsize = if @raw
                                  [0, 1]

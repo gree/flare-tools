@@ -52,7 +52,7 @@ module Flare
         def execute(config, args)
           parse_index_server(config, args)
           cluster = nil
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
           end
           return S_NG if cluster.nil?
@@ -87,7 +87,7 @@ module Flare
           end
 
           hosts.each do |hostname,port|
-            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], @bwlimit, @bwlimit) do |n|
+            Flare::Tools::Node.open(hostname, port.to_i, @timeout, @bwlimit, @bwlimit) do |n|
               output = STDOUT
               unless @output.nil?
                 output = File.open(@output, "w")

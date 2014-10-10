@@ -28,7 +28,8 @@ module Flare
         def setup
           super
           set_option_index_server
-          @optp.on('--force',          "commit changes without confirmation"     ) {@force = true}
+          set_option_dry_run
+          set_option_force
           @optp.on('--retry=COUNT',    "specify retry count (default:#{@retry})" ) {|v| @retry = v.to_i}
           @optp.on('--activate',       "change node's state from ready to active") {@activate = true}
         end
@@ -62,7 +63,7 @@ module Flare
           end
           hosts = hosts.sort_by{|hostname,port,balance,partition| [partition]}
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
 
             hosts.each do |hostname,port,balance,partition|
@@ -92,7 +93,7 @@ module Flare
                 STDERR.print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
                 exec = interruptible {(gets.chomp.upcase == "Y")}
               end
-              if exec && !config[:dry_run]
+              if exec && !@dry_run
                 nretry = 0
                 resp = false
                 while resp == false && nretry < @retry
@@ -107,7 +108,7 @@ module Flare
                   end
                 end
                 if resp
-                  state = wait_for_master_construction(s, nodekey, config[:timeout])
+                  state = wait_for_master_construction(s, nodekey, @timeout)
                   if state == 'ready' && @activate
                     unless @force
                       node = s.stats_nodes[nodekey]

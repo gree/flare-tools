@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- coding: utf-8; -*-
 
-$LOAD_PATH.unshift File.dirname(__FILE__)+"/../lib"
+$LOAD_PATH.unshift File.dirname(__FILE__)+"/../../../lib"
 
 require 'test/unit'
 require 'flare/tools'
@@ -71,7 +71,9 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_NG, $?.exitstatus)
     flare_admin "list --log-file=''"
     assert_equal(S_NG, $?.exitstatus)
-    flare_admin "list #{@opt_index} --dry-run"
+    flare_admin_with_yes "down #{@opt_index} --dry-run #{@datanodes[0].hostname}:#{@datanodes[0].port}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "list #{@opt_index} --timeout=20"
     assert_equal(S_OK, $?.exitstatus)
   end
 

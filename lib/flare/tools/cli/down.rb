@@ -30,12 +30,12 @@ module Flare
         def setup
           super
           set_option_index_server
-          @optp.on('--force',            "commit changes without confirmation") {@force = true}
+          set_option_dry_run
+          set_option_force
         end
 
         def initialize
           super
-          @force = false
         end
 
         def execute(config, args)
@@ -50,7 +50,7 @@ module Flare
             end
           end
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
 
             hosts.each do |hostname,port|
@@ -74,7 +74,7 @@ module Flare
                 exec = interruptible {(gets.chomp.upcase == "Y")}
               end
               if exec
-                s.set_state(hostname, port, down) unless config[:dry_run]
+                s.set_state(hostname, port, down) unless @dry_run
               end
             end
 

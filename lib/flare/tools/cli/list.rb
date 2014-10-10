@@ -68,7 +68,7 @@ module Flare
           end
 
           cluster = Flare::Tools::IndexServer.open(config[:index_server_hostname],
-                                                   config[:index_server_port], config[:timeout]) do |s|
+                                                   config[:index_server_port], @timeout) do |s|
             Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
           end
 

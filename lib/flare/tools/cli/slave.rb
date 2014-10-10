@@ -31,7 +31,8 @@ module Flare
         def setup
           super
           set_option_index_server
-          @optp.on('--force',          "commit changes without confirmation") {@force = true}
+          set_option_dry_run
+          set_option_force
           @optp.on('--retry=COUNT',    "specify retry count(default:#{@retry})") {|v| @retry = v.to_i}
           @optp.on('--clean',          "clear datastore before construction") {@clean = true}
         end
@@ -56,7 +57,7 @@ module Flare
             [hostname, port, balance.to_i, partition.to_i]
           end
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = fetch_cluster(s)
 
             hosts.each do |hostname,port,balance,partition|
@@ -81,9 +82,9 @@ module Flare
                   exec = true if gets.chomp.upcase == "Y"
                 end
               end
-              if exec && !config[:dry_run]
+              if exec && !@dry_run
                 if @clean
-                  Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
+                  Flare::Tools::Node.open(hostname, port, @timeout) do |n|
                     n.flush_all
                   end
                 end
@@ -102,7 +103,7 @@ module Flare
                   end
                 end
                 if resp
-                  wait_for_slave_construction(s, nodekey, config[:timeout])
+                  wait_for_slave_construction(s, nodekey, @timeout)
                   if balance > 0
                     unless @force
                       STDERR.print "changing node's balance (node=#{nodekey}, balance=0 -> #{balance}) (y/n): "

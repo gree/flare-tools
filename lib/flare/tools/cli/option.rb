@@ -18,6 +18,9 @@ module Flare::Tools::Cli::Option
     @optp.on(             '--debug',    "enable debug mode") { $DEBUG = true }
     @optp.on(             '--warn',     "turn on warnings")  { $-w = true }
     @optp.on(             '--log-file=LOGFILE',       "output log to LOGFILE") {|v| Flare::Util::Logging.set_logger(v)}
+
+    @timeout ||= DefaultTimeout
+    @optp.on(             '--timeout=SECOND',         "specify timeout") {|v| @timeout = v.to_i}
   end
 
   def set_option_index_server
@@ -31,12 +34,12 @@ module Flare::Tools::Cli::Option
 
   def set_option_dry_run
     @dry_run ||= false
-    @optp.on('-n',          '--dry-run',                "dry run") { @dry_run = true}
+    @optp.on('-n',          '--dry-run',                "dry run") { @dry_run = true }
   end
 
-  def set_option_timeout
-    @timeout ||= DefaultTimeout
-    @optp.on(               '--timeout=SECOND',         "specify timeout") {|v| @timeout = v.to_i}
+  def set_option_force
+    @force ||= false
+    @optp.on('--force', "commit changes without confirmation") { @force = true }
   end
 
   def parse_options(config, argv)

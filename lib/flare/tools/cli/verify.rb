@@ -64,7 +64,7 @@ module Flare
           cout = STDERR
           status = S_OK
           info "connecting to index ..."
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'].to_i, val['role'], key]}
 
             # meta
@@ -113,7 +113,7 @@ module Flare
 
             if @use_test_data
               info "storing test data ..."
-              Flare::Tools::Node.open(hostname0, port0.to_i, config[:timeout]) do |n|
+              Flare::Tools::Node.open(hostname0, port0.to_i, @timeout) do |n|
                 (1..10000).each do |i|
                   key = ".test."+Digest::MD5.new.update(i.to_s).to_s
                   n.set(key, i.to_s)
@@ -125,7 +125,7 @@ module Flare
             nodes.each do |nodekey,val|
               hostname, port = nodekey.split(":", 2)
               partition = val['partition'].to_i
-              Flare::Tools::Node.open(hostname, port.to_i, config[:timeout]) do |n|
+              Flare::Tools::Node.open(hostname, port.to_i, @timeout) do |n|
                 cout.write "checking #{nodekey} ... "
                 msg = "OK"
                 interruptible do
@@ -180,7 +180,7 @@ module Flare
               error "failed: not found #{remain} keys" if remain > 0
 
               # delete
-              Flare::Tools::Node.open(hostname0, port0.to_i, config[:timeout]) do |n|
+              Flare::Tools::Node.open(hostname0, port0.to_i, @timeout) do |n|
                 keys.each do |k,v|
                   n.delete(k)
                 end

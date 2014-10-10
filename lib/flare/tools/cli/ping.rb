@@ -53,7 +53,7 @@ module Flare
               begin
                 debug "trying..."
                 interruptible do
-                  Flare::Tools::Stats.open(hostname, port, config[:timeout]) do |s|
+                  Flare::Tools::Stats.open(hostname, port, @timeout) do |s|
                     resp = s.ping
                   end
                 end

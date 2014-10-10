@@ -25,7 +25,8 @@ module Flare
         def setup
           super
           set_option_index_server
-          @optp.on('--force',          "commit changes without confirmation")                  {@force = true}
+          set_option_dry_run
+          set_option_force
           @optp.on('--wait=SECOND',    "specify the time to wait node for getting ready (default:#{@wait})") {|v| @wait = v.to_i}
           @optp.on('--retry=COUNT',    "retry count(default:#{@retry})")                        {|v| @retry = v.to_i}
           @optp.on('--connection-threshold=[COUNT]', "specify connection threashold (default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
@@ -50,7 +51,7 @@ module Flare
             end
           end
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = fetch_cluster(s)
 
             hosts.each do |hostname,port|
@@ -63,7 +64,7 @@ module Flare
 
             hosts.each do |hostname,port|
               exec = false
-              Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
+              Flare::Tools::Node.open(hostname, port, @timeout) do |n|
                 nwait = @wait
                 node = n.stats
                 cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
@@ -97,7 +98,7 @@ module Flare
                 while nretry > 0
                   resp = false
                   info "removing #{hostname}:#{port}."
-                  resp = s.node_remove(hostname, port) unless config[:dry_run]
+                  resp = s.node_remove(hostname, port) unless @dry_run
                   if resp
                     suc = true
                     break

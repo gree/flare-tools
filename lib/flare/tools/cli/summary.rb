@@ -47,7 +47,7 @@ module Flare
           threads = {}
           header = HeaderConfig
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             nodes = s.stats_nodes
             unless nodes
               error "Invalid index server."
@@ -71,7 +71,7 @@ module Flare
 
           nodes.each do |hostname_port,data|
             hostname, port = hostname_port.split(":", 2)
-            Flare::Tools::Stats.open(hostname, data['port'], config[:timeout]) do |s|
+            Flare::Tools::Stats.open(hostname, data['port'], @timeout) do |s|
               stats = s.stats
               p = data['partition'].to_i
               total_parts = p+1 if p+1 > total_parts if data['role'] == 'master'

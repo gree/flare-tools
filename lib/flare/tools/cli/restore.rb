@@ -77,6 +77,7 @@ module Flare
 
         def setup
           super
+          set_option_dry_run
           @optp.on('-i', '--input=FILE',             "input from file") {|v| @input = v}
           @optp.on('-f', '--format=FORMAT',          "input format [#{Formats.join(',')}]") {|v|
             @format = v
@@ -119,8 +120,6 @@ module Flare
         def execute(config, args)
           STDERR.puts "please install tokyocabinet via gem command." unless defined? TokyoCabinet
 
-          dry_run = config[:dry_run]
-
           unless @format.nil? || Formats.include?(@format)
             STDERR.puts "unknown format: #{@format}"
             return S_NG
@@ -150,7 +149,7 @@ module Flare
                      end
 
           nodes = hosts.map do |hostname,port|
-            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], @bwlimit, @bwlimit)
+            Flare::Tools::Node.open(hostname, port.to_i, @timeout, @bwlimit, @bwlimit)
           end
 
           count = 0
@@ -158,7 +157,7 @@ module Flare
             if @include.nil? || @include =~ key
               next if @exclude && @exclude =~ key
               STDOUT.puts key if @print_key
-              nodes[0].set(key, data, flag, expire) unless dry_run
+              nodes[0].set(key, data, flag, expire) unless @dry_run
               count += 1
             end
           end

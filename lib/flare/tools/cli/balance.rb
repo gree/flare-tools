@@ -26,8 +26,9 @@ module Flare
 
         def setup
           super
-          @optp.on('--force',            "commit changes without confirmation") {@force = true}
           set_option_index_server
+          set_option_dry_run
+          set_option_force
         end
 
         def initialize
@@ -47,7 +48,7 @@ module Flare
             end
           end
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
 
             hosts.each do |hostname,port,balance|
@@ -74,7 +75,7 @@ module Flare
                 end
               end
               if exec
-                s.set_role(hostname, port.to_i, node['role'], balance, node['partition']) unless config[:dry_run]
+                s.set_role(hostname, port.to_i, node['role'], balance, node['partition']) unless @dry_run
               end
             end
             STDOUT.puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})

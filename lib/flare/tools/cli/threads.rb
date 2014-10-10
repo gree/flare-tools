@@ -58,7 +58,7 @@ module Flare
 
           threads = []
 
-          Flare::Tools::Stats.open(hostname, port, config[:timeout]) do |s|
+          Flare::Tools::Stats.open(hostname, port, @timeout) do |s|
             threads = s.stats_threads
             threads = threads.sort_by{|key,val| [val['peer'], key]}
           end

@@ -76,7 +76,7 @@ module Flare
           nodes = {}
           threads = {}
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             nodes = s.stats_nodes
             unless nodes
               error "Invalid index server."
@@ -105,7 +105,7 @@ module Flare
           s = Flare::Tools::IndexServer.open(
             @index_server_entity.host,
             @index_server_entity.port,
-            config[:timeout]
+            @timeout
           )
           unless s
             error "Couldn't connect to the index server."
@@ -175,7 +175,7 @@ module Flare
           while @cont
             stats_data = nil
             begin
-              s = Flare::Tools::Stats.open(hostname, data['port'], config[:timeout])
+              s = Flare::Tools::Stats.open(hostname, data['port'], @timeout)
               stats = s.stats
               time = Time.now
               behind = threads[hostname_port].has_key?('behind') ? threads[hostname_port]['behind'] : "-"

@@ -29,7 +29,7 @@ module Flare
         def setup
           super
           set_option_index_server
-          @optp.on('--force',          "commits changes without confirmation") {@force = true}
+          set_option_force
           @optp.on('--retry=COUNT',    "retry count"                         ) {|v| @retry = v.to_i}
         end
 
@@ -54,7 +54,7 @@ module Flare
           masters = []
           slaves = []
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
 
             partitions = {}
