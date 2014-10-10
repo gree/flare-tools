@@ -92,15 +92,16 @@ class PartitionTest < Test::Unit::TestCase
     }
     sleep 1 # XXX
     @flare_cluster.wait_for_ready
+
+    @nodes = @node_servers.map {|node| node.open}
+    @wait = 0.005
     @config = {
       :command => 'dummy',
-      :index_server_hostname => @flare_cluster.indexname,
-      :index_server_port => @flare_cluster.indexport,
       :dry_run => false,
       :timeout => 10
     }
-    @nodes = @node_servers.map {|node| node.open}
-    @wait = 0.005
+    @index_server_hostname = @flare_cluster.indexname
+    @index_server_port = @flare_cluster.indexport
   end
 
   def teardown

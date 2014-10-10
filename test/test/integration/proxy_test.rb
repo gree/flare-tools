@@ -17,13 +17,14 @@ class ProxyTest < Test::Unit::TestCase
     @node_servers = ['node1', 'node2', 'node3'].map {|name| @flare_cluster.create_node(name)}
     sleep 1 # XXX
     @flare_cluster.wait_for_ready
+
     @config = {
       :command => 'dummy',
-      :index_server_hostname => @flare_cluster.indexname,
-      :index_server_port => @flare_cluster.indexport,
       :dry_run => false,
       :timeout => 10
     }
+    @index_server_hostname = @flare_cluster.indexname
+    @index_server_port = @flare_cluster.indexport
   end
 
   def teardown

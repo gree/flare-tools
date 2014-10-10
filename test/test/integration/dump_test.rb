@@ -59,19 +59,19 @@ class DumpTest < Test::Unit::TestCase
 
     puts "dumping"
     @config = {
-      :index_server_hostname => src_cluster.indexname,
-      :index_server_port => src_cluster.indexport,
       :timeout => 10
     }
+    @index_server_hostname = src_cluster.indexname
+    @index_server_port = src_cluster.indexport
     args = %w(--format=tch --output=src.tch)
     args.concat extra_dump_options
     assert_equal(S_OK, dump(*args))
 
     @config = {
-      :index_server_hostname => dest_cluster.indexname,
-      :index_server_port => dest_cluster.indexport,
       :timeout => 10
     }
+    @index_server_hostname = dest_cluster.indexname
+    @index_server_port = dest_cluster.indexport
     n = dest_nodes[0]
     args = %w(--format=tch --input=src.tch)
     args.concat extra_restore_options

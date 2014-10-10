@@ -28,8 +28,8 @@ class CliTest < Test::Unit::TestCase
       :dry_run => false,
       :timeout => 10
     }
-    @index_server_hostname = @flare_cluster.indexname.to_s
-    @index_server_port = @flare_cluster.indexport.to_s
+    @index_server_hostname = @flare_cluster.indexname
+    @index_server_port = @flare_cluster.indexport
   end
 
   def teardown
