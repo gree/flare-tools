@@ -4,13 +4,14 @@ GEM
     builder (3.2.2)
     ci_reporter (2.0.0)
       builder (>= 2.1.2)
+    ci_reporter_test_unit (1.0.0)
+      ci_reporter (~> 2.0)
+      test-unit (~> 2.5.5)
     json (1.8.1)
     log4r (1.1.10)
-    power_assert (0.1.4)
     rdoc (4.1.2)
       json (~> 1.4)
-    test-unit (3.0.1)
-      power_assert
+    test-unit (2.5.5)
     tokyocabinet (1.29.1)
     zookeeper (1.4.9)
 
@@ -18,9 +19,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  ci_reporter
+  ci_reporter_test_unit (>= 1.0.0)
   log4r
   rdoc
-  test-unit
   tokyocabinet (>= 1.29)
   zookeeper (>= 1.2.6)

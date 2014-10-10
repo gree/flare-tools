@@ -1,6 +1,6 @@
 
 require 'rake/testtask'
-require 'ci/reporter/rake/test_unit'
+require 'ci/reporter/rake/test_unit_loader'
 
 envargs = "-u FLARE_INDEX_SERVER -u FLARE_INDEX_SERVER_PORT"
 envargs = ""

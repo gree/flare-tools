@@ -10,94 +10,121 @@ module Subcommands
   S_NG = 1
 
   def instantiate(cls, args)
-    opt = OptionParser.new
     subc = cls.new
-    subc.setup(opt)
-    opt.parse!(args)
+    subc.setup
+    subc.optp.parse!(args)
     subc
   end
 
   def ping(*args)
     subc = instantiate(Flare::Tools::Cli::Ping, args)
-    subc.execute(@config.merge({:command => 'ping'}), *args)
+    subc.execute(@config.merge({:command => 'ping'}), args)
   end
   
   def list(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     subc = instantiate(Flare::Tools::Cli::List, args)
-    subc.execute(@config.merge({:command => 'list'}))
+    subc.execute(@config.merge({:command => 'list'}), args)
   end
 
   def stats(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     subc = instantiate(Flare::Tools::Cli::Stats, args)
-    subc.execute(@config.merge({:command => 'stats'}), *args)
+    subc.execute(@config.merge({:command => 'stats'}), args)
   end
 
   def down(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     args << "--force"
     subc = instantiate(Flare::Tools::Cli::Down, args)
-    subc.execute(@config.merge({:command => 'down'}), *args)
+    subc.execute(@config.merge({:command => 'down'}), args)
   end
 
   def activate(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     args << "--force"
     subc = instantiate(Flare::Tools::Cli::Activate, args)
-    subc.execute(@config.merge({:command => 'activate'}), *args)
+    subc.execute(@config.merge({:command => 'activate'}), args)
   end
 
   def slave(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     args << "--force"
     subc = instantiate(Flare::Tools::Cli::Slave, args)
-    subc.execute(@config.merge({:command => 'slave'}), *args)
+    subc.execute(@config.merge({:command => 'slave'}), args)
   end
 
   def balance(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     args << "--force"
     subc = instantiate(Flare::Tools::Cli::Balance, args)
-    subc.execute(@config.merge({:command => 'balance'}), *args)
+    subc.execute(@config.merge({:command => 'balance'}), args)
   end
   
   def reconstruct(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     args << "--force"
     subc = instantiate(Flare::Tools::Cli::Reconstruct, args)
-    subc.execute(@config.merge({:command => 'reconstruct'}), *args)
+    subc.execute(@config.merge({:command => 'reconstruct'}), args)
   end
 
   def index(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     subc = instantiate(Flare::Tools::Cli::Index, args)
-    subc.execute(@config.merge({:command => 'index'}))
+    subc.execute(@config.merge({:command => 'index'}), args)
   end
 
   def remove(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     args << "--force"
     subc = instantiate(Flare::Tools::Cli::Remove, args)
-    subc.execute(@config.merge({:command => 'remove'}), *args)
+    subc.execute(@config.merge({:command => 'remove'}), args)
   end
 
   def master(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     args << "--force"
     subc = instantiate(Flare::Tools::Cli::Master, args)
-    subc.execute(@config.merge({:command => 'master'}), *args)
+    subc.execute(@config.merge({:command => 'master'}), args)
   end
 
   def dump(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     subc = instantiate(Flare::Tools::Cli::Dump, args)
-    subc.execute(@config.merge({:command => 'dump'}), *args)
+    subc.execute(@config.merge({:command => 'dump'}), args)
   end
   
   def dumpkey(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     subc = instantiate(Flare::Tools::Cli::Dumpkey, args)
-    subc.execute(@config.merge({:command => 'dumpkey'}), *args)
+    subc.execute(@config.merge({:command => 'dumpkey'}), args)
   end
   
   def verify(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     puts "args: "+args.join(' ')
     subc = instantiate(Flare::Tools::Cli::Verify, args)
-    subc.execute(@config.merge({:command => 'verify'}), *args)
+    subc.execute(@config.merge({:command => 'verify'}), args)
   end
   
   def restore(*args)
+    args << "--index-server" << @index_server_hostname
+    args << "--index-server-port" << @index_server_port
     subc = instantiate(Flare::Tools::Cli::Restore, args)
-    subc.execute(@config.merge({:command => 'restore'}), *args)
+    subc.execute(@config.merge({:command => 'restore'}), args)
   end
   
 end
