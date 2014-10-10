@@ -61,8 +61,6 @@ module Flare
         end
 
         def execute(config, args)
-          @cout.puts "config=#{config}"
-          @cout.puts "args=#{args}"
           parse_index_server(config, args)
           if args.size > 0
             error "invalid arguments: "+args.join(' ')
