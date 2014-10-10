@@ -14,7 +14,7 @@ require 'flare/tools'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
 
-task :default => [:spec, :features]
+task :default => [:test]
 
 task :manual do
   h = RDoc::Markup::ToAnsi.new

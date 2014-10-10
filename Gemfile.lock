@@ -9,6 +9,7 @@ GEM
       test-unit (~> 2.5.5)
     json (1.8.1)
     log4r (1.1.10)
+    rake (10.3.2)
     rdoc (4.1.2)
       json (~> 1.4)
     test-unit (2.5.5)
@@ -21,6 +22,7 @@ PLATFORMS
 DEPENDENCIES
   ci_reporter_test_unit (>= 1.0.0)
   log4r
+  rake
   rdoc
   tokyocabinet (>= 1.29)
   zookeeper (>= 1.2.6)
