@@ -1,11 +1,13 @@
 require 'flare/tools/index_server'
 require 'flare/entity/server'
+require 'flare/util/logging'
 
 module Flare; end
 module Flare::Tools; end
 module Flare::Tools::Cli; end
 module Flare::Tools::Cli::IndexServerConfig
   include Flare::Util::Constant
+  include Flare::Util::Logging
   FLARE_INDEX_SERVERS = "FLARE_INDEX_SERVERS"
   FLARE_INDEX_SERVER = "FLARE_INDEX_SERVER"
   Entity = Flare::Entity
@@ -51,7 +53,7 @@ module Flare::Tools::Cli::IndexServerConfig
     if ENV.has_key? envname
       clusters = ENV[envname].split(';').map{|s| s.split(':')}
       clusters.each do |cluster_name,index_name,index_port|
-        ret = Flare::Tools::Server.open(index_name, index_port.to_i) do |s|
+        ret = Flare::Tools::IndexServer.open(index_name, index_port.to_i) do |s|
           cluster_nodekeys = s.stats_nodes.map {|x| x[0]}
           included = true
           nodekeys.each do |nodekey|
@@ -68,6 +70,7 @@ module Flare::Tools::Cli::IndexServerConfig
     end
     nil
   rescue => e
+    debug(e.message)
     nil
   end
 
