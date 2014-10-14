@@ -30,14 +30,14 @@ class FlareAdminTest < Test::Unit::TestCase
   end
 
   def flare_admin_with_yes arg
-    cmd = "yes | #{Admin} #{arg}"
+    cmd = "yes | ruby #{Admin} #{arg}"
     puts "> #{cmd}"
     puts `#{cmd}`
     $?.exitstatus
   end
 
   def flare_admin arg
-    cmd = "#{Admin} #{arg}"
+    cmd = "ruby #{Admin} #{arg}"
     puts "> #{cmd}"
     puts `#{cmd}`
     $?.exitstatus
