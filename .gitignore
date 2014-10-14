@@ -1,7 +1,7 @@
 doc
 pkg
-test/work/*.log
-test/work/*
+work/*.log
+work/*
 *.gem
 *.rbc
 .bundle
