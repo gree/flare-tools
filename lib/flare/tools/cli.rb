@@ -25,6 +25,7 @@ module Flare
       autoload :Verify,      'flare/tools/cli/verify'
       autoload :Restore,     'flare/tools/cli/restore'
       autoload :Summary,     'flare/tools/cli/summary'
+      autoload :Part,        'flare/tools/cli/part'
     end
   end
 end

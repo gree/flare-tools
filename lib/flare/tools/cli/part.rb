@@ -11,6 +11,7 @@ require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
 require 'flare/tools/cli/slave'
 require 'flare/tools/cli/master'
+require 'flare/tools/cli/index_server_config'
 
 module Flare
   module Tools
@@ -19,14 +20,17 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
+        include Flare::Tools::Cli::IndexServerConfig
 
         myname :part
         desc   "set the master of a partition."
         usage  "master [hostname:port:balance:partition] ..."
 
-        def setup(opt)
-          opt.on('--force',          "commits changes without confirmation") {@force = true}
-          opt.on('--retry=COUNT',    "retry count"                         ) {|v| @retry = v.to_i}
+        def setup
+          super
+          set_option_index_server
+          set_option_force
+          @optp.on('--retry=COUNT',    "retry count"                         ) {|v| @retry = v.to_i}
         end
 
         def initialize
@@ -34,8 +38,9 @@ module Flare
           @force = false
           @retry = nil
         end
-  
-        def execute(config, *args)
+
+        def execute(config, args)
+          parse_index_server(config, args)
           return S_NG if args.size < 1
 
           hosts = args.map {|x| x.to_s.split(':')}
@@ -49,7 +54,7 @@ module Flare
           masters = []
           slaves = []
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
 
             partitions = {}
@@ -71,24 +76,20 @@ module Flare
           begin
             opt = OptionParser.new
             subc = Flare::Tools::Cli::Master.new
-            subc.setup(opt)
             args = masters
             args << "--force" if @force
             args << "--activate"
-            opt.parse!(args)
-            subc.execute(config, *args)
+            subc.execute_subcommand(config, args)
           end
 
           puts "slaves:"
           begin
             opt = OptionParser.new
             subc = Flare::Tools::Cli::Slave.new
-            subc.setup(opt)
             args = slaves
             args << "--force" if @force
             args << "--retry=#{@retry}" unless @retry.nil?
-            opt.parse!(args)
-            subc.execute(config, *args)
+            subc.execute_subcommand(config, args)
           end
 
           S_OK

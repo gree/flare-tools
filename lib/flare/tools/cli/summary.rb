@@ -8,19 +8,18 @@ require 'flare/tools/index_server'
 require 'flare/tools/cli/sub_command'
 require 'flare/tools/common'
 require 'flare/util/conversion'
+require 'flare/tools/cli/index_server_config'
 
-# 
 module Flare
   module Tools
     module Cli
 
-      # == Description
-      #
       class Summary < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::Logging
         include Flare::Tools::Common
-        
+        include Flare::Tools::Cli::IndexServerConfig
+
         myname :summary
         desc   "show the summary of a flare cluster."
         usage  "summary [hostname:port] ..."
@@ -33,19 +32,22 @@ module Flare
                          ['%16s',     'size'],
                          ['%13s',    'items'] ]
 
-        def setup(opt)
+        def setup
+          super
+          set_option_index_server
         end
 
         def initialize
           super
         end
-  
-        def execute(config, *args)
+
+        def execute(config, args)
+          parse_index_server(config, args)
           nodes = {}
           threads = {}
           header = HeaderConfig
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             nodes = s.stats_nodes
             unless nodes
               error "Invalid index server."
@@ -69,7 +71,7 @@ module Flare
 
           nodes.each do |hostname_port,data|
             hostname, port = hostname_port.split(":", 2)
-            Flare::Tools::Stats.open(hostname, data['port'], config[:timeout]) do |s|
+            Flare::Tools::Stats.open(hostname, data['port'], @timeout) do |s|
               stats = s.stats
               p = data['partition'].to_i
               total_parts = p+1 if p+1 > total_parts if data['role'] == 'master'
@@ -85,7 +87,7 @@ module Flare
           label = format % header.map{|x| x[1]}.flatten
           puts label
           puts(format % [name, total_parts, total_nodes, total_masters, total_slaves, total_bytes, total_items])
-          
+
           S_OK
         end
 

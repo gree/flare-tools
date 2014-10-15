@@ -1,37 +1,36 @@
 
-$LOAD_PATH.unshift File.dirname(__FILE__)+"/lib"
+$LOAD_PATH.unshift File.dirname(__FILE__) + "/lib"
 
 require 'rubygems'
-gem 'hoe', '>= 2.1.0'
-require 'hoe'
-gem 'rdoc'
+require 'bundler/setup'
+require "bundler/gem_tasks"
 require 'rdoc'
 require 'rdoc/markup'
 require 'rdoc/markup/formatter'
 require 'rdoc/markup/to_ansi'
+require 'rake/testtask'
+require 'ci/reporter/rake/test_unit_loader'
 
 require 'fileutils'
 require 'flare/tools'
 
-Hoe.plugin :newgem
-
-$hoe = Hoe.spec 'flare-tools' do
-  self.version = Flare::Tools::VERSION
-  self.developer 'kikehara', 'kiyoshi.ikehara@gree.net'
-  self.urls = ['http://github.com/gree/flare-tools']
-  self.summary = "Management Tools for Flare"
-  self.post_install_message = 'PostInstall.txt'
-  self.description = "Flare-tools is a collection of tools for Flare distributed key-value store."
-  self.readme_file = "README.txt"
-  self.extra_deps = [['log4r', '>= 1.1.4'], ['zookeeper', '>= 1.2.6'], ['tokyocabinet', '>= 1.29']]
-  self.rubyforge_name = 'flare-tools'
-  self.extra_rdoc_files = []
-end
-
-require 'newgem/tasks'
 Dir['tasks/**/*.rake'].each { |t| load t }
 
-task :default => [:spec, :features]
+task :default => [:test]
+
+task :help do
+  print <<EOS
+Examples:
+  run a specific test script
+  > rake test TEST=testname_test.rb
+  run a specific test
+  > rake test TESTOPTS=--name=test_mytest1
+  run tests with --verbose
+  > rake test TESTOPTS=--verbose
+  run stress tests
+  > rake test FLARE_TOOLS_STRESS_TEST=yes
+EOS
+end
 
 task :manual do
   h = RDoc::Markup::ToAnsi.new
@@ -39,24 +38,22 @@ task :manual do
   puts h.convert(rdoc)
 end
 
-task :test do
-  sh "(cd test && rake)"
+Rake::TestTask.new do |test|
+  test.libs << './lib'
+  test.test_files = Dir['test/unit/**/*_test.rb', 'test/integration/**/*_test.rb', 'test/system/**/*_test.rb']
+  test.verbose = true
+  test.ruby_opts = ['-r', 'rubygems']
 end
 
-task :stress_test do
-  sh "(cd test && rake stress)"
-end
+task :test => :work
+
+directory "work"
 
 task :clean do
-  sh "(cd test && rake clean)"
+ sh "rm -rf test/work/test*"
+ sh "rm -f test/*~"
+ sh "rm -f /tmp/flare[id].*.conf"
 end
-
-task :manifest_post do
-  sh "grep -ve '^debian' Manifest.txt| grep -ve '^test' | grep -ve '^package' | grep -ve '^Makefile' | grep -v '#\$' > Manifest.tmp"
-  sh "mv Manifest.tmp Manifest.txt"
-end
-
-task :install => [:manifest, :manifest_post, :install_gem]
 
 task :debuild do |t|
   sh "debuild -us -uc"
@@ -82,6 +79,11 @@ task :change do
   version = Flare::Tools::VERSION
   since = previous version
   sh "git-dch --debian-branch='#{debian_branch}' --new-version #{version} --since=#{since}"
+end
+
+task :killall do
+ sh "pkill /usr/local/bin/flarei"
+ sh "pkill /usr/local/bin/flared"
 end
 
 task :cleanall => [:clean] do

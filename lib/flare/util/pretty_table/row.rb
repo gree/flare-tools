@@ -20,7 +20,7 @@ module Flare
 
         def prettify(column_widths)
           @columns \
-            .map.with_index {|column, index| column.prettify(column_widths[index]) } \
+            .each_with_index.map {|column, index| column.prettify(column_widths[index]) } \
             .join(@separator)
         end
       end

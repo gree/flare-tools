@@ -8,31 +8,29 @@ require 'flare/util/conversion'
 require 'flare/util/logging'
 require 'flare/tools/cli/sub_command'
 
-# 
 module Flare
   module Tools
 
-    # == Description
-    # 
     module Cli
       class Ping < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::Logging
-        
+
         myname :ping
         desc   "ping"
         usage  "ping [hostname:port] ..."
-        
-        def setup(opt)
-          opt.on('--wait',            "wait for OK responses from nodes") {@wait = true}
+
+        def setup
+          super
+          @optp.on('--wait',            "wait for OK responses from nodes") {@wait = true}
         end
-        
+
         def initialize
           super
           @wait = false
         end
-        
-        def execute(config, *args)
+
+        def execute(config, args)
 
           hosts = args.map do |arg|
             hostname, port, rest = arg.split(':', 3)
@@ -55,7 +53,7 @@ module Flare
               begin
                 debug "trying..."
                 interruptible do
-                  Flare::Tools::Stats.open(hostname, port, config[:timeout]) do |s|
+                  Flare::Tools::Stats.open(hostname, port, @timeout) do |s|
                     resp = s.ping
                   end
                 end
@@ -70,11 +68,11 @@ module Flare
               end
             end
           end
-          
+
           puts "alive"
           S_OK
         end
-        
+
       end
     end
   end

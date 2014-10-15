@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- coding: utf-8; -*-
 
-$LOAD_PATH.unshift File.dirname(__FILE__)+"/../lib"
+$LOAD_PATH.unshift File.dirname(__FILE__)+"/../../../lib"
 
 require 'test/unit'
 require 'flare/tools'
@@ -10,7 +10,7 @@ require 'flare/test/cluster'
 ENV['FLARE_INDEX_SERVER'] = nil
 
 class FlareAdminTest < Test::Unit::TestCase
-  Admin = "../bin/flare-admin"
+  Admin = "./bin/flare-admin"
   S_OK = 0
   S_NG = 1
 
@@ -30,14 +30,14 @@ class FlareAdminTest < Test::Unit::TestCase
   end
 
   def flare_admin_with_yes arg
-    cmd = "yes | #{Admin} #{arg}"
+    cmd = "yes | ruby #{Admin} #{arg}"
     puts "> #{cmd}"
     puts `#{cmd}`
     $?.exitstatus
   end
 
   def flare_admin arg
-    cmd = "#{Admin} #{arg}"
+    cmd = "ruby #{Admin} #{arg}"
     puts "> #{cmd}"
     puts `#{cmd}`
     $?.exitstatus
@@ -71,7 +71,9 @@ class FlareAdminTest < Test::Unit::TestCase
     assert_equal(S_NG, $?.exitstatus)
     flare_admin "list --log-file=''"
     assert_equal(S_NG, $?.exitstatus)
-    flare_admin "list #{@opt_index} --dry-run"
+    flare_admin_with_yes "down #{@opt_index} --dry-run #{@datanodes[0].hostname}:#{@datanodes[0].port}"
+    assert_equal(S_OK, $?.exitstatus)
+    flare_admin "list #{@opt_index} --timeout=20"
     assert_equal(S_OK, $?.exitstatus)
   end
 

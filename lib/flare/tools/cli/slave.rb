@@ -11,6 +11,7 @@ require 'flare/tools/common'
 require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
 module Flare
   module Tools
@@ -19,17 +20,21 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
+        include Flare::Tools::Cli::IndexServerConfig
 
         DefaultRetry = 10
-        
+
         myname :slave
         desc   "construct slaves from proxy nodes."
         usage  "slave [hostname:port:balance:partition] ..."
 
-        def setup(opt)
-          opt.on('--force',          "commit changes without confirmation") {@force = true}
-          opt.on('--retry=COUNT',    "specify retry count(default:#{@retry})") {|v| @retry = v.to_i}
-          opt.on('--clean',          "clear datastore before construction") {@clean = true}
+        def setup
+          super
+          set_option_index_server
+          set_option_dry_run
+          set_option_force
+          @optp.on('--retry=COUNT',    "specify retry count(default:#{@retry})") {|v| @retry = v.to_i}
+          @optp.on('--clean',          "clear datastore before construction") {@clean = true}
         end
 
         def initialize
@@ -39,7 +44,8 @@ module Flare
           @clean = false
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
           return S_NG if args.empty?
 
           hosts = args.map do |arg|
@@ -50,10 +56,10 @@ module Flare
             end
             [hostname, port, balance.to_i, partition.to_i]
           end
-          
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = fetch_cluster(s)
-          
+
             hosts.each do |hostname,port,balance,partition|
               nodekey = nodekey_of hostname, port
 
@@ -68,7 +74,7 @@ module Flare
                 puts "#{nodekey} is not a proxy."
                 next
               end
-              
+
               exec = @force
               unless exec
                 STDERR.print "making node slave (node=#{nodekey}, role=#{node['role']} -> slave) (y/n): "
@@ -76,9 +82,9 @@ module Flare
                   exec = true if gets.chomp.upcase == "Y"
                 end
               end
-              if exec && !config[:dry_run]
+              if exec && !@dry_run
                 if @clean
-                  Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
+                  Flare::Tools::Node.open(hostname, port, @timeout) do |n|
                     n.flush_all
                   end
                 end
@@ -97,7 +103,7 @@ module Flare
                   end
                 end
                 if resp
-                  wait_for_slave_construction(s, nodekey, config[:timeout])
+                  wait_for_slave_construction(s, nodekey, @timeout)
                   if balance > 0
                     unless @force
                       STDERR.print "changing node's balance (node=#{nodekey}, balance=0 -> #{balance}) (y/n): "
@@ -115,7 +121,7 @@ module Flare
             end
             STDOUT.puts string_of_nodelist(s.stats_nodes, hosts.map {|x| x[0..1].join(':')})
           end
-          
+
           return S_OK
         end # execute()
 

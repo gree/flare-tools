@@ -11,6 +11,7 @@ require 'flare/tools/common'
 require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
 module Flare
   module Tools
@@ -19,16 +20,20 @@ module Flare
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
-        
+        include Flare::Tools::Cli::IndexServerConfig
+
         myname :reconstruct
         desc "reconstruct the database of nodes by copying."
         usage "reconstruct [hostname:port] ..."
 
-        def setup(opt)
-          opt.on('--force',          "commit changes without confirmation"    ) {@force = true}
-          opt.on('--safe',           "reconstruct a node safely"              ) {@safe = true}
-          opt.on('--retry=COUNT',    "specify retry count (default:#{@retry})") {|v| @retry = v.to_i}
-          opt.on('--all',            "reconstruct all nodes"                  ) {@all = true}
+        def setup
+          super
+          set_option_index_server
+          set_option_dry_run
+          set_option_force
+          @optp.on('--safe',           "reconstruct a node safely"              ) {@safe = true}
+          @optp.on('--retry=COUNT',    "specify retry count (default:#{@retry})") {|v| @retry = v.to_i}
+          @optp.on('--all',            "reconstruct all nodes"                  ) {@all = true}
         end
 
         def initialize
@@ -39,13 +44,15 @@ module Flare
           @all = false
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
+
           if @all
             unless args.empty?
               puts "don't specify any nodes with --all option."
               return S_NG
             else
-              Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+              Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
                 cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
                 args = cluster.master_and_slave_nodekeys
               end
@@ -61,16 +68,16 @@ module Flare
               return S_NG
             end
           end
-          
+
           status = S_OK
 
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| nodekey_of(x[0], x[1])})
 
             hosts.each do |hostname,port|
               nodekey = nodekey_of hostname, port
               cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
-              
+
               unless node = cluster.node_stat(nodekey)
                 puts "#{nodekey} is not found in this cluster."
                 return S_NG
@@ -111,14 +118,14 @@ module Flare
                   end
                 end
               end
-              if exec && !config[:dry_run]
+              if exec && !@dry_run
                 puts "turning down..."
                 s.set_state(hostname, port, 'down')
 
                 puts "waiting for node to be active again..."
                 sleep 3
 
-                Flare::Tools::Node.open(hostname, port, config[:timeout]) do |n|
+                Flare::Tools::Node.open(hostname, port, @timeout) do |n|
                   n.flush_all
                 end
 
@@ -137,7 +144,7 @@ module Flare
                 end
                 balance = node['balance']
                 if resp
-                  wait_for_slave_construction(s, nodekey, config[:timeout])
+                  wait_for_slave_construction(s, nodekey, @timeout)
                   unless @force
                     print "changing node's balance (node=#{nodekey}, balance=0 -> #{balance}) (y/n): "
                     exec = interruptible {(gets.chomp.upcase == "Y")}
@@ -154,7 +161,7 @@ module Flare
 
             puts string_of_nodelist(s.stats_nodes, hosts.map {|x| "#{x[0]}:#{x[1]}"})
           end # open
-          
+
           status
         end # execute()
 

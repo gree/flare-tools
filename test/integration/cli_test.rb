@@ -22,13 +22,14 @@ class CliTest < Test::Unit::TestCase
     @node_servers = ['node1', 'node2', 'node3'].map {|name| @flare_cluster.create_node(name)}
     sleep 1 # XXX
     @flare_cluster.wait_for_ready
+
     @config = {
       :command => 'dummy',
-      :index_server_hostname => @flare_cluster.indexname,
-      :index_server_port => @flare_cluster.indexport,
       :dry_run => false,
       :timeout => 10
     }
+    @index_server_hostname = @flare_cluster.indexname
+    @index_server_port = @flare_cluster.indexport
   end
 
   def teardown
@@ -208,11 +209,12 @@ class CliTest < Test::Unit::TestCase
     assert_equal(S_OK, index())
   end
 
-  def remove_boostheader(s)
+  def remove_boostheader_and_version(s)
     lines = s.split("\n")
     h1 = lines.shift
     h2 = lines.shift
-    lines.shift
+    lines.shift # XXX boost header
+    lines.shift # XXX version
     lines.unshift(h2)
     lines.unshift(h1)
     lines.join("\n")
@@ -224,8 +226,8 @@ class CliTest < Test::Unit::TestCase
     args = ["--output=flare.xml"]
     assert_equal(S_OK, index(*args))
     assert_equal(true, File.exist?("flare.xml"))
-    flarexml = remove_boostheader(open("flare.xml").read)
-    indexxml = remove_boostheader(@flare_cluster.index)
+    flarexml = remove_boostheader_and_version(open("flare.xml").read)
+    indexxml = remove_boostheader_and_version(@flare_cluster.index)
     assert_equal(indexxml, flarexml)
     File.delete("flare.xml")
   end

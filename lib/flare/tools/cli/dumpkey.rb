@@ -10,29 +10,33 @@ require 'flare/util/conversion'
 require 'flare/util/constant'
 require 'flare/util/bwlimit'
 require 'flare/tools/cli/sub_command'
+require 'flare/tools/cli/index_server_config'
 
 require 'csv'
 
 module Flare
   module Tools
     module Cli
-      
+
       class Dumpkey < SubCommand
         include Flare::Util::Conversion
         include Flare::Util::Constant
         include Flare::Tools::Common
-        
+        include Flare::Tools::Cli::IndexServerConfig
+
         myname :dumpkey
         desc   "dump key from nodes."
         usage  "dumpkey [hostname:port] ..."
-        
-        def setup(opt)
-          opt.on('-o', '--output=FILE',            "output to file"         ) {|v| @output = v}
-          opt.on('-f', '--format=FORMAT',          "output format [csv]"     ) {|v| @format = v}
-          opt.on('-p', '--partition=NUMBER',       "partition number"        ) {|v| @part = v.to_i if v.to_i >= 0}
-          opt.on('-s', '--partition-size=SIZE',    "partition size"          ) {|v| @partsize = v.to_i if v.to_i > 0}
-          opt.on(      '--bwlimit=BANDWIDTH',      "bandwidth limit (bps)"   ) {|v| @bwlimit = v if v.to_i > 0}
-          opt.on(      '--all',                      "dump form all partitions") {@all = true}
+
+        def setup
+          super
+          set_option_index_server
+          @optp.on('-o', '--output=FILE',            "output to file"         ) {|v| @output = v}
+          @optp.on('-f', '--format=FORMAT',          "output format [csv]"     ) {|v| @format = v}
+          @optp.on('-p', '--partition=NUMBER',       "partition number"        ) {|v| @part = v.to_i if v.to_i >= 0}
+          @optp.on('-s', '--partition-size=SIZE',    "partition size"          ) {|v| @partsize = v.to_i if v.to_i > 0}
+          @optp.on(      '--bwlimit=BANDWIDTH',      "bandwidth limit (bps)"   ) {|v| @bwlimit = v if v.to_i > 0}
+          @optp.on(      '--all',                      "dump form all partitions") {@all = true}
         end
 
         def initialize
@@ -45,9 +49,10 @@ module Flare
           @all = false
         end
 
-        def execute(config, *args)
+        def execute(config, args)
+          parse_index_server(config, args)
           cluster = nil
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], config[:timeout]) do |s|
+          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
           end
           return S_NG if cluster.nil?
@@ -80,9 +85,9 @@ module Flare
               return S_NG
             end
           end
-          
+
           hosts.each do |hostname,port|
-            Flare::Tools::Node.open(hostname, port.to_i, config[:timeout], @bwlimit, @bwlimit) do |n|
+            Flare::Tools::Node.open(hostname, port.to_i, @timeout, @bwlimit, @bwlimit) do |n|
               output = STDOUT
               unless @output.nil?
                 output = File.open(@output, "w")
@@ -106,10 +111,10 @@ module Flare
               output.close if output != STDOUT
             end
           end
-          
+
           S_OK
         end # execute()
-        
+
       end
     end
   end
