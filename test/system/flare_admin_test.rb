@@ -159,10 +159,13 @@ class FlareAdminTest < Test::Unit::TestCase
     p = @datanodes[0].port
     flare_admin_with_yes "master --index-server=#{@indexname}:#{@indexport} #{h}:#{p}:1:0"
     assert_equal(S_OK, $?.exitstatus)
-    h = @datanodes[1].hostname
-    p = @datanodes[1].port
-    flare_admin_with_yes "slave --index-server=#{@indexname}:#{@indexport} #{h}:#{p}:1:0"
-    assert_equal(S_OK, $?.exitstatus)
+    [1, 2].each do |i|
+      assert_equal(S_OK, $?.exitstatus)
+      h = @datanodes[i].hostname
+      p = @datanodes[i].port
+      flare_admin_with_yes "slave --index-server=#{@indexname}:#{@indexport} #{h}:#{p}:1:0"
+      assert_equal(S_OK, $?.exitstatus)
+    end
     flare_admin_with_yes "reconstruct --index-server=#{@indexname}:#{@indexport} --all"
     assert_equal(S_OK, $?.exitstatus)
   end

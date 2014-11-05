@@ -31,15 +31,18 @@ module Flare
           set_option_index_server
           set_option_dry_run
           set_option_force
-          @optp.on('--safe',           "reconstruct a node safely"              ) {@safe = true}
-          @optp.on('--retry=COUNT',    "specify retry count (default:#{@retry})") {|v| @retry = v.to_i}
-          @optp.on('--all',            "reconstruct all nodes"                  ) {@all = true}
+          @optp.on('--unsafe',         "reconstruct a node safely"              ) { @unsafe = true }
+          @optp.on('--safe',           "[obsolete] now reconstruct a node safely by default") do
+            # do nothing
+          end
+          @optp.on('--retry=COUNT',    "specify retry count (default:#{@retry})") {|v| @retry = v.to_i }
+          @optp.on('--all',            "reconstruct all nodes"                  ) { @all = true }
         end
 
         def initialize
           super
           @force = false
-          @safe = false
+          @unsafe = false
           @retry = 10
           @all = false
         end
@@ -88,7 +91,7 @@ module Flare
                 next
               end
               is_safe = cluster.safely_reconstructable? nodekey
-              if @safe && !is_safe
+              if !@unsafe && !is_safe
                 puts "The partition needs one more slave to reconstruct #{nodekey} safely."
                 status = S_NG
                 next

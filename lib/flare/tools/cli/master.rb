@@ -94,7 +94,9 @@ module Flare
               elsif node['role'] != 'proxy'
                 puts "#{nodekey} is not a proxy."
               else
-                STDERR.print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
+                clean_notice_base = "\nitems stored in the node will be cleaned up (exec flush_all) before constructing it"
+                clean_notice = @without_clean ? clean_notice_base : ''
+                STDERR.print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role})#{clean_notice} (y/n): "
                 exec = interruptible {(gets.chomp.upcase == "Y")}
               end
               if exec && !@dry_run
@@ -107,7 +109,7 @@ module Flare
                     STDERR.print "executing flush_all failed."
                     return S_NG
                   end
-                  puts "executed flush_all command before constructing master node."
+                  puts "executed flush_all command before constructing the master node."
                 end
 
                 nretry = 0
