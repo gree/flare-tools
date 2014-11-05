@@ -30,8 +30,9 @@ module Flare
           set_option_index_server
           set_option_dry_run
           set_option_force
-          @optp.on('--retry=COUNT',    "specify retry count (default:#{@retry})" ) {|v| @retry = v.to_i}
-          @optp.on('--activate',       "change node's state from ready to active") {@activate = true}
+          @optp.on('--retry=COUNT', "specify retry count (default:#{@retry})" ) {|v| @retry = v.to_i }
+          @optp.on('--activate', "change node's state from ready to active") { @activate = true }
+          @optp.on('--without-clean', "don't clear datastore before construction") { @without_clean = true }
         end
 
         def initialize
@@ -39,6 +40,7 @@ module Flare
           @force = false
           @retry = 10
           @activate = false
+          @without_clean = false
         end
 
         def execute(config, args)
@@ -89,11 +91,25 @@ module Flare
                 info "no need to change the role of #{ipaddr}:#{port}."
               elsif existing_master
                 info "the partiton already has a master #{existing_master}."
+              elsif node['role'] != 'proxy'
+                puts "#{nodekey} is not a proxy."
               else
                 STDERR.print "making the node master (node=#{ipaddr}:#{port}, role=#{node['role']} -> #{role}) (y/n): "
                 exec = interruptible {(gets.chomp.upcase == "Y")}
               end
               if exec && !@dry_run
+                unless @without_clean
+                  resp = false
+                  Flare::Tools::Node.open(hostname, port, @timeout) do |n|
+                    resp = n.flush_all
+                  end
+                  unless resp
+                    STDERR.print "executing flush_all failed."
+                    return S_NG
+                  end
+                  puts "executed flush_all command before constructing master node."
+                end
+
                 nretry = 0
                 resp = false
                 while resp == false && nretry < @retry
