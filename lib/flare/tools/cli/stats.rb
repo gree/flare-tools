@@ -126,18 +126,13 @@ module Flare
             nodes.each do |k, n|
               max_nodekey_length = k.length if k.length > max_nodekey_length
             end
-            table = Table.new
-            add_header_to_table(table, header_configs)
-            nodes.each do |k, node|
-              stats_data = queue[k].pop
-              next if (args.size > 0 && !args.include?(k))
-              behind = (threads.has_key?(k) || threads[k].has_key?('behind')) ? threads[k]['behind'] : "-"
-              r = record(stats_data, node, behind, query_prev, k)
-              add_record_to_table(table, header_configs, r)
-            end
+            r = records(args, nodes, queue, threads, query_prev)
             interruptible {
               wait_for_stats
             }
+            table = Table.new
+            add_header_to_table(table, header_configs)
+            add_records_to_table(table, header_configs, r)
             puts table.prettify
           end
           s.close
@@ -235,12 +230,24 @@ module Flare
           table.add_row(row)
         end
 
-        def add_record_to_table(table, header_configs, record)
-          row = Row.new(:separator => @delimiter)
-          header_configs.each_with_index do |header_config, index|
-            row.add_column(Column.new(record[index], header_config[1]))
+        def add_records_to_table(table, header_configs, records)
+          records.each do |record|
+            row = Row.new(:separator => @delimiter)
+            header_configs.each_with_index do |header_config, index|
+              row.add_column(Column.new(record[index], header_config[1]))
+            end
+            table.add_row(row)
           end
-          table.add_row(row)
+        end
+
+        # You can override this method to extend stats infos.
+        def records(args, nodes, queue, threads, query_prev)
+          nodes.map do |k, node|
+            stats_data = queue[k].pop
+            next if (args.size > 0 && !args.include?(k))
+            behind = (threads.has_key?(k) || threads[k].has_key?('behind')) ? threads[k]['behind'] : "-"
+            record(stats_data, node, behind, query_prev, k)
+          end
         end
 
         # You can override this method to extend stats infos.
