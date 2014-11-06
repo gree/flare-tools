@@ -33,15 +33,18 @@ module Flare
           set_option_index_server
           set_option_dry_run
           set_option_force
-          @optp.on('--retry=COUNT',    "specify retry count(default:#{@retry})") {|v| @retry = v.to_i}
-          @optp.on('--clean',          "clear datastore before construction") {@clean = true}
+          @optp.on('--retry=COUNT', "specify retry count(default:#{@retry})") {|v| @retry = v.to_i}
+          @optp.on('--without-clean', "don't clear datastore before construction") { @without_clean = true }
+          @optp.on('--clean', '[obsolete] now slave command clear datastore before construction by default.') do
+            # do nothing
+          end
         end
 
         def initialize
           super
           @force = false
           @retry = DefaultRetry
-          @clean = false
+          @without_clean = false
         end
 
         def execute(config, args)
@@ -77,16 +80,24 @@ module Flare
 
               exec = @force
               unless exec
-                STDERR.print "making node slave (node=#{nodekey}, role=#{node['role']} -> slave) (y/n): "
+                clean_notice_base = "\nitems stored in the node will be cleaned up (exec flush_all) before constructing it"
+                clean_notice = @without_clean ? clean_notice_base : ''
+                STDERR.print "making node slave (node=#{nodekey}, role=#{node['role']} -> slave)#{clean_notice} (y/n): "
                 interruptible do
                   exec = true if gets.chomp.upcase == "Y"
                 end
               end
               if exec && !@dry_run
-                if @clean
+                unless @without_clean
+                  resp = false
                   Flare::Tools::Node.open(hostname, port, @timeout) do |n|
-                    n.flush_all
+                    resp = n.flush_all
                   end
+                  unless resp
+                    STDERR.print "executing flush_all failed."
+                    return S_NG
+                  end
+                  puts "executed flush_all command before constructing the slave node."
                 end
 
                 nretry = 0
