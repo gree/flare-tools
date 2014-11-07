@@ -267,6 +267,7 @@ subcommands:
         --force                      commit changes without confirmation
         --retry=[COUNT]              specify retry count (default:10)
         --activate                   change node's state from ready to active
+        --without-clean              don't clear datastore before construction
 
 [balance] set the balance values of nodes.
   Usage: flare-admin balance [hostname:port:balance] ...
@@ -326,7 +327,8 @@ subcommands:
   Usage: flare-admin slave [hostname:port:balance:partition] ...
         --force                      commit changes without confirmation
         --retry=[COUNT]              specify retry count(default:10)
-        --clean                      clear datastore before construction
+        --without-clean              don't clear datastore before construction
+        --clean                      [obsolete] now slave command clear datastore before construction by default.
 
 [list] show the list of nodes in a flare cluster.
   Usage: flare-admin list
@@ -347,8 +349,9 @@ subcommands:
 [reconstruct] reconstruct the database of nodes by copying.
   Usage: flare-admin reconstruct [hostname:port] ...
         --force                      commit changes without confirmation
-        --safe                       reconstruct a node safely
-        --retry=[COUNT]              specify retry count (default:10)
+        --unsafe                     reconstruct a node safely
+        --safe                       [obsolete] now reconstruct a node safely by default
+        --retry=COUNT                specify retry count (default:10)
         --all                        reconstruct all nodes
 
 == THANKS:
