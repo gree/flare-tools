@@ -89,6 +89,7 @@ module Flare
           worker_threads = []
           queue = {}
 
+          Thread.abort_on_exception = true
           nodes.each do |hostname_port,data|
             queue[hostname_port] = SizedQueue.new(1)
             worker_threads << Thread.new(queue[hostname_port]) do |q|
@@ -204,7 +205,7 @@ module Flare
                 :time       => time,
               }
             rescue Errno::ECONNREFUSED => e
-            rescue => e
+            rescue Timeout::Error, StandardError => e
               begin
                 s.close unless s.nil?
               rescue => close_error
