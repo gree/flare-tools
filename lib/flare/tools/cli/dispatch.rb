@@ -41,6 +41,7 @@ class Flare::Tools::Cli::Dispatch
   end
 
   def main(subcommand_name, argv, as_subcommand)
+    prepare
     _main(subcommand_name, argv, as_subcommand)
   rescue => e
     level = 1
@@ -54,6 +55,10 @@ class Flare::Tools::Cli::Dispatch
   end
 
 private
+
+  def prepare
+    Thread.abort_on_exception = true
+  end
 
   def _main(subcommand_name, argv, as_subcommand)
     @subcommand_name = subcommand_name

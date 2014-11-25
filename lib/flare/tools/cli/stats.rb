@@ -89,7 +89,6 @@ module Flare
           worker_threads = []
           queue = {}
 
-          Thread.abort_on_exception = true
           nodes.each do |hostname_port,data|
             queue[hostname_port] = SizedQueue.new(1)
             worker_threads << Thread.new(queue[hostname_port]) do |q|
