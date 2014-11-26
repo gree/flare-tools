@@ -1,13 +1,13 @@
 language: ruby
 rvm:
-  - 1.9.3
   - 1.8.7
+  - 1.9.3
   - 2.0.0
-  - 2.1.3
+  - 2.1.5
 before_install:
   - travis_retry sudo apt-get update
   - travis_retry sudo apt-get install libtokyocabinet-dev
-  - travis_retry sudo apt-get install libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-thread-dev
+  - travis_retry sudo apt-get install libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-thread-dev libboost-system-dev
   - travis_retry sudo apt-get install uuid-dev
   - git clone https://github.com/gree/flare.git flare
   - (cd flare && ./autogen.sh)

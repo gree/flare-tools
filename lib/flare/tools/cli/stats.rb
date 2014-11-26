@@ -204,7 +204,7 @@ module Flare
                 :time       => time,
               }
             rescue Errno::ECONNREFUSED => e
-            rescue => e
+            rescue Timeout::Error, StandardError => e
               begin
                 s.close unless s.nil?
               rescue => close_error
