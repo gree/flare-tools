@@ -19,24 +19,24 @@ class Flare::Tools::Cli::Dispatch
 
   def initialize
     @subcommands = {
-      'list'        => Cli::List,
+      'activate'    => Cli::Activate,
       'balance'     => Cli::Balance,
       'down'        => Cli::Down,
-      'slave'       => Cli::Slave,
-      'reconstruct' => Cli::Reconstruct,
-      'master'      => Cli::Master,
-      'threads'     => Cli::Threads,
-      'ping'        => Cli::Ping,
-      'remove'      => Cli::Remove,
-      'index'       => Cli::Index,
-      'activate'    => Cli::Activate,
       'dump'        => Cli::Dump,
       'dumpkey'     => Cli::Dumpkey,
-      'verify'      => Cli::Verify,
-      'stats'       => Cli::Stats,
-      'restore'     => Cli::Restore,
-      'summary'     => Cli::Summary,
+      'index'       => Cli::Index,
+      'list'        => Cli::List,
+      'master'      => Cli::Master,
       'part'        => Cli::Part,
+      'ping'        => Cli::Ping,
+      'reconstruct' => Cli::Reconstruct,
+      'remove'      => Cli::Remove,
+      'restore'     => Cli::Restore,
+      'slave'       => Cli::Slave,
+      'stats'       => Cli::Stats,
+      'summary'     => Cli::Summary,
+      'threads'     => Cli::Threads,
+      'verify'      => Cli::Verify,
     }
   end
 

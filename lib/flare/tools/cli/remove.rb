@@ -1,122 +1,84 @@
 # -*- coding: utf-8; -*-
-# Authors::   Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>
-# Copyright:: Copyright (C) GREE, Inc. 2011.
+# Authors::   Yuya YAGUCHI <yuya.yaguchi@gree.net>
+# Copyright:: Copyright (C) GREE, Inc. 2014.
 # License::   MIT-style
 
-require 'flare/tools/index_server'
-require 'flare/util/conversion'
 require 'flare/tools/common'
 require 'flare/tools/cli/sub_command'
 require 'flare/tools/cli/index_server_config'
+require 'flare/cli/parse_host_port_pairs'
+require 'flare/cli/ask_node_remove'
+require 'flare/operation/node_remove'
 
-module Flare
-  module Tools
-    module Cli
+module Flare; end
+module Flare::Tools; end
+module Flare::Tools::Cli; end
 
-      class Remove < SubCommand
-        include Flare::Util::Conversion
-        include Flare::Tools::Common
-        include Flare::Tools::Cli::IndexServerConfig
+class Flare::Tools::Cli::Remove < Flare::Tools::Cli::SubCommand
+  include Flare::Tools::Common
+  include Flare::Tools::Cli::IndexServerConfig
+  include Flare::Cli::ParseHostPortPairs
+  include Flare::Cli::AskNodeRemove
+  include Flare::Operation::NodeRemove
 
-        myname :remove
-        desc   "remove a node. (experimental)"
-        usage  "remove"
+  myname :remove
+  desc   "remove a downed node."
+  usage  "remove [hostname:port] ..."
 
-        def setup
-          super
-          set_option_index_server
-          set_option_dry_run
-          set_option_force
-          @optp.on('--wait=SECOND',    "specify the time to wait node for getting ready (default:#{@wait})") {|v| @wait = v.to_i}
-          @optp.on('--retry=COUNT',    "retry count(default:#{@retry})")                        {|v| @retry = v.to_i}
-          @optp.on('--connection-threshold=[COUNT]', "specify connection threashold (default:#{@connection_threshold})") {|v| @connection_threshold = v.to_i}
+  def setup
+    super
+    set_option_index_server
+    set_option_dry_run
+    set_option_force
+    @optp.on('--retry=COUNT', "retry count(default:#{@retry})") {|v| @retry = v.to_i }
+  end
+
+  def initialize
+    super
+    @retry = 0
+  end
+
+  def execute(config, args)
+    parse_index_server(config, args)
+    nodes = parse_host_port_pairs(args)
+    unless nodes
+      return S_NG
+    end
+
+    Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
+      cluster = fetch_cluster(s)
+
+      nodes.each do |node|
+        node_stat = cluster.node_stat(node.nodekey)
+
+        unless node_stat
+          error "node not found in cluster. (node=#{node})"
+          next
         end
 
-        def initialize
-          super
-          @force = false
-          @wait = 30
-          @retry = 5
-          @connection_threshold = 2
+        # check status downed & proxy
+        unless node_can_remove_safely?(node_stat)
+          error "node should role=proxy and state=down. (node=#{node} role=#{node_stat.role} state=#{node_stat.state})"
+          return S_NG
         end
 
-        def execute(config, args)
-          parse_index_server(config, args)
+        # ask really remove or not
+        unless @force || ask_node_remove(node, node_stat)
+          return S_NG
+        end
 
-          hosts = args.map {|x| x.split(':')}
-          hosts.each do |x|
-            if x.size != 2
-              error "invalid argument '#{x.join(':')}'. it must be hostname:port."
-              return S_NG
-            end
-          end
-
-          Flare::Tools::IndexServer.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
-            cluster = fetch_cluster(s)
-
-            hosts.each do |hostname,port|
-              nodekey = nodekey_of hostname, port
-              unless cluster.has_nodekey? nodekey
-                error "unknown node name: #{nodekey}"
-                return S_NG
-              end
-            end
-
-            hosts.each do |hostname,port|
-              exec = false
-              Flare::Tools::Node.open(hostname, port, @timeout) do |n|
-                nwait = @wait
-                node = n.stats
-                cluster = Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
-                while nwait > 0
-                  conn = node['curr_connections'].to_i
-                  cluster = fetch_cluster(s)
-                  role = cluster.node_stat("#{hostname}:#{port}")['role']
-                  info "waiting until #{hostname}:#{port} (role=#{role}, connections=#{conn}) is inactive..."
-                  if conn <= @connection_threshold && role == 'proxy'
-                    exec = true
-                    break
-                  end
-                  interruptible {sleep 1}
-                  nwait -= 1
-                  node = n.stats
-                end
-                unless @force
-                  node_stat = cluster.node_stat("#{hostname}:#{port}")
-                  role = node_stat['role']
-                  state = node_stat['state']
-                  STDERR.print "please shutdown the daemon and continue (node=#{hostname}:#{port}, role=#{role}, state=#{state}) (y/n): "
-                  interruptible {
-                    exec = false if gets.chomp.upcase != "Y"
-                  }
-                end
-              end
-
-              if exec
-                suc = false
-                nretry = @retry
-                while nretry > 0
-                  resp = false
-                  info "removing #{hostname}:#{port}."
-                  resp = s.node_remove(hostname, port) unless @dry_run
-                  if resp
-                    suc = true
-                    break
-                  end
-                  nretry -= 1
-                end
-                info "done." if suc
-                info "failed." unless suc
-              else
-                info "skipped."
-              end
-            end
-            puts string_of_nodelist(s.stats_nodes)
-          end
-
-          S_OK
+        succeeded = node_remove(s, node, @retry, @dry_run)
+        unless succeeded
+          error "node remove failed. (node=#{node})"
+          return S_NG
         end
       end
+
+      # puts node list after nodes removed
+      puts ""
+      puts string_of_nodelist(s.stats_nodes)
+
+      return S_OK
     end
   end
 end
