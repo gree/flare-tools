@@ -2,7 +2,7 @@ module Flare; end
 module Flare::Entity; end
 class Flare::Entity::Server < Struct.new(:host, :port)
   def to_s
-    to_s
+    nodekey
   end
 
   def nodekey
