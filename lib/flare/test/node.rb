@@ -56,7 +56,7 @@ module Flare
         @alive = false
       end
 
-      attr_reader :hostname, :port, :hostname_port
+      attr_reader :hostname, :port, :hostname_port, :pid
     end
   end
 end
