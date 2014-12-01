@@ -36,19 +36,7 @@ module Flare
       def shutdown
         STDERR.print "killing..."
         (@flared+@flarei).each do |pid|
-          STDERR.print " #{pid}"
-          begin
-            timeout(10) do
-              Process.kill :TERM, pid
-              Process.waitpid pid
-            end
-          rescue Errno::ESRCH
-            STDERR.print "?"
-          rescue TimeoutError => e
-            Process.kill :KILL, pid
-            Process.waitpid pid
-            STDERR.print "*"
-          end
+          kill_node_process(pid)
         end
         STDERR.print "\n"
         Process.waitall
@@ -126,6 +114,16 @@ module Flare
         pid
       end
 
+      def shutdown_flared(target_pid)
+        STDERR.print "killing node..."
+        @flared.each_with_index do |pid, i|
+          next unless pid == target_pid
+          kill_node_process(pid)
+        end
+        STDERR.print "\n"
+        @flared.delete(target_pid)
+      end
+
       def deleteall(delthem)
         return unless FileTest.exist?(delthem)
         if FileTest.directory?(delthem)
@@ -136,6 +134,24 @@ module Flare
           Dir.rmdir(delthem) rescue ""
         else
           File.delete(delthem)
+        end
+      end
+
+      private
+
+      def kill_node_process(pid)
+        STDERR.print " #{pid}"
+        begin
+          timeout(10) do
+            Process.kill :TERM, pid
+            Process.waitpid pid
+          end
+        rescue Errno::ESRCH
+          STDERR.print "?"
+        rescue TimeoutError => e
+          Process.kill :KILL, pid
+          Process.waitpid pid
+          STDERR.print "*"
         end
       end
 

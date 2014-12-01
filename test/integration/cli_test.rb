@@ -239,8 +239,7 @@ class CliTest < Test::Unit::TestCase
     master = targets.shift
     args = targets.map{|n| "#{n.hostname}:#{n.port}"}
     assert_equal(S_OK, down(*args))
-    args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--connection-threshold=4"
-    # sleep 3
+    targets.map{|n| @flare_cluster.shutdown_node(n) }
     assert_equal(S_OK, remove(*args))
     assert_equal(false, @flare_cluster.exist?(args[0]))
     assert_equal(false, @flare_cluster.exist?(args[1]))
@@ -251,8 +250,8 @@ class CliTest < Test::Unit::TestCase
     @flare_cluster.prepare_data(@node_servers[0], "key", 1000)
     targets = @node_servers.dup
     master = targets.shift
-    args = targets.map{|n| "#{n.hostname}:#{n.port}"} << "--connection-threshold=4" << "--wait=3"
-    assert_equal(S_OK, remove(*args))
+    args = targets.map{|n| "#{n.hostname}:#{n.port}"}
+    assert_equal(S_NG, remove(*args))
     assert_equal(true, @flare_cluster.exist?(args[0]))
     assert_equal(true, @flare_cluster.exist?(args[1]))
   end
