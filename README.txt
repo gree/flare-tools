@@ -101,7 +101,7 @@ Please see the stats subcommand section of flare-admin for further detail.
      -c, --count=[REPEATTIME]         repeat count
          --delimiter=[CHAR]           delimiter
 
-=== flare-stdmin
+=== flare-admin
 
 Flare-admin consists of a battery of subcommands used for maintaining a flare cluster.
 You must specify the hostname and port number of the index node by telling them as options 
@@ -305,12 +305,9 @@ subcommands:
         --quiet                      use quiet mode
 
 [remove] remove a node. (experimental)
-  Usage: flare-admin remove
+  Usage: flare-admin remove [hostname:port] ...
         --force                      commit changes without confirmation
-        --wait=[SECOND]              specify the time to wait node for getting ready (default:30)
-        --retry=[COUNT]              retry count(default:5)
-        --connection-threshold=[COUNT]
-                                     specify connection threashold (default:2)
+        --retry=COUNT                retry count(default:0)
 
 [dump] dump data from nodes. (experimental)
   Usage: flare-admin dump [hostname:port] ...

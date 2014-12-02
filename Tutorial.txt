@@ -42,13 +42,23 @@ You can find debian packages at http://labs.gree.jp/Top/OpenSource/Flare/Downloa
 
 == Installing flare-tools
 
-Flare-tools hasn't been published to the public gem repository yet, so please pull the 
-code from the git repository and type "rake install_gem" in your shell.
+=== Before install
 
- mynode1$ sudo gem install hoe newgem rdoc
- mynode1$ git clone ...
- mynode1$ cd flare-tools
- mynode1$ rake rake install_gem
+flare-tools and dependent gem packages require the libraries shown below.
+
+ - libtokyocabinet
+ - libbz2
+ - zlib
+
+You should install these libraries before installing flare-tools. For example, if you are using Debian / Ubuntu:
+
+ mynode1$ sudo apt-get install libtokyocabinet-dev libbz2-dev zlib1g-dev rubygems
+
+=== Install
+
+flare-tools is available on rubygems.
+
+ mynode1$ gem install flare-tools
 
 == Setting up your index server.
 
