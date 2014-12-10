@@ -65,7 +65,7 @@ module Flare
       defcmd :stats_threads_queue, 'stats threads queue\r\n' do |resp|
         m = /STAT total_thread_queue (\d+)/.match(resp)
         return false unless m
-        s[1].to_i
+        m[1].to_i
       end
 
       defcmd :ping, 'ping\r\n' do |resp|
