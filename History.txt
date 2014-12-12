@@ -1,3 +1,11 @@
+=== 0.7.0 / 2014-12-12
+* Major Enhancements
+  * Modify 'remove' subcommand behavior.
+    * Now flare-tools can remove a downed node.
+* Minor Enhancements
+  * Fixed sometimes stats command abort.
+  * Fixed flare-deploy command degraded
+
 === 0.6.0 / 2014-11-07
 * Minor Enhancements
   * Modify default options to safely
