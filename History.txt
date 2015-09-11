@@ -1,3 +1,7 @@
+=== 0.7.1 / 2015-09-10
+* Minor Enhancements
+  * Fixed short commands. (ex. `flare-stats`)
+
 === 0.7.0 / 2014-12-12
 * Major Enhancements
   * Modify 'remove' subcommand behavior.
