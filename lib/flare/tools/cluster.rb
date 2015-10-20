@@ -241,7 +241,7 @@ module Flare
         " class_id=\"#{x['class_id']}\" tracking_level=\"#{x['tracking_level']}\" version=\"#{x['version']}\""
       end
 
-      def serialize
+      def serialize(node_map_version = nil)
         thread_type = 0
 
         node_map_id = {"class_id"=>"0", "tracking_level"=>"0", "version"=>"0"}
@@ -252,7 +252,15 @@ module Flare
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!DOCTYPE boost_serialization>
 <boost_serialization signature="serialization::archive" version="4">
-<version>0</version>
+EOS
+
+        if node_map_version
+          output +=<<"EOS"
+<version>#{node_map_version}</version>
+EOS
+        end
+
+        output +=<<"EOS"
 <node_map#{serattr_(node_map_id)}>
 \t<count>#{@nodes.size}</count>
 \t<item_version>0</item_version>

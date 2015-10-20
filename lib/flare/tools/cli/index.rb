@@ -24,22 +24,24 @@ module Flare
         def setup
           super
           set_option_index_server
-          @optp.on('--output=FILE',            "output index to a file") {|v| @output = v}
+          @optp.on('--output=FILE',            "output index to a file"    ) {|v| @output = v}
+          @optp.on('--increment=VERSION',      "increment node_map_version") {|v| @increment = v}
         end
 
         def initialize
           super
           @output = nil
+          @increment = nil
         end
 
         def execute(config, args)
           parse_index_server(config, args)
-          cluster = Flare::Tools::Stats.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
+          cluster, node_map_version = Flare::Tools::Stats.open(config[:index_server_hostname], config[:index_server_port], @timeout) do |s|
             nodes = s.stats_nodes.sort_by{|key, val| [val['partition'], val['role'], key]}
-            Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes)
+            [Flare::Tools::Cluster.new(s.host, s.port, s.stats_nodes), s.stats['node_map_version']]
           end
 
-          output = cluster.serialize
+          output = cluster.serialize(node_map_version.to_i + @increment.to_i)
           if @output.nil?
             info output
           else
