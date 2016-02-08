@@ -342,6 +342,7 @@ subcommands:
 [index] print the index XML document from a cluster information.
   Usage: flare-admin index
         --output=[FILE]              output index to a file
+        --increment=[VERSION]        increment node_map_version
 
 [reconstruct] reconstruct the database of nodes by copying.
   Usage: flare-admin reconstruct [hostname:port] ...
