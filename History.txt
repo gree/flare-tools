@@ -1,3 +1,7 @@
+=== 0.7.2 / 2016-03-01
+* Minor Enhancements
+  * Modify 'index' subcommand to output node_map_version with Flare 1.3.1 or later.
+
 === 0.7.1 / 2015-09-10
 * Minor Enhancements
   * Fixed short commands. (ex. `flare-stats`)
