@@ -1,3 +1,7 @@
+=== 0.7.3 / 2017-04-14
+* Minor Enhancements
+  * Avoid using deprecated methods.
+
 === 0.7.2 / 2016-03-01
 * Minor Enhancements
   * Modify 'index' subcommand to output node_map_version with Flare 1.3.1 or later.
