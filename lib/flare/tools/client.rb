@@ -37,7 +37,7 @@ module Flare
       def initialize(host, port, tout = DefaultTimeout, uplink_limit = DefalutBwlimit, downlink_limit = DefalutBwlimit)
         @tout = tout
         @conn = nil
-        timeout(1) do
+        Timeout.timeout(1) do
           @conn = Flare::Net::Connection.new(host, port, uplink_limit, downlink_limit)
         end
         @server_name, @version = server_version
@@ -80,7 +80,7 @@ module Flare
         response = nil
         cmd.chomp!
         cmd += "\r\n"
-        timeout(tout) do
+        Timeout.timeout(tout) do
           @conn.send(cmd)
           response = parser.call(@conn, processor)
         end
@@ -101,7 +101,7 @@ module Flare
 
       def close()
         begin
-          timeout(1) { quit }
+          Timeout.timeout(1) { quit }
         rescue Timeout::Error => e
         end
         @conn.close

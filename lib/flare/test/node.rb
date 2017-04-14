@@ -45,7 +45,7 @@ module Flare
       def terminate
         puts "killing... #{@pid}"
         begin
-          timeout(10) do
+          Timeout.timeout(10) do
             Process.kill :TERM, @pid
             Process.waitpid @pid
           end

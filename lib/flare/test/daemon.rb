@@ -142,7 +142,7 @@ module Flare
       def kill_node_process(pid)
         STDERR.print " #{pid}"
         begin
-          timeout(10) do
+          Timeout.timeout(10) do
             Process.kill :TERM, pid
             Process.waitpid pid
           end

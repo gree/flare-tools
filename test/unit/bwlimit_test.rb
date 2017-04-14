@@ -35,7 +35,7 @@ class BwlimitTest < Test::Unit::TestCase
     total = size*1024*duration
     bwlimit = Bwlimit.new("#{size}kB")
     assert_nothing_raised {
-      timeout(duration*1.5) {
+      Timeout.timeout(duration*1.5) {
         while bwlimit.totalbytes < total
           bwlimit.inc((1500*(rand+1)).to_i)
           bwlimit.wait
