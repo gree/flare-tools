@@ -65,6 +65,8 @@ module Flare
 end
 
 Signal.trap(:INT) do
-  Flare::Util::Interruption.interrupt_all
+  Thread.new do
+    Flare::Util::Interruption.interrupt_all
+  end.join
 end
 
