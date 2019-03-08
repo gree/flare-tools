@@ -10,12 +10,12 @@ require 'thread'
 require 'flare/util/flarei_conf'
 require 'flare/util/flared_conf'
 
-# 
+#
 module Flare
   module Test
     class Daemon
       include Singleton
-  
+
       Flarei = "/usr/local/bin/flarei"
       Flared = "/usr/local/bin/flared"
 
@@ -148,7 +148,7 @@ module Flare
           end
         rescue Errno::ESRCH
           STDERR.print "?"
-        rescue TimeoutError => e
+        rescue Timeout::Error => e
           Process.kill :KILL, pid
           Process.waitpid pid
           STDERR.print "*"

@@ -6,7 +6,7 @@
 require 'rubygems'
 require 'flare/tools/node'
 
-# 
+#
 module Flare
   module Test
 
@@ -49,7 +49,7 @@ module Flare
             Process.kill :TERM, @pid
             Process.waitpid @pid
           end
-        rescue TimeoutError => e
+        rescue Timeout::Error => e
           Process.kill :KILL, @pid
           Process.waitpid @pid
         end

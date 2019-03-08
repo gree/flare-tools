@@ -9,12 +9,12 @@ require 'flare/util/logging'
 require 'flare/util/constant'
 require 'flare/util/result'
 
-# 
+#
 module Flare
   module Tools
 
     # == Description
-    # 
+    #
     class Client
       include Flare::Util::Logging
       extend Flare::Util::Logging
@@ -44,7 +44,7 @@ module Flare
       rescue Errno::ECONNREFUSED
         debug "Connection refused. server=[#{@conn}]"
         raise
-      rescue TimeoutError
+      rescue Timeout::Error
         debug "Connection timeout. server=[#{@conn}]"
         raise
       rescue SocketError
@@ -85,7 +85,7 @@ module Flare
           response = parser.call(@conn, processor)
         end
         response
-      rescue TimeoutError => e
+      rescue Timeout::Error => e
         error "Connection timeout. server=[#{@conn}] command=[#{cmd}}]"
         @conn.close
         raise e
@@ -147,7 +147,7 @@ module Flare
               resp += x
             end
           end
-          return processor.call(resp) if resp 
+          return processor.call(resp) if resp
           return false
         }
         defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
@@ -159,7 +159,7 @@ module Flare
         }
         defcmd_generic(method_symbol, command_template, parser, true, &default_processor)
       end
- 
+
       def self.defcmd_oneline(method_symbol, command_template, &default_processor)
         parser = lambda {|conn,processor|
           line = conn.getline
@@ -259,7 +259,7 @@ module Flare
       defcmd_oneline :version_, 'version\r\n' do |resp|
         code, version = resp.chomp.split(' ')
         return "0.0.0" if code != "VERSION"
-        version          
+        version
       end
 
     end
