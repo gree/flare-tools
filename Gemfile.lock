@@ -11,7 +11,7 @@ GEM
     test-unit (3.3.0)
       power_assert
     tokyocabinet (1.32.0)
-    zookeeper (1.4.11)
+    zookeeper (1.5.1)
 
 PLATFORMS
   ruby
