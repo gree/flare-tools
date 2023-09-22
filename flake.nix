@@ -13,7 +13,7 @@
           };
           env = with pkgs;
             bundlerEnv {
-              pname = "flare-tools";
+              name = "flare-tools";
               gemdir = ./.;
               gemConfig = defaultGemConfig // {
                 tokyocabinet = attrs :{
@@ -28,7 +28,9 @@
               name = "flare-tools";
               src = ./.;
               buildInputs = [ env ruby ];
+              phases = [ "unpackPhase" "installPhase" ];
               installPhase = ''
+                patchShebangs .
                 mkdir -p $out/
                 cp -r lib $out/
                 cp -r bin $out/
@@ -37,7 +39,7 @@
           };
           defaultPackage = packages.flare-tools;
           devShell = pkgs.mkShell {
-            packages = with pkgs; [ ruby env ];
+            packages = with pkgs; [ ruby bundix env ];
             shellHook = ''
             '';
             inputsFrom = builtins.attrValues self.packages.${system};
