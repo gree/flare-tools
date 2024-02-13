@@ -19,6 +19,9 @@
                 tokyocabinet = attrs :{
                   buildInputs = [tokyocabinet zlib bzip2];
                 };
+                psych = attrs :{
+                  buildInputs = [libyaml];
+                };
               };
             };
      in
