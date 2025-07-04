@@ -2,7 +2,6 @@ package admin
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"strings"
 	"testing"
@@ -25,9 +24,9 @@ func (m *MockFlareServer) Start() error {
 	if err != nil {
 		return err
 	}
-	
+
 	m.port = m.listener.Addr().(*net.TCPAddr).Port
-	
+
 	go func() {
 		for {
 			conn, err := m.listener.Accept()
@@ -37,7 +36,7 @@ func (m *MockFlareServer) Start() error {
 			go m.handleConnection(conn)
 		}
 	}()
-	
+
 	return nil
 }
 
@@ -53,7 +52,7 @@ func (m *MockFlareServer) Port() int {
 
 func (m *MockFlareServer) handleConnection(conn net.Conn) {
 	defer conn.Close()
-	
+
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
 		command := strings.TrimSpace(scanner.Text())
@@ -67,9 +66,9 @@ func (m *MockFlareServer) processCommand(command string) string {
 	if len(parts) == 0 {
 		return "ERROR invalid command\r\n"
 	}
-	
+
 	cmd := strings.ToLower(parts[0])
-	
+
 	switch cmd {
 	case "ping":
 		return "OK\r\n"
@@ -105,44 +104,14 @@ func startMockServer(t *testing.T) *MockFlareServer {
 	if err != nil {
 		t.Fatalf("Failed to start mock server: %v", err)
 	}
-	
+
 	// Give the server a moment to start
 	time.Sleep(10 * time.Millisecond)
-	
-	t.Cleanup(func() {
-		server.Stop()
-	})
-	
-	return server
-}
 
-func startMockDataNode(t *testing.T, port int) *MockFlareServer {
-	server := &MockFlareServer{}
-	var err error
-	server.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		// If can't bind to specific port, skip the test
-		t.Skipf("Cannot bind to port %d: %v", port, err)
-	}
-	
-	server.port = port
-	
-	go func() {
-		for {
-			conn, err := server.listener.Accept()
-			if err != nil {
-				return
-			}
-			go server.handleConnection(conn)
-		}
-	}()
-	
-	time.Sleep(10 * time.Millisecond)
-	
 	t.Cleanup(func() {
 		server.Stop()
 	})
-	
+
 	return server
 }
 
@@ -184,7 +153,7 @@ func TestRunMasterWithoutArgs(t *testing.T) {
 
 func TestRunMasterWithForce(t *testing.T) {
 	server := startMockServer(t)
-	
+
 	cfg := config.NewConfig()
 	cfg.Force = true
 	cfg.IndexServer = "127.0.0.1"
@@ -207,14 +176,14 @@ func TestRunSlaveWithoutArgs(t *testing.T) {
 
 func TestRunSlaveWithForce(t *testing.T) {
 	server := startMockServer(t)
-	
+
 	cfg := config.NewConfig()
 	cfg.Force = true
 	cfg.IndexServer = "127.0.0.1"
 	cfg.IndexServerPort = server.Port()
 	cli := NewCLI(cfg)
 
-	// Use withoutClean=true to skip the flush_all step that requires connecting to the data node  
+	// Use withoutClean=true to skip the flush_all step that requires connecting to the data node
 	err := cli.runSlave([]string{"server1:12121:1:0"}, true)
 	assert.NoError(t, err)
 }
@@ -230,7 +199,7 @@ func TestRunBalanceWithoutArgs(t *testing.T) {
 
 func TestRunBalanceWithForce(t *testing.T) {
 	server := startMockServer(t)
-	
+
 	cfg := config.NewConfig()
 	cfg.Force = true
 	cfg.IndexServer = "127.0.0.1"
