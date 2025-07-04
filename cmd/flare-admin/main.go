@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gree/flare-tools/internal/admin"
 	"github.com/gree/flare-tools/internal/config"
-	"github.com/spf13/cobra"
 )
 
 func main() {
 	cfg := config.NewConfig()
 	adminCli := admin.NewCLI(cfg)
-	
+
 	rootCmd := &cobra.Command{
 		Use:   "flare-admin",
 		Short: "Management tool for Flare cluster",

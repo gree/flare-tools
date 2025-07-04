@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gree/flare-tools/internal/config"
 	"github.com/gree/flare-tools/internal/stats"
-	"github.com/spf13/cobra"
 )
 
 func main() {
 	cfg := config.NewConfig()
 	statsCli := stats.NewCLI(cfg)
-	
+
 	rootCmd := &cobra.Command{
 		Use:   "flare-stats",
 		Short: "Statistics tool for Flare cluster",

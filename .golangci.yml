@@ -6,53 +6,16 @@ run:
 linters:
   enable:
     - gofmt
-    - golint
     - govet
     - errcheck
-    - deadcode
-    - structcheck
-    - varcheck
+    - unused
     - ineffassign
     - typecheck
     - goimports
     - misspell
-    - unparam
-    - unused
     - staticcheck
     - gosimple
     - stylecheck
-    - gosec
-    - interfacer
-    - unconvert
-    - dupl
-    - goconst
-    - gocyclo
-    - gocognit
-    - asciicheck
-    - gofumpt
-    - goheader
-    - gci
-    - godot
-    - godox
-    - goerr113
-    - gomnd
-    - gomodguard
-    - goprintffuncname
-    - gosimple
-    - govet
-    - ineffassign
-    - misspell
-    - nakedret
-    - rowserrcheck
-    - staticcheck
-    - structcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - varcheck
-    - whitespace
 
 linters-settings:
   gocyclo:
@@ -71,9 +34,8 @@ linters-settings:
   goimports:
     local-prefixes: github.com/gree/flare-tools
   govet:
-    check-shadowing: true
-  golint:
-    min-confidence: 0
+    enable:
+      - shadow  # replaces check-shadowing
   maligned:
     suggest-new: true
   gocritic:
@@ -94,14 +56,16 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - gomnd
-        - goconst
-        - dupl
+        - errcheck
     - path: test/
       linters:
-        - gomnd
-        - goconst
-        - dupl
-    - linters:
-        - lll
-      source: "^//go:generate "
+        - errcheck
+    - path: cmd/
+      linters:
+        - errcheck
+    - text: "Error return value of.*is not checked"
+      linters:
+        - errcheck
+    - text: "should have comment or be unexported"
+      linters:
+        - revive

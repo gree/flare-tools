@@ -19,17 +19,17 @@ func NewCLI(cfg *config.Config) *CLI {
 
 func (c *CLI) Run(args []string) error {
 	client := flare.NewClient(c.config.IndexServer, c.config.IndexServerPort)
-	
+
 	for i := 0; i < c.config.Count; i++ {
 		if err := c.printStats(client); err != nil {
 			return fmt.Errorf("failed to get stats: %v", err)
 		}
-		
+
 		if i < c.config.Count-1 && c.config.Wait > 0 {
 			time.Sleep(time.Duration(c.config.Wait) * time.Second)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -40,11 +40,11 @@ func (c *CLI) printStats(client *flare.Client) error {
 	}
 
 	c.printHeader()
-	
+
 	for _, node := range clusterInfo.Nodes {
 		c.printNode(node)
 	}
-	
+
 	return nil
 }
 
@@ -63,11 +63,11 @@ func (c *CLI) printHeader() {
 		"uptime",
 		"version",
 	}
-	
+
 	if c.config.ShowQPS {
 		headers = append(headers, "qps", "qps-r", "qps-w")
 	}
-	
+
 	fmt.Println(strings.Join(headers, c.config.Delimiter))
 }
 
@@ -86,7 +86,7 @@ func (c *CLI) printNode(node flare.NodeInfo) {
 		node.Uptime,
 		node.Version,
 	}
-	
+
 	if c.config.ShowQPS {
 		values = append(values,
 			fmt.Sprintf("%.1f", node.QPS),
@@ -94,6 +94,6 @@ func (c *CLI) printNode(node flare.NodeInfo) {
 			fmt.Sprintf("%.1f", node.QPSW),
 		)
 	}
-	
+
 	fmt.Println(strings.Join(values, c.config.Delimiter))
 }

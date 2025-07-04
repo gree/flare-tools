@@ -9,7 +9,7 @@ import (
 
 func TestNewConfig(t *testing.T) {
 	cfg := NewConfig()
-	
+
 	assert.Equal(t, "127.0.0.1", cfg.IndexServer)
 	assert.Equal(t, 12120, cfg.IndexServerPort)
 	assert.False(t, cfg.Debug)
@@ -32,9 +32,9 @@ func TestNewConfigWithEnvironment(t *testing.T) {
 		os.Unsetenv("FLARE_INDEX_SERVER")
 		os.Unsetenv("FLARE_INDEX_SERVER_PORT")
 	}()
-	
+
 	cfg := NewConfig()
-	
+
 	assert.Equal(t, "test.example.com", cfg.IndexServer)
 	assert.Equal(t, 13130, cfg.IndexServerPort)
 }
@@ -44,9 +44,9 @@ func TestNewConfigWithEnvironmentHostPort(t *testing.T) {
 	defer func() {
 		os.Unsetenv("FLARE_INDEX_SERVER")
 	}()
-	
+
 	cfg := NewConfig()
-	
+
 	assert.Equal(t, "test.example.com", cfg.IndexServer)
 	assert.Equal(t, 14140, cfg.IndexServerPort)
 }
@@ -55,7 +55,7 @@ func TestGetIndexServerAddress(t *testing.T) {
 	cfg := NewConfig()
 	cfg.IndexServer = "test.example.com"
 	cfg.IndexServerPort = 12345
-	
+
 	address := cfg.GetIndexServerAddress()
 	assert.Equal(t, "test.example.com:12345", address)
 }

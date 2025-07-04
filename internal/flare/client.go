@@ -80,12 +80,12 @@ func (c *Client) SendCommand(cmd string) (string, error) {
 
 	scanner := bufio.NewScanner(c.conn)
 	var response strings.Builder
-	
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		response.WriteString(line)
 		response.WriteString("\n")
-		
+
 		// Check for terminal responses that indicate command completion
 		// For simple commands that return just OK
 		if (cmd == "ping" || cmd == "flush_all") && line == "OK" {
@@ -147,11 +147,11 @@ func (c *Client) SetNodeRole(host string, port int, role string, balance int, pa
 	if err != nil {
 		return err
 	}
-	
+
 	if !strings.Contains(response, "OK") && !strings.Contains(response, "STORED") {
 		return fmt.Errorf("failed to set node role: %s", response)
 	}
-	
+
 	return nil
 }
 
@@ -166,11 +166,11 @@ func (c *Client) SetNodeState(host string, port int, state string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if !strings.Contains(response, "OK") && !strings.Contains(response, "STORED") {
 		return fmt.Errorf("failed to set node state: %s", response)
 	}
-	
+
 	return nil
 }
 
@@ -185,11 +185,11 @@ func (c *Client) RemoveNode(host string, port int) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if !strings.Contains(response, "OK") && !strings.Contains(response, "STORED") {
 		return fmt.Errorf("failed to remove node: %s", response)
 	}
-	
+
 	return nil
 }
 
@@ -200,16 +200,16 @@ func (c *Client) FlushAll(host string, port int) error {
 		return err
 	}
 	defer dataClient.Close()
-	
+
 	response, err := dataClient.SendCommand("flush_all")
 	if err != nil {
 		return err
 	}
-	
+
 	if !strings.Contains(response, "OK") {
 		return fmt.Errorf("flush_all failed: %s", response)
 	}
-	
+
 	return nil
 }
 
@@ -222,35 +222,35 @@ func (c *Client) parseStatsResponse(response string) (*ClusterInfo, error) {
 		if line == "" || line == "END" || line == "ERROR" {
 			continue
 		}
-		
+
 		// Parse STAT lines: STAT node-0.flared.default.svc.cluster.local:13301:role proxy
 		if !strings.HasPrefix(line, "STAT ") {
 			continue
 		}
-		
+
 		parts := strings.SplitN(line, " ", 2)
 		if len(parts) != 2 {
 			continue
 		}
-		
+
 		// Split the key:value part
 		keyValue := strings.SplitN(parts[1], " ", 2)
 		if len(keyValue) != 2 {
 			continue
 		}
-		
+
 		key := keyValue[0]
 		value := keyValue[1]
-		
+
 		// Extract node address and field name
 		keyParts := strings.Split(key, ":")
 		if len(keyParts) < 3 {
 			continue
 		}
-		
+
 		nodeAddr := strings.Join(keyParts[:2], ":") // host:port
 		fieldName := keyParts[2]
-		
+
 		// Get or create node
 		if nodeMap[nodeAddr] == nil {
 			hostPort := strings.Split(nodeAddr, ":")
@@ -261,16 +261,16 @@ func (c *Client) parseStatsResponse(response string) (*ClusterInfo, error) {
 			if err != nil {
 				continue
 			}
-			
+
 			nodeMap[nodeAddr] = &NodeInfo{
 				Host:      hostPort[0],
 				Port:      port,
 				Partition: -1, // Default for proxy nodes
 			}
 		}
-		
+
 		node := nodeMap[nodeAddr]
-		
+
 		// Set field values
 		switch fieldName {
 		case "role":
@@ -315,45 +315,45 @@ func (c *Client) parseStatsResponse(response string) (*ClusterInfo, error) {
 	return &ClusterInfo{Nodes: nodes}, nil
 }
 
-// SetNodeBalance sets the balance value for a node
+// SetNodeBalance sets the balance value for a node.
 func (c *Client) SetNodeBalance(host string, port int, balance int) error {
 	cmd := fmt.Sprintf("node balance %s %d %d", host, port, balance)
-	
+
 	err := c.Connect()
 	if err != nil {
 		return err
 	}
 	defer c.Close()
-	
+
 	response, err := c.SendCommand(cmd)
 	if err != nil {
 		return err
 	}
-	
+
 	if !strings.Contains(response, "OK") && !strings.Contains(response, "STORED") {
 		return fmt.Errorf("set balance failed: %s", response)
 	}
-	
+
 	return nil
 }
 
-// CanRemoveNodeSafely checks if a node can be safely removed (must be proxy and down)
+// CanRemoveNodeSafely checks if a node can be safely removed (must be proxy and down).
 func (c *Client) CanRemoveNodeSafely(host string, port int) (bool, error) {
 	clusterInfo, err := c.GetStats()
 	if err != nil {
 		return false, fmt.Errorf("failed to get cluster info: %v", err)
 	}
-	
+
 	for _, node := range clusterInfo.Nodes {
 		if node.Host == host && node.Port == port {
 			return node.Role == "proxy" && node.State == "down", nil
 		}
 	}
-	
+
 	return false, fmt.Errorf("node %s:%d not found in cluster", host, port)
 }
 
-// GetThreadStatus gets thread status for a node
+// GetThreadStatus gets thread status for a node.
 func (c *Client) GetThreadStatus(host string, port int) (string, error) {
 	dataClient := NewClient(host, port)
 	err := dataClient.Connect()
@@ -361,29 +361,29 @@ func (c *Client) GetThreadStatus(host string, port int) (string, error) {
 		return "", err
 	}
 	defer dataClient.Close()
-	
+
 	response, err := dataClient.SendCommand("stats threads")
 	if err != nil {
 		return "", err
 	}
-	
+
 	return response, nil
 }
 
-// VerifyCluster performs cluster verification
+// VerifyCluster performs cluster verification.
 func (c *Client) VerifyCluster() error {
 	err := c.Connect()
 	if err != nil {
 		return err
 	}
 	defer c.Close()
-	
+
 	// Get cluster info and verify each node
 	clusterInfo, err := c.GetStats()
 	if err != nil {
 		return fmt.Errorf("failed to get cluster info: %v", err)
 	}
-	
+
 	for _, node := range clusterInfo.Nodes {
 		// Check if node is reachable
 		nodeClient := NewClient(node.Host, node.Port)
@@ -393,24 +393,24 @@ func (c *Client) VerifyCluster() error {
 		}
 		nodeClient.Close()
 	}
-	
+
 	return nil
 }
 
-// GenerateIndexXML generates the cluster index XML
+// GenerateIndexXML generates the cluster index XML.
 func (c *Client) GenerateIndexXML() (string, error) {
 	clusterInfo, err := c.GetStats()
 	if err != nil {
 		return "", fmt.Errorf("failed to get cluster info: %v", err)
 	}
-	
+
 	var xml strings.Builder
 	xml.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!DOCTYPE boost_serialization>
 <boost_serialization signature="serialization::archive" version="4">
 <node_map class_id='0' tracking_level='0' version='0'>
 `)
-	
+
 	for i, node := range clusterInfo.Nodes {
 		xml.WriteString(fmt.Sprintf(`  <item class_id='1' tracking_level='0' version='0'>
     <first>%d</first>
@@ -425,9 +425,9 @@ func (c *Client) GenerateIndexXML() (string, error) {
   </item>
 `, node.Partition, i, node.Host, node.Port, node.Role, node.State, node.Partition, node.Balance))
 	}
-	
+
 	xml.WriteString(`</node_map>
 </boost_serialization>`)
-	
+
 	return xml.String(), nil
 }

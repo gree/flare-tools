@@ -1,8 +1,9 @@
 package admin
 
 import (
-	"github.com/gree/flare-tools/internal/config"
 	"github.com/spf13/cobra"
+
+	"github.com/gree/flare-tools/internal/config"
 )
 
 type CLI struct {
