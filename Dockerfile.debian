@@ -1,0 +1,25 @@
+FROM --platform=linux/amd64 ubuntu:noble
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    debhelper \
+    golang-go \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Go environment
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+
+# Create working directory
+WORKDIR /build
+
+# Copy source code
+COPY . .
+
+# Build the debian package
+RUN dpkg-buildpackage -us -uc -b
+
+# List generated files
+RUN ls -la /

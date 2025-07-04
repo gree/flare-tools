@@ -1,0 +1,16 @@
+Source: flare-tools
+Section: database
+Priority: optional
+Maintainer: Junji Hashimoto <junji.hashimoto@gree.net>
+Build-Depends: debhelper (>= 10), golang-go (>= 1.18)
+Standards-Version: 4.5.1
+Homepage: https://github.com/gree/flare-tools
+
+Package: flare-tools
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Command line tools for flare distributed key-value storage
+ Flare-tools provides administrative and monitoring utilities for flare,
+ a distributed key-value storage system. It includes flare-admin for
+ cluster management operations and flare-stats for monitoring cluster
+ statistics and node information.
