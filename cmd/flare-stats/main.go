@@ -23,7 +23,7 @@ func main() {
 	}
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.IndexServer, "index-server", "i", "", "index server hostname")
-	rootCmd.PersistentFlags().IntVarP(&cfg.IndexServerPort, "index-server-port", "p", 12120, "index server port")
+	rootCmd.PersistentFlags().IntVarP(&cfg.IndexServerPort, "index-server-port", "p", 13300, "index server port")
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", false, "enable debug mode")
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Warn, "warn", "w", false, "turn on warnings")
 	rootCmd.PersistentFlags().BoolVarP(&cfg.ShowQPS, "qps", "q", false, "show qps")
