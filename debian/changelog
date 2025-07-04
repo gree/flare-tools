@@ -1,0 +1,11 @@
+flare-tools (1.0.0-1) noble; urgency=medium
+
+  * Initial Go implementation of flare-tools
+  * Convert from Ruby to Go with full protocol compatibility
+  * Add flare-admin for cluster management operations
+  * Add flare-stats for monitoring cluster statistics
+  * Support all administrative commands (master, slave, reconstruct, etc.)
+  * Add comprehensive unit tests and e2e tests
+  * Add dry-run support for destructive operations
+
+ -- Junji Hashimoto <junji.hashimoto@gree.net>  Thu, 04 Jul 2025 00:00:00 +0000

@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	go build -o flare-admin ./cmd/flare-admin
+	go build -o flare-stats ./cmd/flare-stats
+
+override_dh_auto_install:
+	mkdir -p debian/flare-tools/usr/bin
+	cp flare-admin debian/flare-tools/usr/bin/
+	cp flare-stats debian/flare-tools/usr/bin/
+
+override_dh_auto_clean:
+	rm -f flare-admin flare-stats
+	dh_auto_clean
+
+override_dh_auto_test:
+	# Skip tests during package build - they require network connections
