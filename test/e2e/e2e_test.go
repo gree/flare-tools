@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,12 +16,16 @@ import (
 var (
 	flareIndexServer     = "localhost"
 	flareIndexServerPort = "12120"
+	projectRoot          string
 )
 
-// setupDockerCluster starts the Docker flare cluster for testing
-func setupDockerCluster(t *testing.T) {
-	projectRoot, err := filepath.Abs("../..")
-	require.NoError(t, err)
+// TestMain sets up the Docker cluster once for all tests
+func TestMain(m *testing.M) {
+	var err error
+	projectRoot, err = filepath.Abs("../..")
+	if err != nil {
+		panic(err)
+	}
 
 	// Check if Docker Compose is available
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -29,7 +34,9 @@ func setupDockerCluster(t *testing.T) {
 	cmd := exec.CommandContext(ctx, "docker-compose", "--version")
 	cmd.Dir = projectRoot
 	err = cmd.Run()
-	require.NoError(t, err, "docker-compose is required for e2e tests")
+	if err != nil {
+		panic("docker-compose is required for e2e tests")
+	}
 
 	// Start the Docker cluster
 	ctx, cancel = context.WithTimeout(context.Background(), 180*time.Second)
@@ -38,7 +45,9 @@ func setupDockerCluster(t *testing.T) {
 	cmd = exec.CommandContext(ctx, "docker-compose", "up", "-d", "--build")
 	cmd.Dir = projectRoot
 	err = cmd.Run()
-	require.NoError(t, err, "Failed to start Docker cluster")
+	if err != nil {
+		panic("Failed to start Docker cluster")
+	}
 
 	// Wait for services to be ready
 	time.Sleep(15 * time.Second)
@@ -54,22 +63,25 @@ func setupDockerCluster(t *testing.T) {
 		}
 		time.Sleep(2 * time.Second)
 	}
-	require.NoError(t, err, "Flare index server failed to start")
+	if err != nil {
+		panic("Flare index server failed to start")
+	}
 
-	// Cleanup function
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
-		cmd := exec.CommandContext(ctx, "docker-compose", "down")
-		cmd.Dir = projectRoot
-		cmd.Run()
-	})
+	// Run tests
+	code := m.Run()
+
+	// Cleanup
+	ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	cmd = exec.CommandContext(ctx, "docker-compose", "down")
+	cmd.Dir = projectRoot
+	cmd.Run()
+
+	os.Exit(code)
 }
 
-func buildBinaries(t *testing.T) (string, string) {
-	projectRoot, err := filepath.Abs("../..")
-	require.NoError(t, err)
 
+func buildBinaries(t *testing.T) (string, string) {
 	tmpDir := t.TempDir()
 
 	flareAdminPath := filepath.Join(tmpDir, "flare-admin")
@@ -77,7 +89,7 @@ func buildBinaries(t *testing.T) (string, string) {
 
 	cmd := exec.Command("go", "build", "-o", flareAdminPath, "./cmd/flare-admin")
 	cmd.Dir = projectRoot
-	err = cmd.Run()
+	err := cmd.Run()
 	require.NoError(t, err, "Failed to build flare-admin")
 
 	cmd = exec.Command("go", "build", "-o", flareStatsPath, "./cmd/flare-stats")
@@ -89,7 +101,6 @@ func buildBinaries(t *testing.T) (string, string) {
 }
 
 func TestFlareStatsE2E(t *testing.T) {
-	setupDockerCluster(t)
 	_, flareStatsPath := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -115,7 +126,6 @@ func TestFlareStatsE2E(t *testing.T) {
 }
 
 func TestFlareStatsWithQPSE2E(t *testing.T) {
-	setupDockerCluster(t)
 	_, flareStatsPath := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -136,7 +146,6 @@ func TestFlareStatsWithQPSE2E(t *testing.T) {
 }
 
 func TestFlareAdminPingE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -156,7 +165,6 @@ func TestFlareAdminPingE2E(t *testing.T) {
 }
 
 func TestFlareAdminStatsE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -179,7 +187,6 @@ func TestFlareAdminStatsE2E(t *testing.T) {
 }
 
 func TestFlareAdminListE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -202,7 +209,6 @@ func TestFlareAdminListE2E(t *testing.T) {
 }
 
 func TestFlareAdminMasterWithForceE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -226,7 +232,6 @@ func TestFlareAdminMasterWithForceE2E(t *testing.T) {
 }
 
 func TestFlareAdminSlaveWithForceE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -250,7 +255,6 @@ func TestFlareAdminSlaveWithForceE2E(t *testing.T) {
 }
 
 func TestFlareAdminBalanceWithForceE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -274,7 +278,6 @@ func TestFlareAdminBalanceWithForceE2E(t *testing.T) {
 }
 
 func TestFlareAdminDownWithForceE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -298,7 +301,6 @@ func TestFlareAdminDownWithForceE2E(t *testing.T) {
 }
 
 func TestFlareAdminReconstructWithForceE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -322,7 +324,6 @@ func TestFlareAdminReconstructWithForceE2E(t *testing.T) {
 }
 
 func TestFlareAdminEnvironmentVariables(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -407,7 +408,6 @@ func TestFlareStatsConnectionError(t *testing.T) {
 }
 
 func TestFlareAdminDumpWithDataE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -430,7 +430,6 @@ func TestFlareAdminDumpWithDataE2E(t *testing.T) {
 }
 
 func TestFlareAdminDumpkeyWithDataE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -453,7 +452,6 @@ func TestFlareAdminDumpkeyWithDataE2E(t *testing.T) {
 }
 
 func TestFlareAdminReconstructWithDataE2E(t *testing.T) {
-	setupDockerCluster(t)
 	flareAdminPath, _ := buildBinaries(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -474,4 +472,173 @@ func TestFlareAdminReconstructWithDataE2E(t *testing.T) {
 
 	outputStr := string(output)
 	assert.Contains(t, outputStr, "DRY RUN MODE")
+}
+
+func TestFlareAdminDumpRestoreE2E(t *testing.T) {
+	flareAdminPath, _ := buildBinaries(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	// Create temp directory for dump files
+	tmpDir, err := os.MkdirTemp("", "dump-restore-e2e-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	dumpFile := filepath.Join(tmpDir, "cluster_dump.txt")
+
+	// Step 1: Add some test data to the cluster using netcat
+	addTestDataCmd := exec.CommandContext(ctx, "bash", "-c", `echo -e "set testkey1 0 0 10\r\ntestvalue1\r\nset testkey2 0 0 10\r\ntestvalue2\r\nset testkey3 0 0 15\r\nlongtestvalue3\r\nquit\r\n" | nc localhost 12121`)
+	err = addTestDataCmd.Run()
+	require.NoError(t, err, "Failed to add test data")
+
+	// Wait for data to be distributed
+	time.Sleep(2 * time.Second)
+
+	// Step 2: Dump data from master nodes
+	dumpCmd := exec.CommandContext(ctx, flareAdminPath,
+		"--index-server", flareIndexServer,
+		"--index-server-port", flareIndexServerPort,
+		"dump",
+		"--all",
+		"--output", dumpFile,
+	)
+
+	output, err := dumpCmd.Output()
+	require.NoError(t, err, "Dump command failed: %s", string(output))
+
+	// Verify dump file was created and contains data
+	dumpData, err := os.ReadFile(dumpFile)
+	require.NoError(t, err)
+	dumpStr := string(dumpData)
+	
+	// Should contain our test keys
+	assert.Contains(t, dumpStr, "testkey1", "Dump should contain testkey1")
+	assert.Contains(t, dumpStr, "testkey2", "Dump should contain testkey2")
+	assert.Contains(t, dumpStr, "testkey3", "Dump should contain testkey3")
+	assert.Contains(t, dumpStr, "testvalue1", "Dump should contain testvalue1")
+	assert.Contains(t, dumpStr, "testvalue2", "Dump should contain testvalue2")
+	assert.Contains(t, dumpStr, "longtestvalue3", "Dump should contain longtestvalue3")
+
+	// Count the number of VALUE lines to verify we have data
+	valueLines := strings.Count(dumpStr, "VALUE ")
+	assert.Greater(t, valueLines, 0, "Dump should contain at least one VALUE line")
+
+	// Step 3: Clear data from one node to test restore
+	clearCmd := exec.CommandContext(ctx, "bash", "-c", `echo -e "flush_all\r\nquit\r\n" | nc localhost 12122`)
+	err = clearCmd.Run()
+	require.NoError(t, err, "Failed to clear data from target node")
+
+	time.Sleep(1 * time.Second)
+
+	// Step 4: Restore data to the cleared node
+	restoreCmd := exec.CommandContext(ctx, flareAdminPath,
+		"--index-server", flareIndexServer,
+		"--index-server-port", flareIndexServerPort,
+		"restore",
+		"--input", dumpFile,
+		"--print-keys",
+		"localhost:12122",
+	)
+
+	restoreOutput, err := restoreCmd.Output()
+	require.NoError(t, err, "Restore command failed: %s", string(restoreOutput))
+
+	restoreStr := string(restoreOutput)
+	
+	// Verify restore output
+	assert.Contains(t, restoreStr, "Restored key: testkey1", "Should restore testkey1")
+	assert.Contains(t, restoreStr, "Restored key: testkey2", "Should restore testkey2")
+	assert.Contains(t, restoreStr, "Restored key: testkey3", "Should restore testkey3")
+	assert.Contains(t, restoreStr, "Restore completed successfully", "Should complete successfully")
+
+	// Step 5: Verify data was actually restored by checking if we can retrieve it
+	verifyCmd := exec.CommandContext(ctx, "bash", "-c", `echo -e "get testkey1\r\nget testkey2\r\nget testkey3\r\nquit\r\n" | nc localhost 12122`)
+	verifyOutput, err := verifyCmd.Output()
+	require.NoError(t, err, "Failed to verify restored data")
+
+	verifyStr := string(verifyOutput)
+	assert.Contains(t, verifyStr, "testvalue1", "Should be able to retrieve testvalue1")
+	assert.Contains(t, verifyStr, "testvalue2", "Should be able to retrieve testvalue2")
+	assert.Contains(t, verifyStr, "longtestvalue3", "Should be able to retrieve longtestvalue3")
+
+	t.Logf("Successfully dumped %d items and restored them", valueLines)
+}
+
+func TestFlareAdminRestoreWithFiltersE2E(t *testing.T) {
+	flareAdminPath, _ := buildBinaries(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	// Create temp directory for dump files
+	tmpDir, err := os.MkdirTemp("", "restore-filter-e2e-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	dumpFile := filepath.Join(tmpDir, "filter_test_dump.txt")
+
+	// Step 1: Create test dump file with various keys
+	testDump := `VALUE user:1 0 5 1 0
+data1
+VALUE user:2 0 5 1 0
+data2
+VALUE session:abc 0 5 1 0
+data3
+VALUE config:main 0 5 1 0
+data4
+VALUE temp:xyz 0 5 1 0
+data5
+END`
+
+	err = os.WriteFile(dumpFile, []byte(testDump), 0644)
+	require.NoError(t, err)
+
+	// Step 2: Test restore with include filter (only restore user keys)
+	restoreCmd := exec.CommandContext(ctx, flareAdminPath,
+		"--index-server", flareIndexServer,
+		"--index-server-port", flareIndexServerPort,
+		"restore",
+		"--input", dumpFile,
+		"--include", "user",
+		"--print-keys",
+		"localhost:12123",
+	)
+
+	restoreOutput, err := restoreCmd.Output()
+	require.NoError(t, err, "Restore with include filter failed: %s", string(restoreOutput))
+
+	restoreStr := string(restoreOutput)
+	
+	// Should only restore user keys
+	assert.Contains(t, restoreStr, "Restored key: user:1", "Should restore user:1")
+	assert.Contains(t, restoreStr, "Restored key: user:2", "Should restore user:2")
+	assert.NotContains(t, restoreStr, "Restored key: session:abc", "Should not restore session key")
+	assert.NotContains(t, restoreStr, "Restored key: config:main", "Should not restore config key")
+	assert.NotContains(t, restoreStr, "Restored key: temp:xyz", "Should not restore temp key")
+
+	// Step 3: Test restore with exclude filter (exclude temp keys)
+	restoreCmd2 := exec.CommandContext(ctx, flareAdminPath,
+		"--index-server", flareIndexServer,
+		"--index-server-port", flareIndexServerPort,
+		"restore",
+		"--input", dumpFile,
+		"--exclude", "temp",
+		"--print-keys",
+		"localhost:12124",
+	)
+
+	restoreOutput2, err := restoreCmd2.Output()
+	require.NoError(t, err, "Restore with exclude filter failed: %s", string(restoreOutput2))
+
+	restoreStr2 := string(restoreOutput2)
+	
+	// Should restore everything except temp keys
+	assert.Contains(t, restoreStr2, "Restored key: user:1", "Should restore user:1")
+	assert.Contains(t, restoreStr2, "Restored key: user:2", "Should restore user:2")
+	assert.Contains(t, restoreStr2, "Restored key: session:abc", "Should restore session key")
+	assert.Contains(t, restoreStr2, "Restored key: config:main", "Should restore config key")
+	assert.NotContains(t, restoreStr2, "Restored key: temp:xyz", "Should not restore temp key")
+
+	t.Logf("Successfully tested restore filters")
 }

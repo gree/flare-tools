@@ -647,46 +647,17 @@ func (c *CLI) runDump(args []string, output string, format string, all bool, raw
 			return fmt.Errorf("invalid port: %s", parts[1])
 		}
 
-		// Connect directly to the data node and send "stats dump" command
+		// Connect directly to the data node and dump
 		dataClient := flare.NewClient(host, port)
-		err = dataClient.Connect()
+		
+		// Use empty string for partition to dump all
+		dumpData, err := dataClient.Dump("")
 		if err != nil {
-			return fmt.Errorf("failed to connect to %s:%d: %v", host, port, err)
-		}
-
-		response, err := dataClient.SendCommand("dump")
-		if err != nil {
-			dataClient.Close()
 			return fmt.Errorf("failed to dump from %s:%d: %v", host, port, err)
 		}
 
-		// Parse the response and collect data (VALUE format)
-		lines := strings.Split(strings.TrimSpace(response), "\n")
-		i := 0
-		for i < len(lines) {
-			line := strings.TrimSpace(lines[i])
-			if line == "" || line == "END" {
-				i++
-				continue
-			}
-
-			// Handle VALUE lines: "VALUE key flag len version expire"
-			if strings.HasPrefix(line, "VALUE ") {
-				allData = append(allData, line)
-				i++
-				// Next line should be the data
-				if i < len(lines) {
-					dataLine := strings.TrimSpace(lines[i])
-					if dataLine != "" {
-						allData = append(allData, dataLine)
-					}
-				}
-			} else {
-				allData = append(allData, line)
-			}
-			i++
-		}
-		dataClient.Close()
+		// Add all dumped data
+		allData = append(allData, dumpData...)
 	}
 
 	// Write to output file or stdout
@@ -759,39 +730,17 @@ func (c *CLI) runDumpkey(args []string, output string, format string, partition 
 			return fmt.Errorf("invalid port: %s", parts[1])
 		}
 
-		// Connect directly to the data node and send "stats dumpkey" command
+		// Connect directly to the data node and dump keys
 		dataClient := flare.NewClient(host, port)
-		err = dataClient.Connect()
+		
+		// Use empty string for partition to dump all keys
+		keys, err := dataClient.DumpKey("")
 		if err != nil {
-			return fmt.Errorf("failed to connect to %s:%d: %v", host, port, err)
-		}
-
-		response, err := dataClient.SendCommand("dump_key")
-		if err != nil {
-			dataClient.Close()
 			return fmt.Errorf("failed to dump keys from %s:%d: %v", host, port, err)
 		}
 
-		// Parse the response and collect keys (format: "KEY keyname")
-		lines := strings.Split(strings.TrimSpace(response), "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line != "" && line != "END" && line != "ERROR" {
-				// Extract key from "KEY keyname" format
-				if strings.HasPrefix(line, "KEY ") {
-					key := strings.TrimSpace(line[4:]) // Remove "KEY " prefix
-					if key != "" {
-						allKeys = append(allKeys, key)
-					}
-				}
-			}
-		}
-
-		// Check if the command is not supported
-		if strings.TrimSpace(response) == "ERROR" {
-			fmt.Printf("Warning: dump_key command not supported by server %s:%d\n", host, port)
-		}
-		dataClient.Close()
+		// Add all keys
+		allKeys = append(allKeys, keys...)
 	}
 
 	// Write to output file or stdout
@@ -820,10 +769,127 @@ func (c *CLI) runRestore(args []string, input string, format string, include str
 		return fmt.Errorf("restore command requires --input parameter")
 	}
 
-	fmt.Printf("Restoring data to %d nodes from %s...\n", len(args), input)
-	time.Sleep(2 * time.Second)
-	fmt.Println("Restore completed successfully")
+	// Read the dump file
+	data, err := os.ReadFile(input)
+	if err != nil {
+		return fmt.Errorf("failed to read input file %s: %v", input, err)
+	}
 
+	fmt.Printf("Restoring data to %d nodes from %s...\n", len(args), input)
+
+	if c.config.DryRun {
+		fmt.Println("DRY RUN MODE - no actual restore will be performed")
+		lines := strings.Split(string(data), "\n")
+		count := 0
+		for _, line := range lines {
+			if strings.HasPrefix(line, "VALUE ") {
+				count++
+			}
+		}
+		fmt.Printf("Would restore %d items\n", count)
+		return nil
+	}
+
+	// Parse nodes
+	for _, nodeArg := range args {
+		parts := strings.Split(nodeArg, ":")
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid node format: %s (expected host:port)", nodeArg)
+		}
+
+		host := parts[0]
+		port, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return fmt.Errorf("invalid port: %s", parts[1])
+		}
+
+		// Parse and restore data
+		lines := strings.Split(string(data), "\n")
+		restoredCount := 0
+		errorCount := 0
+		
+		i := 0
+		for i < len(lines) {
+			line := strings.TrimSpace(lines[i])
+			
+			// Skip empty lines and END markers
+			if line == "" || line == "END" {
+				i++
+				continue
+			}
+			
+			// Handle VALUE lines: "VALUE key flag len"
+			if strings.HasPrefix(line, "VALUE ") {
+				parts := strings.Fields(line)
+				if len(parts) < 4 {
+					errorCount++
+					i++
+					continue
+				}
+				
+				key := parts[1]
+				flagsStr := parts[2]
+				length, err := strconv.Atoi(parts[3])
+				if err != nil {
+					errorCount++
+					i++
+					continue
+				}
+				
+				// Check filters
+				if include != "" && !strings.Contains(key, include) {
+					i += 2 // Skip value line too
+					continue
+				}
+				if prefixInclude != "" && !strings.HasPrefix(key, prefixInclude) {
+					i += 2 // Skip value line too
+					continue
+				}
+				if exclude != "" && strings.Contains(key, exclude) {
+					i += 2 // Skip value line too
+					continue
+				}
+				
+				// Get the data value from next line
+				i++
+				if i >= len(lines) {
+					errorCount++
+					break
+				}
+				
+				value := lines[i]
+				// Don't trim the value - it might have intentional whitespace
+				
+				// Parse flags
+				flags, err := strconv.Atoi(flagsStr)
+				if err != nil {
+					errorCount++
+					i++
+					continue
+				}
+				
+				// Connect to the data node and restore
+				dataClient := flare.NewClient(host, port)
+				err = dataClient.Set(key, flags, 0, []byte(value))
+				if err != nil {
+					errorCount++
+					if printKeys {
+						fmt.Printf("Failed to restore key: %s\n", key)
+					}
+				} else {
+					restoredCount++
+					if printKeys {
+						fmt.Printf("Restored key: %s\n", key)
+					}
+				}
+			}
+			i++
+		}
+		
+		fmt.Printf("Restored %d items to %s:%d (%d errors)\n", restoredCount, host, port, errorCount)
+	}
+
+	fmt.Println("Restore completed successfully")
 	return nil
 }
 

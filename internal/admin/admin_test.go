@@ -4,11 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/gree/flare-tools/internal/config"
 )
@@ -180,9 +183,19 @@ func (m *MockFlareServer) processDataNodeCommand(command string) string {
 		return "dumped 100 keys\r\nEND\r\n"
 	case "dump_key":
 		return "KEY key1\r\nKEY key2\r\nEND\r\n"
+	case "set":
+		// Handle set command for restore functionality
+		if len(parts) >= 5 {
+			return "STORED\r\n"
+		}
+		return "ERROR invalid set command\r\n"
 	case "quit":
 		return ""
 	default:
+		// Check if it's a multiline set command
+		if strings.Contains(command, "\r\n") && strings.HasPrefix(command, "set ") {
+			return "STORED\r\n"
+		}
 		return "OK\r\n"
 	}
 }
@@ -441,11 +454,20 @@ func TestRunRestoreWithoutInput(t *testing.T) {
 }
 
 func TestRunRestoreWithInput(t *testing.T) {
+	// Create temp file for test
+	tmpDir, err := os.MkdirTemp("", "restore-test-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+	
+	dumpFile := filepath.Join(tmpDir, "backup.tch")
+	err = os.WriteFile(dumpFile, []byte("VALUE test 0 4 1 0\ndata\nEND\n"), 0644)
+	require.NoError(t, err)
+	
 	cfg := config.NewConfig()
 	cfg.DryRun = true // Use dry run to avoid actual restore operations
 	cli := NewCLI(cfg)
 
-	err := cli.runRestore([]string{"server1:12121"}, "backup.tch", "tch", "", "", "", false)
+	err = cli.runRestore([]string{"server1:12121"}, dumpFile, "tch", "", "", "", false)
 	assert.NoError(t, err)
 }
 

@@ -95,6 +95,10 @@ func (c *Client) SendCommand(cmd string) (string, error) {
 		if strings.HasPrefix(cmd, "node ") && (line == "OK" || line == "STORED") {
 			break
 		}
+		// For set commands that return STORED
+		if strings.HasPrefix(cmd, "set ") && line == "STORED" {
+			break
+		}
 		// For stats commands that return END
 		if line == "END" {
 			break
@@ -430,4 +434,143 @@ func (c *Client) GenerateIndexXML() (string, error) {
 </boost_serialization>`)
 
 	return xml.String(), nil
+}
+
+// Dump retrieves all key-value pairs from a node
+func (c *Client) Dump(partition string) ([]string, error) {
+	if err := c.Connect(); err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
+	// Send dump command with optional partition
+	cmd := "dump"
+	if partition != "" {
+		cmd = fmt.Sprintf("dump %s", partition)
+	}
+
+	_, err := c.conn.Write([]byte(cmd + "\r\n"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to send dump command: %v", err)
+	}
+
+	scanner := bufio.NewScanner(c.conn)
+	var result []string
+	var currentValue []string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		
+		if line == "END" {
+			break
+		}
+
+		if strings.HasPrefix(line, "VALUE ") {
+			// If we have a previous VALUE, add it to results
+			if len(currentValue) > 0 {
+				result = append(result, currentValue...)
+				currentValue = nil
+			}
+			// Start new VALUE
+			currentValue = append(currentValue, line)
+		} else if len(currentValue) > 0 {
+			// This is data for the current VALUE
+			currentValue = append(currentValue, line)
+		}
+	}
+
+	// Add the last VALUE if any
+	if len(currentValue) > 0 {
+		result = append(result, currentValue...)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading dump response: %v", err)
+	}
+
+	return result, nil
+}
+
+// DumpKey retrieves all keys from a node
+func (c *Client) DumpKey(partition string) ([]string, error) {
+	if err := c.Connect(); err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
+	// Send dump_key command with optional partition
+	cmd := "dump_key"
+	if partition != "" {
+		cmd = fmt.Sprintf("dump_key %s", partition)
+	}
+
+	_, err := c.conn.Write([]byte(cmd + "\r\n"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to send dump_key command: %v", err)
+	}
+
+	scanner := bufio.NewScanner(c.conn)
+	var keys []string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		
+		if line == "END" {
+			break
+		}
+
+		if strings.HasPrefix(line, "KEY ") {
+			// Extract key from "KEY keyname"
+			parts := strings.SplitN(line, " ", 2)
+			if len(parts) == 2 {
+				keys = append(keys, parts[1])
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading dump_key response: %v", err)
+	}
+
+	return keys, nil
+}
+
+// Set stores a key-value pair
+func (c *Client) Set(key string, flags int, exptime int, data []byte) error {
+	if err := c.Connect(); err != nil {
+		return err
+	}
+	defer c.Close()
+
+	// Send set command
+	cmd := fmt.Sprintf("set %s %d %d %d", key, flags, exptime, len(data))
+	_, err := c.conn.Write([]byte(cmd + "\r\n"))
+	if err != nil {
+		return fmt.Errorf("failed to send set command: %v", err)
+	}
+
+	// Send data
+	_, err = c.conn.Write(data)
+	if err != nil {
+		return fmt.Errorf("failed to send data: %v", err)
+	}
+
+	// Send CRLF after data
+	_, err = c.conn.Write([]byte("\r\n"))
+	if err != nil {
+		return fmt.Errorf("failed to send CRLF: %v", err)
+	}
+
+	// Read response
+	scanner := bufio.NewScanner(c.conn)
+	if scanner.Scan() {
+		response := scanner.Text()
+		if response != "STORED" {
+			return fmt.Errorf("unexpected response: %s", response)
+		}
+	} else {
+		return fmt.Errorf("no response from server")
+	}
+
+	return nil
 }
