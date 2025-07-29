@@ -1,6 +1,5 @@
 use clap::{Arg, Command};
 use std::process::{self, Stdio};
-use std::io;
 
 fn main() {
     let matches = Command::new("kubectl-flare")

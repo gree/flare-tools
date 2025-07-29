@@ -90,12 +90,12 @@ fn run_stats(index_server: &str, index_port: u16, show_qps: bool, wait: u64, cou
         if i == 0 {
             // Print header
             if show_qps {
-                println!("{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}",
-                    "node", "partition", "role", "state", "balance", "items", "conn", "behind", "hit", "size", "uptime", "version", "qps", "qpsr/qpsw",
+                println!("{node}{d}{partition}{d}{role}{d}{state}{d}{balance}{d}{items}{d}{conn}{d}{behind}{d}{hit}{d}{size}{d}{uptime}{d}{version}{d}{qps}{d}{qpsrw}",
+                    node="node", partition="partition", role="role", state="state", balance="balance", items="items", conn="conn", behind="behind", hit="hit", size="size", uptime="uptime", version="version", qps="qps", qpsrw="qpsr/qpsw",
                     d = delimiter);
             } else {
-                println!("{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}",
-                    "node", "partition", "role", "state", "balance", "items", "conn", "behind", "hit", "size", "uptime",
+                println!("{node}{d}{partition}{d}{role}{d}{state}{d}{balance}{d}{items}{d}{conn}{d}{behind}{d}{hit}{d}{size}{d}{uptime}",
+                    node="node", partition="partition", role="role", state="state", balance="balance", items="items", conn="conn", behind="behind", hit="hit", size="size", uptime="uptime",
                     d = delimiter);
             }
         }
@@ -110,15 +110,15 @@ fn run_stats(index_server: &str, index_port: u16, show_qps: bool, wait: u64, cou
             let node_name = format!("{}:{}", node.host, node.port);
             
             if show_qps {
-                println!("{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{:.2}{d}{}{d}{}{d}{}{d}{:.2}{d}{:.2}/{:.2}",
-                    node_name, partition, node.role, node.state, node.balance, 
-                    node.items, node.conn, node.behind, node.hit, node.size, 
-                    node.uptime, node.qps, node.qpsr, node.qpsw,
+                println!("{node_name}{d}{partition}{d}{role}{d}{state}{d}{balance}{d}{items}{d}{conn}{d}{behind}{d}{hit:.2}{d}{size}{d}{uptime}{d}{qps:.2}{d}{qpsr:.2}/{qpsw:.2}",
+                    node_name=node_name, partition=partition, role=node.role, state=node.state, balance=node.balance, 
+                    items=node.items, conn=node.conn, behind=node.behind, hit=node.hit, size=node.size, 
+                    uptime=node.uptime, qps=node.qps, qpsr=node.qpsr, qpsw=node.qpsw,
                     d = delimiter);
             } else {
-                println!("{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{}{d}{:.2}{d}{}{d}{}",
-                    node_name, partition, node.role, node.state, node.balance, 
-                    node.items, node.conn, node.behind, node.hit, node.size, node.uptime,
+                println!("{node_name}{d}{partition}{d}{role}{d}{state}{d}{balance}{d}{items}{d}{conn}{d}{behind}{d}{hit:.2}{d}{size}{d}{uptime}",
+                    node_name=node_name, partition=partition, role=node.role, state=node.state, balance=node.balance, 
+                    items=node.items, conn=node.conn, behind=node.behind, hit=node.hit, size=node.size, uptime=node.uptime,
                     d = delimiter);
             }
         }

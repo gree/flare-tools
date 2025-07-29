@@ -9,27 +9,76 @@ jobs:
   release:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
       with:
-        go-version: 1.21
+        targets: ${{ matrix.target }}
 
     - name: Get tag name
       id: tag
       run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-    - name: Build for multiple platforms
-      run: make build-all
-
-    - name: Create release archives
+    - name: Install cross-compilation tools
       run: |
+        cargo install cross
+
+    - name: Build for ${{ matrix.target }}
+      run: |
+        if [[ "${{ matrix.target }}" == *"darwin"* ]]; then
+          # For macOS targets, we need special handling
+          cross build --release --target ${{ matrix.target }}
+        elif [ "${{ matrix.target }}" = "x86_64-unknown-linux-gnu" ]; then
+          cargo build --release --target ${{ matrix.target }}
+        else
+          cross build --release --target ${{ matrix.target }}
+        fi
+
+    - name: Create release archive
+      run: |
+        mkdir -p build/bin
+        cp target/${{ matrix.target }}/release/flare-admin build/bin/
+        cp target/${{ matrix.target }}/release/flare-stats build/bin/
+        cp target/${{ matrix.target }}/release/kubectl-flare build/bin/
         cd build/bin
-        tar -czf flare-tools-${{ steps.tag.outputs.TAG }}-linux-amd64.tar.gz linux-amd64/
-        tar -czf flare-tools-${{ steps.tag.outputs.TAG }}-darwin-amd64.tar.gz darwin-amd64/
-        zip -r flare-tools-${{ steps.tag.outputs.TAG }}-windows-amd64.zip windows-amd64/
+        if [[ "${{ matrix.target }}" == *"windows"* ]]; then
+          zip -r flare-tools-${{ steps.tag.outputs.TAG }}-${{ matrix.target }}.zip .
+        else
+          tar -czf flare-tools-${{ steps.tag.outputs.TAG }}-${{ matrix.target }}.tar.gz .
+        fi
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/bin/flare-tools-${{ steps.tag.outputs.TAG }}-${{ matrix.target }}.tar.gz
+        asset_name: flare-tools-${{ steps.tag.outputs.TAG }}-${{ matrix.target }}.tar.gz
+        asset_content_type: application/gzip
+
+  create_release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Get tag name
+      id: tag
+      run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
     - name: Create Release
       uses: actions/create-release@v1
@@ -41,33 +90,3 @@ jobs:
         release_name: Release ${{ steps.tag.outputs.TAG }}
         draft: false
         prerelease: false
-
-    - name: Upload Linux Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/bin/flare-tools-${{ steps.tag.outputs.TAG }}-linux-amd64.tar.gz
-        asset_name: flare-tools-${{ steps.tag.outputs.TAG }}-linux-amd64.tar.gz
-        asset_content_type: application/gzip
-
-    - name: Upload Darwin Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/bin/flare-tools-${{ steps.tag.outputs.TAG }}-darwin-amd64.tar.gz
-        asset_name: flare-tools-${{ steps.tag.outputs.TAG }}-darwin-amd64.tar.gz
-        asset_content_type: application/gzip
-
-    - name: Upload Windows Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/bin/flare-tools-${{ steps.tag.outputs.TAG }}-windows-amd64.zip
-        asset_name: flare-tools-${{ steps.tag.outputs.TAG }}-windows-amd64.zip
-        asset_content_type: application/zip

@@ -1,23 +1,21 @@
-# Multi-stage build for flare-tools
-FROM golang:1.21-alpine AS builder
+# Multi-stage build for flare-tools (Rust)
+FROM rust:1.75-alpine AS builder
 
 # Install build dependencies
-RUN apk add --no-cache git make
+RUN apk add --no-cache git make musl-dev
 
 # Set working directory
 WORKDIR /app
 
-# Copy go mod files
-COPY go.mod go.sum ./
-
-# Download dependencies
-RUN go mod download
+# Copy Cargo files
+COPY Cargo.toml Cargo.lock ./
 
 # Copy source code
-COPY . .
+COPY src/ ./src/
+COPY tests/ ./tests/
 
-# Build binaries
-RUN make build
+# Build binaries in release mode
+RUN cargo build --release
 
 # Final stage
 FROM alpine:latest
@@ -33,8 +31,9 @@ RUN addgroup -g 1001 flare && \
 WORKDIR /home/flare
 
 # Copy binaries from builder stage
-COPY --from=builder /app/build/bin/flare-admin /usr/local/bin/
-COPY --from=builder /app/build/bin/flare-stats /usr/local/bin/
+COPY --from=builder /app/target/release/flare-admin /usr/local/bin/
+COPY --from=builder /app/target/release/flare-stats /usr/local/bin/
+COPY --from=builder /app/target/release/kubectl-flare /usr/local/bin/
 
 # Change ownership
 RUN chown -R flare:flare /home/flare

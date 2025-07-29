@@ -423,7 +423,6 @@ fn run_balance(_index_server: &str, _index_port: u16, matches: &ArgMatches, forc
         }
     }
 
-    println!("Setting balance values...");
 
     if dry_run {
         println!("DRY RUN MODE - no actual changes will be made");
@@ -676,7 +675,6 @@ fn run_restore(_index_server: &str, _index_port: u16, matches: &ArgMatches, dry_
         
         let lines: Vec<&str> = data.lines().collect();
         let mut i = 0;
-        println!("Create client: {} {}", host, port);
         
         while i < lines.len() {
             let line = lines[i].trim();
@@ -724,32 +722,14 @@ fn run_restore(_index_server: &str, _index_port: u16, matches: &ArgMatches, dry_
                     value.as_bytes()
                 };
                 
-                // Send set command to restore the key (with retry for EAGAIN)
-                let mut retry_count = 0;
-                let max_retries = 3;
-                
-                println!("se_key_value");
-                loop {
-                    match client.set_key_value(key, flags, exptime, data_bytes) {
-                        Ok(()) => {
-                            restored_count += 1;
-                            if !dry_run {
-                                println!("Restored key: {}", key);
-                            }
-                            break;
-                        }
-                        Err(e) => {
-                            if retry_count < max_retries && format!("{}", e).contains("Resource temporarily unavailable") {
-                                retry_count += 1;
-                                std::thread::sleep(std::time::Duration::from_millis(100 * retry_count));
-                                // Create fresh connection on retry
-                                client = FlareClient::new(host.clone(), port);
-                                continue;
-                            }
-                            error_count += 1;
-                            println!("Failed to restore key {}: {}", key, e);
-                            break;
-                        }
+                // Send set command to restore the key
+                match client.set_key_value(key, flags, exptime, data_bytes) {
+                    Ok(()) => {
+                        restored_count += 1;
+                    }
+                    Err(e) => {
+                        error_count += 1;
+                        println!("Failed to restore key {}: {}", key, e);
                     }
                 }
             }
@@ -826,8 +806,7 @@ fn run_verify(index_server: &str, index_port: u16, _matches: &ArgMatches) -> Res
     // Check for basic cluster health
     if cluster_info.nodes.is_empty() {
         println!("ERROR: No nodes found in cluster");
-        errors += 1;
-        return Ok(());
+        return Err(ClientError::InvalidResponse("No nodes found in cluster".to_string()));
     }
     
     println!("Found {} nodes in cluster", cluster_info.nodes.len());
@@ -927,13 +906,14 @@ fn run_verify(index_server: &str, index_port: u16, _matches: &ArgMatches) -> Res
     
     if errors == 0 && warnings == 0 {
         println!("\n✓ Cluster verification completed successfully - no issues found");
+        Ok(())
     } else if errors == 0 {
         println!("\n⚠ Cluster verification completed with {} warnings", warnings);
+        Ok(())
     } else {
         println!("\n✗ Cluster verification failed with {} errors and {} warnings", errors, warnings);
+        Err(ClientError::InvalidResponse(format!("Cluster verification failed with {} errors", errors)))
     }
-    
-    Ok(())
 }
 
 fn run_index(index_server: &str, index_port: u16, _matches: &ArgMatches) -> Result<(), ClientError> {

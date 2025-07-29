@@ -770,6 +770,7 @@ mod comprehensive_protocol_tests {
             flags: 42,
             bytes: 5,
             cas_unique: None,
+            exptime: None,
             data: Bytes::from("hello"),
         };
         let formatted = parser.format_response(&response);
@@ -785,6 +786,7 @@ mod comprehensive_protocol_tests {
             flags: 0,
             bytes: 4,
             cas_unique: Some(12345),
+            exptime: None,
             data: Bytes::from("test"),
         };
         let formatted = parser.format_response(&response);

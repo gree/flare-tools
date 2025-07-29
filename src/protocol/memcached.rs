@@ -686,9 +686,6 @@ impl MemcachedParser {
                     command_str.push_str(" noreply");
                 }
                 command_str.push_str("\r\n");
-                println!("set {}",command_str);
-
-                println!("value {}", str::from_utf8(value).unwrap());
                 let mut result = BytesMut::from(command_str.as_bytes());
                 result.extend_from_slice(value);
                 result.extend_from_slice(b"\r\n");
@@ -839,6 +836,7 @@ mod tests {
             flags: 0,
             bytes: 5,
             cas_unique: None,
+            exptime: None,
             data: Bytes::from("hello"),
         };
         let formatted = parser.format_response(&response);

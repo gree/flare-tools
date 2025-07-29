@@ -19,7 +19,6 @@ pub enum ClientError {
 
 pub struct FlareClient {
     stream: Option<TcpStream>,
-    parser: FlareParser,
     host: String,
     port: u16,
 }
@@ -53,7 +52,6 @@ impl FlareClient {
     pub fn new(host: String, port: u16) -> Self {
         FlareClient {
             stream: None,
-            parser: FlareParser::new(),
             host,
             port,
         }
@@ -138,10 +136,27 @@ impl FlareClient {
 
             // Parse response based on the line
             let response = self.parse_response_line_with_reader(&line, &mut reader)?;
-            let is_end = matches!(response, FlareResponse::End | FlareResponse::Ok);
+            
+            // Check if this is a terminal response (single-line response that ends the command)
+            let is_terminal = matches!(response, 
+                FlareResponse::End | 
+                FlareResponse::Ok |
+                FlareResponse::Memcached(MemcachedResponse::Stored) |
+                FlareResponse::Memcached(MemcachedResponse::NotStored) |
+                FlareResponse::Memcached(MemcachedResponse::Exists) |
+                FlareResponse::Memcached(MemcachedResponse::NotFound) |
+                FlareResponse::Memcached(MemcachedResponse::Deleted) |
+                FlareResponse::Memcached(MemcachedResponse::Touched) |
+                FlareResponse::Memcached(MemcachedResponse::Error(_)) |
+                FlareResponse::Memcached(MemcachedResponse::ClientError(_)) |
+                FlareResponse::Memcached(MemcachedResponse::ServerError(_)) |
+                FlareResponse::Memcached(MemcachedResponse::IncrDecr(_)) |
+                FlareResponse::Memcached(MemcachedResponse::Version(_))
+            );
+            
             responses.push(response);
             
-            if is_end {
+            if is_terminal {
                 break;
             }
         }
@@ -257,6 +272,7 @@ impl FlareClient {
         }
     }
 
+    #[allow(dead_code)]
     fn parse_response_line(&self, line: &str) -> Result<FlareResponse, ClientError> {
         let line = line.trim();
         let parts: Vec<&str> = line.split_whitespace().collect();
