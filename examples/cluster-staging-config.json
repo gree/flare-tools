@@ -1,0 +1,19 @@
+{
+  "name": "flare-cluster-staging",
+  "nodes": [
+    {
+      "name": "flare-staging-master-1",
+      "container_name": "flare-staging-master-1",
+      "role": "master",
+      "balance": 150,
+      "partition": 0
+    },
+    {
+      "name": "flare-staging-slave-1", 
+      "container_name": "flare-staging-slave-1",
+      "role": "slave",
+      "balance": 150,
+      "partition": 0
+    }
+  ]
+}

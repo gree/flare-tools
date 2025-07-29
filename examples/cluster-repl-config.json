@@ -1,0 +1,33 @@
+{
+  "name": "flare-cluster-example",
+  "nodes": [
+    {
+      "name": "flared1",
+      "container_name": "flared1",
+      "role": "master",
+      "balance": 100,
+      "partition": 0
+    },
+    {
+      "name": "flared2",
+      "container_name": "flared2", 
+      "role": "master",
+      "balance": 100,
+      "partition": 1
+    },
+    {
+      "name": "flared3",
+      "container_name": "flared3",
+      "role": "slave",
+      "balance": 100,
+      "partition": 0
+    },
+    {
+      "name": "flared4",
+      "container_name": "flared4",
+      "role": "slave",
+      "balance": 100,
+      "partition": 1
+    }
+  ]
+}

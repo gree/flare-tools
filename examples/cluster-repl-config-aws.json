@@ -1,0 +1,33 @@
+{
+  "name": "flare-cluster-aws",
+  "nodes": [
+    {
+      "name": "flare-master-1",
+      "instance_id": "i-1234567890abcdef0",
+      "role": "master",
+      "balance": 100,
+      "partition": 0
+    },
+    {
+      "name": "flare-slave-1",
+      "instance_id": "i-0987654321fedcba0",
+      "role": "slave",
+      "balance": 100,
+      "partition": 0
+    },
+    {
+      "name": "flare-master-2",
+      "instance_id": "i-abcdef1234567890a",
+      "role": "master",
+      "balance": 100,
+      "partition": 1
+    },
+    {
+      "name": "flare-slave-2",
+      "instance_id": "i-fedcba0987654321f",
+      "role": "slave",
+      "balance": 100,
+      "partition": 1
+    }
+  ]
+}

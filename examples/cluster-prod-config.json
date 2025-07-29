@@ -1,0 +1,33 @@
+{
+  "name": "flare-cluster-production",
+  "nodes": [
+    {
+      "name": "flare-prod-master-1",
+      "container_name": "flare-prod-master-1",
+      "role": "master",
+      "balance": 200,
+      "partition": 0
+    },
+    {
+      "name": "flare-prod-master-2",
+      "container_name": "flare-prod-master-2",
+      "role": "master",
+      "balance": 200,
+      "partition": 1
+    },
+    {
+      "name": "flare-prod-slave-1",
+      "container_name": "flare-prod-slave-1",
+      "role": "slave",
+      "balance": 200,
+      "partition": 0
+    },
+    {
+      "name": "flare-prod-slave-2",
+      "container_name": "flare-prod-slave-2",
+      "role": "slave",
+      "balance": 200,
+      "partition": 1
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+version: '3.8'
+
+services:
+  # Production Cluster - Index Server
+  flarei-prod:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flarei
+    platform: linux/amd64
+    container_name: flarei-prod
+    ports:
+      - "12120:12120"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flarei-prod && /usr/bin/flarei -f /config/production/flarei-prod.conf -s"]
+    networks:
+      - flare-prod-network
+
+  # Production Cluster - Master 1
+  flare-prod-master-1:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flare-prod-master-1
+    ports:
+      - "12121:12121"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-master-1 && /usr/bin/flared -f /config/production/flare-prod-master-1.conf -s"]
+    depends_on:
+      - flarei-prod
+    networks:
+      - flare-prod-network
+
+  # Production Cluster - Master 2
+  flare-prod-master-2:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flare-prod-master-2
+    ports:
+      - "12122:12121"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-master-2 && /usr/bin/flared -f /config/production/flare-prod-master-2.conf -s"]
+    depends_on:
+      - flarei-prod
+    networks:
+      - flare-prod-network
+
+  # Production Cluster - Slave 1
+  flare-prod-slave-1:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flare-prod-slave-1
+    ports:
+      - "12123:12121"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-slave-1 && /usr/bin/flared -f /config/production/flare-prod-slave-1.conf -s"]
+    depends_on:
+      - flarei-prod
+    networks:
+      - flare-prod-network
+
+  # Production Cluster - Slave 2
+  flare-prod-slave-2:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flare-prod-slave-2
+    ports:
+      - "12124:12121"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-slave-2 && /usr/bin/flared -f /config/production/flare-prod-slave-2.conf -s"]
+    depends_on:
+      - flarei-prod
+    networks:
+      - flare-prod-network
+
+  # Staging Cluster - Index Server
+  flarei-staging:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flarei
+    platform: linux/amd64
+    container_name: flarei-staging
+    ports:
+      - "12130:12120"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flarei-staging && /usr/bin/flarei -f /config/staging/flarei-staging.conf -s"]
+    networks:
+      - flare-staging-network
+
+  # Staging Cluster - Master 1
+  flare-staging-master-1:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flare-staging-master-1
+    ports:
+      - "12131:12121"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flare-staging-master-1 && /usr/bin/flared -f /config/staging/flare-staging-master-1.conf -s"]
+    depends_on:
+      - flarei-staging
+    networks:
+      - flare-staging-network
+
+  # Staging Cluster - Slave 1
+  flare-staging-slave-1:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flare-staging-slave-1
+    ports:
+      - "12132:12121"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flare-staging-slave-1 && /usr/bin/flared -f /config/staging/flare-staging-slave-1.conf -s"]
+    depends_on:
+      - flarei-staging
+    networks:
+      - flare-staging-network
+
+  # Flare Cluster Replication Tool
+  flare-cluster-repl:
+    build: .
+    platform: linux/amd64
+    container_name: flare-cluster-repl
+    volumes:
+      - ./examples:/app/examples:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./logs:/app/logs
+    working_dir: /app
+    entrypoint: ["flare-cluster-repl"]
+    command: ["--help"]
+    user: root  # Need root to access docker socket
+    networks:
+      - flare-prod-network
+      - flare-staging-network
+
+networks:
+  flare-prod-network:
+    driver: bridge
+  flare-staging-network:
+    driver: bridge
+
+volumes:
+  logs:
