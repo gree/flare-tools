@@ -1,27 +1,28 @@
 # Multi-stage build for flare-tools (Rust)
-FROM rust:1.75-alpine AS builder
+FROM --platform=linux/amd64 rust:1.81-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git make musl-dev
 
+# Add musl target for static linking
+RUN rustup target add x86_64-unknown-linux-musl
+
 # Set working directory
 WORKDIR /app
 
-# Copy Cargo files
-COPY Cargo.toml Cargo.lock ./
+# Copy Cargo files  
+COPY Cargo.toml ./
 
 # Copy source code
 COPY src/ ./src/
 COPY tests/ ./tests/
 
-# Build binaries in release mode
-RUN cargo build --release
+# Build static binaries with musl target
+ENV RUSTFLAGS='-C target-feature=+crt-static'
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
-# Final stage
-FROM alpine:latest
-
-# Install runtime dependencies
-RUN apk add --no-cache ca-certificates
+# Final stage - minimal Alpine with static binaries
+FROM --platform=linux/amd64 alpine:latest
 
 # Create non-root user
 RUN addgroup -g 1001 flare && \
@@ -30,10 +31,10 @@ RUN addgroup -g 1001 flare && \
 # Set working directory
 WORKDIR /home/flare
 
-# Copy binaries from builder stage
-COPY --from=builder /app/target/release/flare-admin /usr/local/bin/
-COPY --from=builder /app/target/release/flare-stats /usr/local/bin/
-COPY --from=builder /app/target/release/kubectl-flare /usr/local/bin/
+# Copy static binaries from builder stage
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/flare-admin /usr/local/bin/
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/flare-stats /usr/local/bin/
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/kubectl-flare /usr/local/bin/
 
 # Change ownership
 RUN chown -R flare:flare /home/flare

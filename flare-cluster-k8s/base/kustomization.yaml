@@ -1,0 +1,10 @@
+kind: Kustomization
+resources:
+- statefullset.yaml
+- service.yaml
+- pv.yaml
+configMapGenerator:
+- name: flare-config
+  files:
+  - flare-config/flarei.conf
+  - flare-config/flared.conf

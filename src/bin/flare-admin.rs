@@ -1,6 +1,8 @@
 use clap::{Arg, Command, ArgMatches};
 use std::process;
 use std::io::{self, Write};
+use std::thread;
+use std::time::Duration;
 
 use flare_tools::{FlareClient, ClientError, NodeRole, NodeState, MemcachedResponse};
 
@@ -745,12 +747,17 @@ fn run_restore(_index_server: &str, _index_port: u16, matches: &ArgMatches, dry_
 
 fn run_reconstruct(index_server: &str, index_port: u16, matches: &ArgMatches, force: bool, dry_run: bool) -> Result<(), ClientError> {
     let all = matches.get_flag("all");
+    let retry_count = matches.get_one::<String>("retry")
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or(10);
     
+    // Get nodes to reconstruct
     let nodes: Vec<String> = if all {
-        // Get all nodes from cluster
+        // Get all master and slave nodes from cluster
         let mut client = FlareClient::new(index_server.to_string(), index_port);
         let cluster_info = client.get_stats()?;
         cluster_info.nodes.into_iter()
+            .filter(|node| node.role == "master" || node.role == "slave")
             .map(|node| format!("{}:{}", node.host, node.port))
             .collect()
     } else if let Some(node_values) = matches.get_many::<String>("nodes") {
@@ -759,6 +766,15 @@ fn run_reconstruct(index_server: &str, index_port: u16, matches: &ArgMatches, fo
         return Err(ClientError::InvalidResponse("No nodes specified and --all not used".to_string()));
     };
 
+    if nodes.is_empty() {
+        println!("No nodes to reconstruct");
+        return Ok(());
+    }
+
+    // Get cluster info for node details
+    let mut index_client = FlareClient::new(index_server.to_string(), index_port);
+    let cluster_info = index_client.get_stats()?;
+    
     if !force && !dry_run {
         print!("This will reconstruct {} nodes. Continue? (y/n): ", nodes.len());
         io::stdout().flush().unwrap();
@@ -770,7 +786,7 @@ fn run_reconstruct(index_server: &str, index_port: u16, matches: &ArgMatches, fo
         }
     }
 
-    println!("Reconstructing nodes...");
+    println!("Reconstructing {} nodes...", nodes.len());
 
     if dry_run {
         println!("DRY RUN MODE - no actual changes will be made");
@@ -781,16 +797,82 @@ fn run_reconstruct(index_server: &str, index_port: u16, matches: &ArgMatches, fo
         return Ok(());
     }
 
-    for node in nodes {
-        let (host, port) = parse_host_port(&node)?;
+    for node_spec in nodes {
+        let (host, port) = parse_host_port(&node_spec)?;
         
-        // Connect to the node and flush_all before reconstruction
+        // Find node info
+        let node_info = cluster_info.nodes.iter()
+            .find(|n| n.host == host && n.port == port)
+            .ok_or_else(|| ClientError::InvalidResponse(format!("{} is not found in this cluster", node_spec)))?;
+        
+        let current_role = node_info.role.clone();
+        let current_balance = node_info.balance;
+        let partition = node_info.partition;
+        
+        println!("Reconstructing node {}:{} (role={}, partition={})", host, port, current_role, partition);
+        
+        // Step 1: Set node state to down
+        println!("  Setting node state to down...");
+        index_client.set_node_state(host.clone(), port, NodeState::Down)?;
+        
+        // Step 2: Wait for node to be active again
+        println!("  Waiting for node to be active again...");
+        thread::sleep(Duration::from_secs(3));
+        
+        // Step 3: Connect to the node and flush_all
+        println!("  Flushing all data on the node...");
         let mut node_client = FlareClient::new(host.clone(), port);
         node_client.flush_all()?;
-        println!("Reconstructed node: {}:{}", host, port);
+        
+        // Step 4: Set the role to slave with retry logic
+        let mut success = false;
+        for attempt in 0..retry_count {
+            println!("  Setting node role to slave (attempt {}/{})", attempt + 1, retry_count);
+            
+            match index_client.set_node_role(host.clone(), port, NodeRole::Slave, 0, Some(partition)) {
+                Ok(()) => {
+                    println!("  Started constructing node as slave...");
+                    success = true;
+                    break;
+                }
+                Err(e) => {
+                    if attempt < retry_count - 1 {
+                        let wait_time = attempt + 1;
+                        println!("  Failed: {}. Waiting {} seconds before retry...", e, wait_time);
+                        thread::sleep(Duration::from_secs(wait_time as u64));
+                    } else {
+                        return Err(ClientError::InvalidResponse(format!("Failed to set role after {} attempts: {}", retry_count, e)));
+                    }
+                }
+            }
+        }
+        
+        if success {
+            // Step 5: Wait for slave construction to complete
+            println!("  Waiting for slave construction to complete...");
+            wait_for_slave_construction(&mut index_client, &host, port, Duration::from_secs(30))?;
+            
+            // Step 6: Restore the original balance if it was non-zero
+            if current_balance > 0 {
+                if !force {
+                    print!("  Restore balance to {} for {}? (y/n): ", current_balance, node_spec);
+                    io::stdout().flush().unwrap();
+                    let mut input = String::new();
+                    io::stdin().read_line(&mut input).unwrap();
+                    if !input.trim().eq_ignore_ascii_case("y") {
+                        println!("  Skipping balance restoration");
+                        continue;
+                    }
+                }
+                println!("  Restoring balance to {}", current_balance);
+                index_client.set_node_role(host.clone(), port, NodeRole::Slave, current_balance, Some(partition))?;
+            }
+            
+            println!("  Reconstruction of {} completed successfully", node_spec);
+        }
     }
     
-    println!("Operation completed successfully");
+    println!("\nReconstruction completed successfully");
     Ok(())
 }
 
@@ -1071,4 +1153,56 @@ fn parse_host_port(node: &str) -> Result<(String, u16), ClientError> {
         .map_err(|_| ClientError::InvalidResponse(format!("Invalid port: {}", parts[1])))?;
     
     Ok((host, port))
+}
+
+fn wait_for_active_state(client: &mut FlareClient, host: &str, port: u16, timeout: Duration) -> Result<(), ClientError> {
+    let start_time = std::time::Instant::now();
+    
+    loop {
+        if start_time.elapsed() > timeout {
+            return Err(ClientError::InvalidResponse(format!("Timeout waiting for {}:{} to become active", host, port)));
+        }
+        
+        match client.get_stats() {
+            Ok(cluster_info) => {
+                for node in &cluster_info.nodes {
+                    if node.host == host && node.port == port {
+                        if node.state == "active" {
+                            return Ok(());
+                        }
+                        break;
+                    }
+                }
+            }
+            Err(_) => {}
+        }
+        
+        thread::sleep(Duration::from_secs(1));
+    }
+}
+
+fn wait_for_slave_construction(client: &mut FlareClient, host: &str, port: u16, timeout: Duration) -> Result<(), ClientError> {
+    let start_time = std::time::Instant::now();
+    
+    loop {
+        if start_time.elapsed() > timeout {
+            return Err(ClientError::InvalidResponse(format!("Timeout waiting for slave construction on {}:{}", host, port)));
+        }
+        
+        match client.get_stats() {
+            Ok(cluster_info) => {
+                for node in &cluster_info.nodes {
+                    if node.host == host && node.port == port {
+                        if node.role == "slave" && node.state == "active" {
+                            return Ok(());
+                        }
+                        break;
+                    }
+                }
+            }
+            Err(_) => {}
+        }
+        
+        thread::sleep(Duration::from_secs(1));
+    }
 }

@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flarei
+  labels:
+    app: flarei
+spec:
+  ports:
+  - port: 13300
+    name: index
+  clusterIP: None
+  selector:
+    app: flarei
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flared
+  labels:
+    app: flared
+spec:
+  ports:
+  - port: 13301
+    name: node
+  clusterIP: None
+  selector:
+    app: flared
