@@ -1,0 +1,38 @@
+[package]
+name = "flare-tools"
+version = "1.0.0"
+edition = "2021"
+authors = ["Flare Tools Contributors"]
+description = "Rust implementation of flare-tools for memcached-compatible flare cluster management"
+license = "MIT"
+
+[[bin]]
+name = "flare-admin"
+path = "src/bin/flare-admin.rs"
+
+[[bin]]
+name = "flare-stats"
+path = "src/bin/flare-stats.rs"
+
+[[bin]]
+name = "kubectl-flare"
+path = "src/bin/kubectl-flare.rs"
+
+[dependencies]
+bytes = "1.5"
+thiserror = "1.0"
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"], optional = true }
+
+[dev-dependencies]
+tempfile = "3.8"
+
+[features]
+default = []
+async = ["tokio"]
+
+[lib]
+name = "flare_tools"
+path = "src/lib.rs"

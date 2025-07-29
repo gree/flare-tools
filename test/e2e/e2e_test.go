@@ -512,6 +512,7 @@ func TestFlareAdminDumpRestoreE2E(t *testing.T) {
 	require.NoError(t, err)
 	dumpStr := string(dumpData)
 	
+	t.Logf("Dump output: %s", dumpStr)
 	// Should contain our test keys
 	assert.Contains(t, dumpStr, "testkey1", "Dump should contain testkey1")
 	assert.Contains(t, dumpStr, "testkey2", "Dump should contain testkey2")

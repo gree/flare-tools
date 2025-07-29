@@ -540,7 +540,7 @@ func (c *Client) Set(key string, flags int, exptime int, data []byte) error {
 	if err := c.Connect(); err != nil {
 		return err
 	}
-	defer c.Close()
+	defer c.Close();
 
 	// Send set command
 	cmd := fmt.Sprintf("set %s %d %d %d", key, flags, exptime, len(data))
@@ -563,14 +563,19 @@ func (c *Client) Set(key string, flags int, exptime int, data []byte) error {
 
 	// Read response
 	scanner := bufio.NewScanner(c.conn)
-	if scanner.Scan() {
+	for scanner.Scan() {
 		response := scanner.Text()
-		if response != "STORED" {
+		if response == "STORED" {
+			return nil
+		}
+		if strings.HasPrefix(response, "SERVER_ERROR") || strings.HasPrefix(response, "CLIENT_ERROR") || response == "ERROR" {
 			return fmt.Errorf("unexpected response: %s", response)
 		}
-	} else {
-		return fmt.Errorf("no response from server")
 	}
 
-	return nil
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to read response: %v", err)
+	}
+
+	return fmt.Errorf("no response from server")
 }

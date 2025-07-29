@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strconv"
@@ -649,7 +650,7 @@ func (c *CLI) runDump(args []string, output string, format string, all bool, raw
 
 		// Connect directly to the data node and dump
 		dataClient := flare.NewClient(host, port)
-		
+
 		// Use empty string for partition to dump all
 		dumpData, err := dataClient.Dump("")
 		if err != nil {
@@ -662,10 +663,20 @@ func (c *CLI) runDump(args []string, output string, format string, all bool, raw
 
 	// Write to output file or stdout
 	if output != "" {
-		err := os.WriteFile(output, []byte(strings.Join(allData, "\n")+"\n"), 0o644)
+		file, err := os.Create(output)
 		if err != nil {
-			return fmt.Errorf("failed to write dump to file %s: %v", output, err)
+			return fmt.Errorf("failed to create dump file %s: %v", output, err)
 		}
+		defer file.Close()
+
+		w := bufio.NewWriter(file)
+		for _, line := range allData {
+			_, err := w.WriteString(line + "\n")
+			if err != nil {
+				return fmt.Errorf("failed to write to dump file: %v", err)
+			}
+		}
+		w.Flush()
 		fmt.Printf("Dumped %d entries to %s\n", len(allData), output)
 	} else {
 		for _, line := range allData {
@@ -769,27 +780,6 @@ func (c *CLI) runRestore(args []string, input string, format string, include str
 		return fmt.Errorf("restore command requires --input parameter")
 	}
 
-	// Read the dump file
-	data, err := os.ReadFile(input)
-	if err != nil {
-		return fmt.Errorf("failed to read input file %s: %v", input, err)
-	}
-
-	fmt.Printf("Restoring data to %d nodes from %s...\n", len(args), input)
-
-	if c.config.DryRun {
-		fmt.Println("DRY RUN MODE - no actual restore will be performed")
-		lines := strings.Split(string(data), "\n")
-		count := 0
-		for _, line := range lines {
-			if strings.HasPrefix(line, "VALUE ") {
-				count++
-			}
-		}
-		fmt.Printf("Would restore %d items\n", count)
-		return nil
-	}
-
 	// Parse nodes
 	for _, nodeArg := range args {
 		parts := strings.Split(nodeArg, ":")
@@ -803,71 +793,87 @@ func (c *CLI) runRestore(args []string, input string, format string, include str
 			return fmt.Errorf("invalid port: %s", parts[1])
 		}
 
+		// Open the input file
+		file, err := os.Open(input)
+		if err != nil {
+			return fmt.Errorf("failed to open input file %s: %v", input, err)
+		}
+		defer file.Close()
+
+		fmt.Printf("Restoring data to %s:%d from %s...\n", host, port, input)
+
+		if c.config.DryRun {
+			fmt.Println("DRY RUN MODE - no actual restore will be performed")
+			scanner := bufio.NewScanner(file)
+			count := 0
+			for scanner.Scan() {
+				if strings.HasPrefix(scanner.Text(), "VALUE ") {
+					count++
+				}
+			}
+			fmt.Printf("Would restore %d items\n", count)
+			return nil
+		}
+
 		// Parse and restore data
-		lines := strings.Split(string(data), "\n")
+		scanner := bufio.NewScanner(file)
 		restoredCount := 0
 		errorCount := 0
-		
-		i := 0
-		for i < len(lines) {
-			line := strings.TrimSpace(lines[i])
-			
+
+		for scanner.Scan() {
+			line := scanner.Text()
+
 			// Skip empty lines and END markers
 			if line == "" || line == "END" {
-				i++
 				continue
 			}
-			
+
 			// Handle VALUE lines: "VALUE key flag len"
 			if strings.HasPrefix(line, "VALUE ") {
 				parts := strings.Fields(line)
 				if len(parts) < 4 {
 					errorCount++
-					i++
 					continue
 				}
-				
+
 				key := parts[1]
 				flagsStr := parts[2]
-				length, err := strconv.Atoi(parts[3])
+				_, err := strconv.Atoi(parts[3])
 				if err != nil {
 					errorCount++
-					i++
 					continue
 				}
-				
+
 				// Check filters
 				if include != "" && !strings.Contains(key, include) {
-					i += 2 // Skip value line too
+					scanner.Scan() // Skip value line
 					continue
 				}
 				if prefixInclude != "" && !strings.HasPrefix(key, prefixInclude) {
-					i += 2 // Skip value line too
+					scanner.Scan() // Skip value line
 					continue
 				}
 				if exclude != "" && strings.Contains(key, exclude) {
-					i += 2 // Skip value line too
+					scanner.Scan() // Skip value line
 					continue
 				}
-				
+
 				// Get the data value from next line
-				i++
-				if i >= len(lines) {
+				if !scanner.Scan() {
 					errorCount++
 					break
 				}
-				
-				value := lines[i]
+
+				value := scanner.Text()
 				// Don't trim the value - it might have intentional whitespace
-				
+
 				// Parse flags
 				flags, err := strconv.Atoi(flagsStr)
 				if err != nil {
 					errorCount++
-					i++
 					continue
 				}
-				
+
 				// Connect to the data node and restore
 				dataClient := flare.NewClient(host, port)
 				err = dataClient.Set(key, flags, 0, []byte(value))
@@ -883,9 +889,12 @@ func (c *CLI) runRestore(args []string, input string, format string, include str
 					}
 				}
 			}
-			i++
 		}
-		
+
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("error reading input file: %v", err)
+		}
+
 		fmt.Printf("Restored %d items to %s:%d (%d errors)\n", restoredCount, host, port, errorCount)
 	}
 

@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Flare Index Server
+  flarei:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flarei
+    platform: linux/amd64
+    container_name: flarei
+    ports:
+      - "12120:12120"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flarei && /usr/bin/flarei -f /config/flarei.conf -s"]
+    depends_on: []
+
+  # Flare Data Server 1 (Master)
+  flared1:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flared1
+    ports:
+      - "12121:12121"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flared1 && /usr/bin/flared -f /config/flared1.conf -s"]
+    depends_on:
+      - flarei
+
+  # Flare Data Server 2 (Master)
+  flared2:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flared2
+    ports:
+      - "12122:12122"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flared2 && /usr/bin/flared -f /config/flared2.conf -s"]
+    depends_on:
+      - flarei
+
+  # Flare Data Server 3 (Slave)
+  flared3:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flared3
+    ports:
+      - "12123:12123"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flared3 && /usr/bin/flared -f /config/flared3.conf -s"]
+    depends_on:
+      - flarei
+
+  # Flare Data Server 4 (Slave)
+  flared4:
+    build:
+      context: ./flare-cluster-k8s
+      dockerfile: dockerfiles/flared
+    platform: linux/amd64
+    container_name: flared4
+    ports:
+      - "12124:12124"
+    volumes:
+      - ./cluster-config:/config
+    command: ["bash", "-c", "mkdir -p /tmp/flared4 && /usr/bin/flared -f /config/flared4.conf -s"]
+    depends_on:
+      - flarei
+

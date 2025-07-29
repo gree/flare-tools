@@ -12,10 +12,25 @@
 
 **response**
 
-    VALUE [key name] [flag] [expiration time]
+    VALUE [key name] [flag] [size of value]
     (value)
+    END
 
 Get value by key name.
+
+#### gets
+
+**syntax**
+
+    gets [key name]
+
+**response**
+
+    VALUE [key name] [flag] [size of value] [version]
+    (value)
+    END
+
+Get value with CAS version by key name.
 
 #### set
 
@@ -181,7 +196,7 @@ Clear all data from terget node.
 
 **syntax**
 
-    dump ([wait]) ([partition]) ([partition size])
+    dump ([wait]) ([partition]) ([partition size]) ([bwlimit])
 
 **response**
 
@@ -190,9 +205,10 @@ Clear all data from terget node.
     ...
     END
 
-- wait: wait msec for each key retrieval (msec) (default = 0)
+- wait: wait microseconds for each key retrieval (default = 0)
 - partition: target partition to dump
-- partition size: partition size to calculate parition
+- partition size: partition size to calculate partition
+- bwlimit: bandwidth limit in bytes/sec (default = no limit)
 
 Dump all the data in the target node. If partition arguments are specified, only data in target partition are dumped.
 
