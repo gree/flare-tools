@@ -1,16 +1,13 @@
-# flare-tools (Go Implementation)
+# flare-tools (Rust Implementation)
 
-[![CI](https://github.com/gree/flare-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/gree/flare-tools/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gree/flare-tools)](https://goreportcard.com/report/github.com/gree/flare-tools)
-[![Coverage](https://codecov.io/gh/gree/flare-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/gree/flare-tools)
-
-A Go implementation of flare-tools, a collection of command line tools to maintain a flare cluster.
+A Rust implementation of flare-tools, a collection of command line tools to maintain a flare cluster.
 
 ## Overview
 
-This is a complete rewrite of the original Ruby-based flare-tools in Go, providing:
+This is a complete rewrite of the original Ruby-based flare-tools in Rust, providing:
 
 - **Performance**: Faster execution and lower memory usage
+- **Safety**: Memory safety and thread safety guaranteed by Rust
 - **Deployment**: Single binary deployment with no runtime dependencies
 - **Maintainability**: Strong typing and comprehensive test coverage
 - **Compatibility**: Full compatibility with the original Ruby implementation
@@ -47,10 +44,19 @@ flare-admin [subcommand] [options] [arguments]
 - `dump` - Dump data from nodes
 - `dumpkey` - Dump keys from nodes
 - `restore` - Restore data to nodes
-- `activate` - Activate nodes
 - `index` - Generate index XML
 - `threads` - Show thread status
 - `verify` - Verify cluster integrity
+
+### flare-cluster-repl
+
+A command line tool for configuring cluster replication settings:
+
+```bash
+flare-cluster-repl [environment] [config-file]
+```
+
+Supports both Docker Compose and AWS environments for updating flared.conf files with replication settings.
 
 ## Installation
 
@@ -66,15 +72,14 @@ git clone https://github.com/gree/flare-tools.git
 cd flare-tools
 
 # Build and install
-make build
-make install
+cargo build --release
+cargo install --path .
 ```
 
-### Using Go
+### Using Cargo
 
 ```bash
-go install github.com/gree/flare-tools/cmd/flare-admin@latest
-go install github.com/gree/flare-tools/cmd/flare-stats@latest
+cargo install flare-tools
 ```
 
 ### Docker
@@ -151,90 +156,139 @@ flare-admin restore --index-server=flare1.example.com --input=backup.data node1:
 
 ### Prerequisites
 
-- Go 1.21 or later
-- Make
-- Docker (optional)
+- Rust 1.75 or later
+- Docker (for integration/e2e tests)
+- Docker Compose
 
 ### Building
 
 ```bash
 # Build binaries
-make build
-
-# Build for all platforms
-make build-all
+cargo build --release
 
 # Run tests
-make test
+cargo test
 
-# Run all tests (unit + integration + e2e)
-make test-all
+# Run all tests with integration tests
+cargo test --all-features
 
 # Generate coverage report
-make coverage
+cargo tarpaulin
 ```
 
 ### Testing
 
+#### Unit Tests
+
 ```bash
-# Run unit tests
-make test
-
-# Run integration tests
-make integration-test
-
-# Run e2e tests (mock server)
-go test -v ./test/e2e
-
-# Run comprehensive e2e tests on Kubernetes cluster
-./scripts/k8s-e2e-test.sh
-
-# Run all tests
-make test-all
+cargo test
 ```
 
-For detailed testing instructions, see [E2E Testing Guide](docs/e2e-testing.md).
+#### Integration Tests
+
+```bash
+# Run flare-admin integration tests
+cargo test flare_admin_integration_test -- --nocapture
+
+# Run flare-cluster-repl integration tests
+cargo test flare_cluster_repl_integration_test -- --nocapture
+```
+
+#### E2E Testing Setup
+
+Before running e2e tests, you need to set up your environment:
+
+1. **Update /etc/hosts** - Add these entries to `/etc/hosts`:
+   ```
+   # Single cluster setup
+   127.0.0.1	flarei
+   127.0.0.1	flared1
+   127.0.0.1	flared2
+   127.0.0.1	flared3
+   127.0.0.1	flared4
+
+   # Multi-cluster setup (for flare-cluster-repl testing)
+   127.0.0.1	flarei-prod
+   127.0.0.1	flare-prod-master-1
+   127.0.0.1	flare-prod-master-2
+   127.0.0.1	flare-prod-slave-1
+   127.0.0.1	flare-prod-slave-2
+   127.0.0.1	flarei-staging
+   127.0.0.1	flare-staging-master-1
+   127.0.0.1	flare-staging-slave-1
+   ```
+
+2. **Start test clusters**:
+   ```bash
+   # For single cluster tests
+   docker-compose up -d
+
+   # For multi-cluster tests
+   docker-compose -f docker-compose-multi-cluster.yml up -d
+   ```
+
+3. **Run e2e tests**:
+   ```bash
+   # Test flare-admin with single cluster
+   cargo test flare_admin_integration_test -- --nocapture
+
+   # Test flare-cluster-repl with multi-cluster
+   cargo test flare_cluster_repl_integration_test -- --nocapture
+   ```
+
+4. **Clean up**:
+   ```bash
+   # Stop single cluster
+   docker-compose down
+
+   # Stop multi-cluster
+   docker-compose -f docker-compose-multi-cluster.yml down
+   ```
+
+#### Test Environment Details
+
+- **Unit tests**: Mock server implementation, no external dependencies
+- **Integration tests**: Real flare cluster using Docker containers with DNS names
+- **E2E tests**: Full cluster topology with master/slave configuration and replication testing
 
 ### Code Quality
 
 ```bash
 # Format code
-make fmt
+cargo fmt
 
-# Vet code
-make vet
+# Lint code
+cargo clippy
 
-# Lint code (requires golangci-lint)
-make lint
-
-# Development setup
-make dev-setup
+# Check code
+cargo check
 ```
 
 ## Project Structure
 
 ```
 .
-├── cmd/                    # Command line applications
-│   ├── flare-admin/       # flare-admin command
-│   └── flare-stats/       # flare-stats command
-├── internal/              # Internal packages
-│   ├── admin/            # Admin CLI implementation
-│   ├── config/           # Configuration handling
-│   ├── flare/            # Flare client implementation
-│   └── stats/            # Stats CLI implementation
-├── test/                  # Test files
-│   ├── e2e/              # End-to-end tests
-│   └── integration/      # Integration tests
-├── .github/workflows/     # GitHub Actions CI/CD
-├── Dockerfile            # Docker configuration
-├── Makefile.go           # Go build configuration
-└── go.mod               # Go module definition
+├── src/
+│   ├── bin/              # Command line applications
+│   │   ├── flare-admin.rs      # flare-admin command
+│   │   ├── flare-stats.rs      # flare-stats command  
+│   │   └── flare-cluster-repl.rs # flare-cluster-repl command
+│   ├── lib.rs           # Library root
+│   └── modules/         # Internal modules
+├── tests/               # Integration tests
+│   ├── flare_admin_integration_test.rs
+│   └── flare_cluster_repl_integration_test.rs
+├── examples/            # Configuration examples
+├── docker-compose.yml   # Single cluster setup
+├── docker-compose-multi-cluster.yml # Multi-cluster setup
+├── Dockerfile           # Docker configuration
+├── Cargo.toml          # Rust project configuration
+└── Cargo.lock          # Dependency lockfile
 ```
 
 ## Migration from Ruby Version
 
-This Go implementation maintains full compatibility with the original Ruby version:
+This Rust implementation maintains full compatibility with the original Ruby version:
 
 - All command line options are preserved
 - Output formats are identical
@@ -244,11 +298,12 @@ This Go implementation maintains full compatibility with the original Ruby versi
 ### Key Improvements
 
 1. **Performance**: Significantly faster startup and execution
-2. **Memory Usage**: Lower memory footprint
-3. **Deployment**: Single binary with no runtime dependencies
-4. **Error Handling**: More robust error handling and reporting
-5. **Testing**: Comprehensive test coverage including e2e tests
-6. **Maintenance**: Easier to maintain and extend
+2. **Safety**: Memory safety and thread safety guaranteed by Rust
+3. **Memory Usage**: Lower memory footprint
+4. **Deployment**: Single binary with no runtime dependencies
+5. **Error Handling**: More robust error handling and reporting
+6. **Testing**: Comprehensive test coverage including e2e tests
+7. **Maintenance**: Easier to maintain and extend
 
 ## Contributing
 
@@ -265,7 +320,7 @@ MIT-style license - see LICENSE file for details.
 
 ## Authors
 
-- Original Ruby implementation: Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>
-- Go implementation: Converted from Ruby with full compatibility
+- Original Ruby implementation: Kiyoshi Ikehara <kiyoshi.ikehara@gree.net>  
+- Rust implementation: Converted from Ruby with full compatibility
 
 Copyright (C) GREE, Inc. 2011-2024.

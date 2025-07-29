@@ -35,6 +35,7 @@ WORKDIR /home/flare
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/flare-admin /usr/local/bin/
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/flare-stats /usr/local/bin/
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/kubectl-flare /usr/local/bin/
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/flare-cluster-repl /usr/local/bin/
 
 # Change ownership
 RUN chown -R flare:flare /home/flare
