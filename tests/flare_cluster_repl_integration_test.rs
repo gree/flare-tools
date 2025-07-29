@@ -3,6 +3,143 @@ use std::thread;
 use std::time::Duration;
 use std::fs;
 
+/// Helper function to launch multi-cluster docker compose
+fn launch_multi_cluster() -> Result<(), std::io::Error> {
+    println!("🚀 Launching multi-cluster Docker Compose setup...");
+    
+    let output = Command::new("docker")
+        .args(&["compose", "-f", "docker-compose-multi-cluster.yml", "up", "-d"])
+        .stdin(std::process::Stdio::null())
+        .output()?;
+    
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        eprintln!("Failed to launch multi-cluster: {}", stderr);
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "Docker compose up failed"));
+    }
+    
+    println!("✓ Multi-cluster setup launched");
+    
+    // Wait for containers to be ready
+    println!("⏳ Waiting for containers to be ready...");
+    thread::sleep(Duration::from_secs(10));
+    
+    Ok(())
+}
+
+/// Helper function to shut down multi-cluster docker compose
+fn shutdown_multi_cluster() -> Result<(), std::io::Error> {
+    println!("🛑 Shutting down multi-cluster Docker Compose setup...");
+    
+    let output = Command::new("docker")
+        .args(&["compose", "-f", "docker-compose-multi-cluster.yml", "down"])
+        .stdin(std::process::Stdio::null())
+        .output()?;
+    
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        eprintln!("Failed to shutdown multi-cluster: {}", stderr);
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "Docker compose down failed"));
+    }
+    
+    println!("✓ Multi-cluster setup shut down");
+    Ok(())
+}
+
+/// Helper function to setup cluster topology without managing Docker lifecycle
+fn setup_cluster_topology() {
+    println!("Setting up cluster topology...");
+    
+    // Setup production cluster topology
+    println!("Setting up production cluster topology...");
+    
+    // Create master nodes
+    let (success, stdout, stderr) = run_flare_admin(&[
+        "--force",
+        "-i", "flarei-prod:12120",
+        "master",
+        "flare-prod-master-1:12121:200:0",
+        "flare-prod-master-2:12121:200:1"
+    ]);
+    
+    if !success {
+        println!("Master setup failed - stdout: {}, stderr: {}", stdout, stderr);
+    }
+    assert!(success, "Should be able to create master nodes");
+    println!("✓ Production master nodes created");
+    
+    // Create slave nodes  
+    let (success, stdout, stderr) = run_flare_admin(&[
+        "--force",
+        "-i", "flarei-prod:12120",
+        "slave",
+        "flare-prod-slave-1:12121:200:0",
+        "flare-prod-slave-2:12121:200:1"
+    ]);
+    
+    if !success {
+        println!("Slave setup failed - stdout: {}, stderr: {}", stdout, stderr);
+    }
+    assert!(success, "Should be able to create slave nodes");
+    println!("✓ Production slave nodes created");
+    
+    // Setup staging cluster topology
+    println!("Setting up staging cluster topology...");
+    
+    // Create master node
+    let (success, stdout, stderr) = run_flare_admin(&[
+        "--force",
+        "-i", "flarei-staging:12130",
+        "master",
+        "flare-staging-master-1:12121:150:0"
+    ]);
+    
+    if !success {
+        println!("Staging master setup failed - stdout: {}, stderr: {}", stdout, stderr); 
+    }
+    assert!(success, "Should be able to create staging master node");
+    println!("✓ Staging master node created");
+    
+    // Create slave node
+    let (success, stdout, stderr) = run_flare_admin(&[
+        "--force",
+        "-i", "flarei-staging:12130",
+        "slave",
+        "flare-staging-slave-1:12121:150:0" 
+    ]);
+    
+    if !success {
+        println!("Staging slave setup failed - stdout: {}, stderr: {}", stdout, stderr);
+    }
+    assert!(success, "Should be able to create staging slave node");
+    println!("✓ Staging slave node created");
+    
+    println!("✓ Cluster topology setup completed");
+}
+
+/// Helper function to run flare-admin command and return output
+fn run_flare_admin(args: &[&str]) -> (bool, String, String) {
+    println!("🔧 Running command: flare-admin {}", args.join(" "));
+    
+    let output = Command::new("./target/debug/flare-admin")
+        .args(args)
+        .stdin(std::process::Stdio::null())
+        .output()
+        .expect("Failed to execute flare-admin");
+    
+    let success = output.status.success();
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    
+    if success {
+        println!("✓ Command completed successfully");
+    } else {
+        println!("❌ Command failed: {}", stderr);
+    }
+    
+    (success, stdout, stderr)
+}
+
 /// Helper function to run flare-cluster-repl command and return output
 fn run_flare_cluster_repl(args: &[&str]) -> (bool, String, String) {
     run_flare_cluster_repl_with_timeout(args, 10) // 10 second timeout
@@ -454,6 +591,83 @@ fn test_config_update_functionality() {
     println!("✓ Configuration update functionality works");
 }
 
+#[test]
+fn test_cluster_topology_setup() {
+    println!("Testing cluster topology setup with flare-admin...");
+    
+    // Launch multi-cluster setup
+    launch_multi_cluster().expect("Failed to launch multi-cluster");
+    
+    // Setup cluster topology
+    setup_cluster_topology();
+    
+    // Verify the topology with stats
+    println!("Verifying cluster topology...");
+    
+    let (success, stdout, _) = run_flare_admin(&[
+        "-i", "flarei-prod:12120",
+        "stats"
+    ]);
+    
+    assert!(success, "Should be able to get production cluster stats");
+    assert!(stdout.contains("master"), "Should show master nodes");
+    assert!(stdout.contains("slave"), "Should show slave nodes");
+    println!("✓ Production cluster topology verified");
+    
+    let (success, stdout, _) = run_flare_admin(&[
+        "-i", "flarei-staging:12130",
+        "stats"
+    ]);
+    
+    assert!(success, "Should be able to get staging cluster stats");
+    assert!(stdout.contains("master"), "Should show master node");
+    assert!(stdout.contains("slave"), "Should show slave node");
+    println!("✓ Staging cluster topology verified");
+    
+    println!("✓ Cluster topology setup completed successfully");
+    
+    // Shutdown multi-cluster setup
+    shutdown_multi_cluster().expect("Failed to shutdown multi-cluster");
+}
+
+#[test]
+fn test_cluster_replication_with_topology() {
+    println!("Testing flare-cluster-repl with established topology...");
+    
+    // Launch multi-cluster setup
+    launch_multi_cluster().expect("Failed to launch multi-cluster");
+    
+    // Setup cluster topology first
+    setup_cluster_topology();
+    
+    // Now test flare-cluster-repl
+    let (success, stdout, stderr) = run_flare_cluster_repl(&[
+        "-c", "flare-cluster-production",
+        "-e", "docker-compose", 
+        "--dry-run",
+        "setup",
+        "-f", "examples/cluster-prod-config.json"
+    ]);
+    
+    if !success {
+        println!("Replication setup failed - stdout: {}, stderr: {}", stdout, stderr);
+    }
+    
+    assert!(success, "Should be able to configure replication on established cluster");
+    
+    // Verify replication settings would be applied
+    assert!(stdout.contains("replication-enabled true"), "Should enable replication");
+    assert!(stdout.contains("replication-role master"), "Should set master role");
+    assert!(stdout.contains("replication-role slave"), "Should set slave role");
+    assert!(stdout.contains("server-balance"), "Should set server balance");
+    assert!(stdout.contains("server-partition"), "Should set server partition");
+    
+    println!("✓ Cluster replication configuration works with established topology");
+    
+    // Shutdown multi-cluster setup
+    shutdown_multi_cluster().expect("Failed to shutdown multi-cluster");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -499,8 +713,14 @@ mod tests {
         
         // Configuration functionality tests
         test_config_update_functionality();
+        println!();
         
-        println!("\n=== Flare-Cluster-Repl Test Suite Completed ===");
+        // Note: Cluster topology and replication tests are run separately
+        // as they require Docker Compose and manage their own lifecycle
+        println!("💡 To run cluster topology tests: cargo test test_cluster_topology_setup -- --nocapture");
+        println!("💡 To run cluster replication tests: cargo test test_cluster_replication_with_topology -- --nocapture");
+        
+        println!("=== Flare-Cluster-Repl Test Suite Completed ===");
         
         // Clean up test files
         let _ = fs::remove_file("examples/test-cluster-prod.json");

@@ -2,6 +2,64 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
+/// Helper function to launch single cluster docker compose
+fn launch_single_cluster() -> Result<(), std::io::Error> {
+    println!("🚀 Launching single cluster Docker Compose setup...");
+    
+    // First, clean up any existing containers aggressively
+    let _ = Command::new("docker")
+        .args(&["compose", "down", "--remove-orphans"])
+        .stdin(std::process::Stdio::null())
+        .output();
+    
+    // Also remove any containers with conflicting names
+    let _ = Command::new("docker")
+        .args(&["rm", "-f", "flarei", "flared1", "flared2", "flared3", "flared4"])
+        .stdin(std::process::Stdio::null())
+        .output();
+    
+    // Give Docker a moment to clean up
+    thread::sleep(Duration::from_secs(2));
+    
+    let output = Command::new("docker")
+        .args(&["compose", "up", "-d"])
+        .stdin(std::process::Stdio::null())
+        .output()?;
+    
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        eprintln!("Failed to launch single cluster: {}", stderr);
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "Docker compose up failed"));
+    }
+    
+    println!("✓ Single cluster setup launched");
+    
+    // Wait for containers to be ready
+    println!("⏳ Waiting for containers to be ready...");
+    thread::sleep(Duration::from_secs(10));
+    
+    Ok(())
+}
+
+/// Helper function to shut down single cluster docker compose
+fn shutdown_single_cluster() -> Result<(), std::io::Error> {
+    println!("🛑 Shutting down single cluster Docker Compose setup...");
+    
+    let output = Command::new("docker")
+        .args(&["compose", "down"])
+        .stdin(std::process::Stdio::null())
+        .output()?;
+    
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        eprintln!("Failed to shutdown single cluster: {}", stderr);
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "Docker compose down failed"));
+    }
+    
+    println!("✓ Single cluster setup shut down");
+    Ok(())
+}
+
 /// Helper function to run flare-admin command and return output
 fn run_flare_admin(args: &[&str]) -> (bool, String, String) {
     run_flare_admin_with_timeout(args, 10) // 10 second timeout
@@ -118,6 +176,9 @@ fn test_build_binaries() {
 fn test_ping_commands() {
     println!("Testing ping commands...");
     
+    // Launch single cluster setup
+    launch_single_cluster().expect("Failed to launch single cluster");
+    
     // Test ping to index server (default)
     let (success, stdout, _) = run_flare_admin(&["ping"]);
     assert!(success, "Ping to index server failed");
@@ -138,11 +199,17 @@ fn test_ping_commands() {
     assert!(!success, "Ping to non-existent server should fail");
     assert!(stderr.contains("Failed to resolve"), "Expected resolution error");
     println!("✓ Ping to non-existent server properly fails");
+    
+    // Shutdown single cluster setup
+    shutdown_single_cluster().expect("Failed to shutdown single cluster");
 }
 
 #[test]
 fn test_stats_and_list_commands() {
     println!("Testing stats and list commands...");
+    
+    // Launch single cluster setup
+    launch_single_cluster().expect("Failed to launch single cluster");
     
     // Test stats command
     let (success, stdout, _) = run_flare_admin(&["stats"]);
@@ -164,11 +231,17 @@ fn test_stats_and_list_commands() {
     assert!(success, "flare-stats command failed");
     assert!(stdout.contains("node"), "Expected node column in flare-stats");
     println!("✓ flare-stats binary works");
+    
+    // Shutdown single cluster setup
+    shutdown_single_cluster().expect("Failed to shutdown single cluster");
 }
 
 #[test]
 fn test_cluster_management_commands() {
     println!("Testing cluster management commands...");
+    
+    // Launch single cluster setup
+    launch_single_cluster().expect("Failed to launch single cluster");
     
     // Reset cluster to proxy state first
     println!("📋 Step 1: Resetting cluster to proxy state...");
@@ -264,6 +337,9 @@ fn test_data_operations() {
     } else {
         println!("⚠ Index command may have issues");
     }
+    
+    // Shutdown single cluster setup
+    shutdown_single_cluster().expect("Failed to shutdown single cluster");
 }
 
 #[test]
@@ -320,6 +396,9 @@ fn test_kubectl_flare_proxy() {
 fn test_end_to_end_workflow() {
     println!("Testing end-to-end cluster workflow...");
     
+    // Launch single cluster setup
+    launch_single_cluster().expect("Failed to launch single cluster");
+    
     // Step 1: Reset cluster state
     println!("1. Resetting cluster state...");
     let _ = run_flare_admin(&["--force", "master", "flared1:12121:0:0"]);
@@ -364,6 +443,9 @@ fn test_end_to_end_workflow() {
     setup_test_data();
     
     println!("✓ End-to-end workflow completed");
+    
+    // Shutdown single cluster setup
+    shutdown_single_cluster().expect("Failed to shutdown single cluster");
 }
 
 #[cfg(test)]
@@ -378,32 +460,24 @@ mod tests {
         test_build_binaries();
         println!();
         
-        // Basic connectivity tests
-        test_ping_commands();
-        println!();
-        
-        // Status and monitoring tests  
-        test_stats_and_list_commands();
-        println!();
-        
-        // Cluster management tests
-        test_cluster_management_commands();
-        println!();
-        
-        // Data operation tests
+        // Data operation tests (no Docker required)
         test_data_operations();
         println!();
         
-        // Error handling tests
+        // Error handling tests (no Docker required)
         test_error_handling();
         println!();
         
-        // Proxy functionality tests
+        // Proxy functionality tests (no Docker required)
         test_kubectl_flare_proxy();
         println!();
         
-        // End-to-end workflow tests
-        test_end_to_end_workflow();
+        // Note: Docker-dependent tests run separately to avoid conflicts
+        println!("💡 To run Docker-dependent tests individually:");
+        println!("   cargo test test_ping_commands -- --nocapture");
+        println!("   cargo test test_stats_and_list_commands -- --nocapture");
+        println!("   cargo test test_cluster_management_commands -- --nocapture");
+        println!("   cargo test test_end_to_end_workflow -- --nocapture");
         
         println!("\n=== Test Suite Completed ===");
     }

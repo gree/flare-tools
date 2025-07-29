@@ -147,33 +147,43 @@ fn main() {
                 .action(clap::ArgAction::Append)))
         .get_matches();
 
-    let index_server = matches.get_one::<String>("index-server").unwrap();
-    let index_port = matches.get_one::<String>("index-port").unwrap()
-        .parse::<u16>()
-        .unwrap_or_else(|_| {
-            eprintln!("Invalid index port");
+    let index_server_arg = matches.get_one::<String>("index-server").unwrap();
+    let index_port_arg = matches.get_one::<String>("index-port").unwrap();
+    
+    // Parse index server - if it contains a port, use that instead of the port argument
+    let (index_server, index_port) = if index_server_arg.contains(':') {
+        parse_host_port(index_server_arg).unwrap_or_else(|e| {
+            eprintln!("Invalid index server format: {}", e);
             process::exit(1);
-        });
+        })
+    } else {
+        let port = index_port_arg.parse::<u16>()
+            .unwrap_or_else(|_| {
+                eprintln!("Invalid index port");
+                process::exit(1);
+            });
+        (index_server_arg.clone(), port)
+    };
     let force = matches.get_flag("force");
     let dry_run = matches.get_flag("dry-run");
 
     let result = match matches.subcommand() {
-        Some(("ping", sub_m)) => run_ping(index_server, index_port, sub_m),
-        Some(("stats", sub_m)) => run_stats(index_server, index_port, sub_m),
-        Some(("list", sub_m)) => run_list(index_server, index_port, sub_m),
-        Some(("master", sub_m)) => run_master(index_server, index_port, sub_m, force, dry_run),
-        Some(("slave", sub_m)) => run_slave(index_server, index_port, sub_m, force, dry_run),
-        Some(("balance", sub_m)) => run_balance(index_server, index_port, sub_m, force, dry_run),
-        Some(("down", sub_m)) => run_down(index_server, index_port, sub_m, force, dry_run),
-        Some(("remove", sub_m)) => run_remove(index_server, index_port, sub_m, force, dry_run),
-        Some(("dump", sub_m)) => run_dump(index_server, index_port, sub_m, dry_run),
-        Some(("dumpkey", sub_m)) => run_dumpkey(index_server, index_port, sub_m, dry_run),
-        Some(("restore", sub_m)) => run_restore(index_server, index_port, sub_m, dry_run),
-        Some(("reconstruct", sub_m)) => run_reconstruct(index_server, index_port, sub_m, force, dry_run),
-        Some(("verify", sub_m)) => run_verify(index_server, index_port, sub_m),
-        Some(("index", sub_m)) => run_index(index_server, index_port, sub_m),
-        Some(("threads", sub_m)) => run_threads(index_server, index_port, sub_m),
-        Some(("activate", sub_m)) => run_activate(index_server, index_port, sub_m, force, dry_run),
+        Some(("ping", sub_m)) => run_ping(&index_server, index_port, sub_m),
+        Some(("stats", sub_m)) => run_stats(&index_server, index_port, sub_m),
+        Some(("list", sub_m)) => run_list(&index_server, index_port, sub_m),
+        Some(("master", sub_m)) => run_master(&index_server, index_port, sub_m, force, dry_run),
+        Some(("slave", sub_m)) => run_slave(&index_server, index_port, sub_m, force, dry_run),
+        Some(("balance", sub_m)) => run_balance(&index_server, index_port, sub_m, force, dry_run),
+        Some(("down", sub_m)) => run_down(&index_server, index_port, sub_m, force, dry_run),
+        Some(("remove", sub_m)) => run_remove(&index_server, index_port, sub_m, force, dry_run),
+        Some(("dump", sub_m)) => run_dump(&index_server, index_port, sub_m, dry_run),
+        Some(("dumpkey", sub_m)) => run_dumpkey(&index_server, index_port, sub_m, dry_run),
+        Some(("restore", sub_m)) => run_restore(&index_server, index_port, sub_m, dry_run),
+        Some(("reconstruct", sub_m)) => run_reconstruct(&index_server, index_port, sub_m, force, dry_run),
+        Some(("verify", sub_m)) => run_verify(&index_server, index_port, sub_m),
+        Some(("index", sub_m)) => run_index(&index_server, index_port, sub_m),
+        Some(("threads", sub_m)) => run_threads(&index_server, index_port, sub_m),
+        Some(("activate", sub_m)) => run_activate(&index_server, index_port, sub_m, force, dry_run),
         _ => {
             eprintln!("No subcommand specified. Use --help for usage information.");
             process::exit(1);

@@ -47,13 +47,23 @@ fn main() {
             .action(clap::ArgAction::Append))
         .get_matches();
 
-    let index_server = matches.get_one::<String>("index-server").unwrap();
-    let index_port = matches.get_one::<String>("index-port").unwrap()
-        .parse::<u16>()
-        .unwrap_or_else(|_| {
-            eprintln!("Invalid index port");
+    let index_server_arg = matches.get_one::<String>("index-server").unwrap();
+    let index_port_arg = matches.get_one::<String>("index-port").unwrap();
+    
+    // Parse index server - if it contains a port, use that instead of the port argument
+    let (index_server, index_port) = if index_server_arg.contains(':') {
+        parse_host_port(index_server_arg).unwrap_or_else(|e| {
+            eprintln!("Invalid index server format: {}", e);
             process::exit(1);
-        });
+        })
+    } else {
+        let port = index_port_arg.parse::<u16>()
+            .unwrap_or_else(|_| {
+                eprintln!("Invalid index port");
+                process::exit(1);
+            });
+        (index_server_arg.clone(), port)
+    };
     let show_qps = matches.get_flag("qps");
     let wait = matches.get_one::<String>("wait").unwrap()
         .parse::<u64>()
@@ -69,7 +79,7 @@ fn main() {
         });
     let delimiter = matches.get_one::<String>("delimiter").unwrap();
 
-    let result = run_stats(index_server, index_port, show_qps, wait, count, delimiter);
+    let result = run_stats(&index_server, index_port, show_qps, wait, count, delimiter);
 
     if let Err(e) = result {
         eprintln!("Error: {}", e);
@@ -129,4 +139,17 @@ fn run_stats(index_server: &str, index_port: u16, show_qps: bool, wait: u64, cou
     }
     
     Ok(())
+}
+
+fn parse_host_port(node: &str) -> Result<(String, u16), ClientError> {
+    let parts: Vec<&str> = node.split(':').collect();
+    if parts.len() != 2 {
+        return Err(ClientError::InvalidResponse(format!("Invalid host:port format: {}", node)));
+    }
+    
+    let host = parts[0].to_string();
+    let port = parts[1].parse::<u16>()
+        .map_err(|_| ClientError::InvalidResponse(format!("Invalid port: {}", parts[1])))?;
+    
+    Ok((host, port))
 }

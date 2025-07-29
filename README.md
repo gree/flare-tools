@@ -178,6 +178,8 @@ cargo tarpaulin
 
 ### Testing
 
+**Important**: Tests run with single thread by default (configured in `.cargo/config.toml`) to prevent Docker container conflicts when running integration tests.
+
 #### Unit Tests
 
 ```bash
