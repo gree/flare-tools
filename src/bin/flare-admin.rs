@@ -1,4 +1,5 @@
-use clap::{Arg, Command, ArgMatches};
+use clap::{Arg, Command, ArgMatches, ValueHint};
+use clap_complete::{generate, Shell};
 use std::process;
 use std::io::{self, Write};
 use std::thread;
@@ -7,145 +8,7 @@ use std::time::Duration;
 use flare_tools::{FlareClient, ClientError, NodeRole, NodeState, MemcachedResponse};
 
 fn main() {
-    let matches = Command::new("flare-admin")
-        .version("1.0.0")
-        .about("Flare cluster administration tool")
-        .arg(Arg::new("index-server")
-            .long("index-server")
-            .short('i')
-            .value_name("HOST")
-            .help("Index server hostname")
-            .default_value("127.0.0.1"))
-        .arg(Arg::new("index-port")
-            .long("index-port")
-            .short('p')
-            .value_name("PORT")
-            .help("Index server port")
-            .default_value("12120"))
-        .arg(Arg::new("force")
-            .long("force")
-            .short('f')
-            .help("Force operation without confirmation")
-            .action(clap::ArgAction::SetTrue))
-        .arg(Arg::new("dry-run")
-            .long("dry-run")
-            .help("Show what would be done without actually doing it")
-            .action(clap::ArgAction::SetTrue))
-        .subcommand(Command::new("ping")
-            .about("Ping flare nodes")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .action(clap::ArgAction::Append)))
-        .subcommand(Command::new("stats")
-            .about("Show statistics of flare cluster")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .action(clap::ArgAction::Append)))
-        .subcommand(Command::new("list")
-            .about("List nodes in flare cluster"))
-        .subcommand(Command::new("master")
-            .about("Set nodes as master")
-            .arg(Arg::new("nodes")
-                .help("Node specs (host:port:balance:partition)")
-                .required(true)
-                .action(clap::ArgAction::Append))
-            .arg(Arg::new("activate")
-                .long("activate")
-                .help("Change node's state from ready to active after setting as master")
-                .action(clap::ArgAction::SetTrue))
-            .arg(Arg::new("without-clean")
-                .long("without-clean")
-                .help("Don't clear datastore before construction (skip flush_all)")
-                .action(clap::ArgAction::SetTrue)))
-        .subcommand(Command::new("slave")
-            .about("Set nodes as slave")
-            .arg(Arg::new("nodes")
-                .help("Node specs (host:port:balance:partition)")
-                .required(true)
-                .action(clap::ArgAction::Append)))
-        .subcommand(Command::new("balance")
-            .about("Set balance for nodes")
-            .arg(Arg::new("nodes")
-                .help("Node specs (host:port:balance)")
-                .required(true)
-                .action(clap::ArgAction::Append)))
-        .subcommand(Command::new("down")
-            .about("Set nodes down")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .required(true)
-                .action(clap::ArgAction::Append)))
-        .subcommand(Command::new("remove")
-            .about("Remove nodes from cluster")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .required(true)
-                .action(clap::ArgAction::Append)))
-        .subcommand(Command::new("dump")
-            .about("Dump data from nodes")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .action(clap::ArgAction::Append))
-            .arg(Arg::new("all")
-                .long("all")
-                .help("Dump from all master nodes")
-                .action(clap::ArgAction::SetTrue))
-            .arg(Arg::new("output")
-                .long("output")
-                .short('o')
-                .value_name("FILE")
-                .help("Output file")))
-        .subcommand(Command::new("dumpkey")
-            .about("Dump keys from nodes")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .action(clap::ArgAction::Append))
-            .arg(Arg::new("all")
-                .long("all")
-                .help("Dump from all master nodes")
-                .action(clap::ArgAction::SetTrue))
-            .arg(Arg::new("output")
-                .long("output")
-                .short('o')
-                .value_name("FILE")
-                .help("Output file")))
-        .subcommand(Command::new("restore")
-            .about("Restore data to nodes")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .required(true)
-                .action(clap::ArgAction::Append))
-            .arg(Arg::new("input")
-                .long("input")
-                .short('i')
-                .value_name("FILE")
-                .help("Input file")
-                .required(true)))
-        .subcommand(Command::new("reconstruct")
-            .about("Reconstruct nodes")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .action(clap::ArgAction::Append))
-            .arg(Arg::new("all")
-                .long("all")
-                .help("Reconstruct all nodes")
-                .action(clap::ArgAction::SetTrue)))
-        .subcommand(Command::new("verify")
-            .about("Verify cluster consistency"))
-        .subcommand(Command::new("index")
-            .about("Generate index XML"))
-        .subcommand(Command::new("threads")
-            .about("Show thread status")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .action(clap::ArgAction::Append)))
-        .subcommand(Command::new("activate")
-            .about("Activate nodes (change state from ready to active)")
-            .arg(Arg::new("nodes")
-                .help("Node addresses (host:port)")
-                .required(true)
-                .action(clap::ArgAction::Append)))
-        .get_matches();
+    let matches = build_cli().get_matches();
 
     let index_server_arg = matches.get_one::<String>("index-server").unwrap();
     let index_port_arg = matches.get_one::<String>("index-port").unwrap();
@@ -184,6 +47,7 @@ fn main() {
         Some(("index", sub_m)) => run_index(&index_server, index_port, sub_m),
         Some(("threads", sub_m)) => run_threads(&index_server, index_port, sub_m),
         Some(("activate", sub_m)) => run_activate(&index_server, index_port, sub_m, force, dry_run),
+        Some(("completion", sub_m)) => run_completion(sub_m),
         _ => {
             eprintln!("No subcommand specified. Use --help for usage information.");
             process::exit(1);
@@ -225,11 +89,35 @@ fn run_ping(index_server: &str, index_port: u16, matches: &ArgMatches) -> Result
     Ok(())
 }
 
-fn run_stats(index_server: &str, index_port: u16, _matches: &ArgMatches) -> Result<(), ClientError> {
+fn run_stats(index_server: &str, index_port: u16, matches: &ArgMatches) -> Result<(), ClientError> {
+    let nodes: Vec<String> = if let Some(node_values) = matches.get_many::<String>("nodes") {
+        node_values.cloned().collect()
+    } else {
+        vec![]
+    };
+    
+    // If specific nodes are provided, show stats for those nodes only
+    if !nodes.is_empty() {
+        for node in nodes {
+            let (host, port) = parse_host_port(&node)?;
+            let mut client = FlareClient::new(host.clone(), port);
+            
+            // For individual nodes, show basic node info
+            match client.ping() {
+                Ok(()) => println!("Node {}:{} is alive", host, port),
+                Err(e) => eprintln!("Failed to ping {}:{}: {}", host, port, e),
+            }
+        }
+        return Ok(());
+    }
+    
+    // Otherwise, show cluster-wide stats using aligned column format
     let mut client = FlareClient::new(index_server.to_string(), index_port);
     let cluster_info = client.get_stats()?;
     
-    println!("{:<30} {:<10} {:<10} {:<10} {:<7}", "node", "partition", "role", "state", "balance");
+    // Print header with aligned columns
+    println!("{:<30} {:<10} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8}",
+        "node", "partition", "role", "state", "balance", "items", "conn", "behind", "hit", "size", "uptime");
     
     for node in cluster_info.nodes {
         let partition = if node.partition >= 0 {
@@ -238,20 +126,18 @@ fn run_stats(index_server: &str, index_port: u16, _matches: &ArgMatches) -> Resu
             "-".to_string()
         };
         
-        println!("{:<30} {:<10} {:<10} {:<10} {:<7}",
-            format!("{}:{}", node.host, node.port),
-            partition,
-            node.role,
-            node.state,
-            node.balance
-        );
+        let node_name = format!("{}:{}", node.host, node.port);
+        
+        println!("{:<30} {:<10} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8.2} {:<8} {:<8}",
+            node_name, partition, node.role, node.state, node.balance, 
+            node.items, node.conn, node.behind, node.hit, node.size, node.uptime);
     }
     
     Ok(())
 }
 
-fn run_list(index_server: &str, index_port: u16, _matches: &ArgMatches) -> Result<(), ClientError> {
-    run_stats(index_server, index_port, _matches)
+fn run_list(index_server: &str, index_port: u16, matches: &ArgMatches) -> Result<(), ClientError> {
+    run_stats(index_server, index_port, matches)
 }
 
 fn run_master(index_server: &str, index_port: u16, matches: &ArgMatches, force: bool, dry_run: bool) -> Result<(), ClientError> {
@@ -1215,4 +1101,200 @@ fn wait_for_slave_construction(client: &mut FlareClient, host: &str, port: u16, 
         
         thread::sleep(Duration::from_secs(1));
     }
+}
+
+fn run_completion(matches: &ArgMatches) -> Result<(), ClientError> {
+    let shell = matches.get_one::<Shell>("shell").unwrap();
+    let mut cmd = build_cli();
+    let bin_name = cmd.get_name().to_string();
+    generate(*shell, &mut cmd, bin_name, &mut io::stdout());
+    Ok(())
+}
+
+fn build_cli() -> Command {
+    Command::new("flare-admin")
+        .version("1.0.0")
+        .about("Flare cluster administration tool")
+        .arg(Arg::new("index-server")
+            .long("index-server")
+            .short('i')
+            .value_name("HOST")
+            .help("Index server hostname")
+            .default_value("127.0.0.1"))
+        .arg(Arg::new("index-port")
+            .long("index-port")
+            .short('p')
+            .value_name("PORT")
+            .help("Index server port")
+            .default_value("12120"))
+        .arg(Arg::new("force")
+            .long("force")
+            .short('f')
+            .help("Force operation without confirmation")
+            .action(clap::ArgAction::SetTrue))
+        .arg(Arg::new("dry-run")
+            .long("dry-run")
+            .help("Show what would be done without actually doing it")
+            .action(clap::ArgAction::SetTrue))
+        .subcommand(Command::new("ping")
+            .about("Ping flare nodes")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("stats")
+            .about("Show statistics of flare cluster")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("list")
+            .about("List nodes in flare cluster")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("master")
+            .about("Set nodes as master")
+            .arg(Arg::new("nodes")
+                .help("Node specs (host:port:balance:partition)")
+                .required(true)
+                .action(clap::ArgAction::Append))
+            .arg(Arg::new("activate")
+                .long("activate")
+                .help("Change node's state from ready to active after setting as master")
+                .action(clap::ArgAction::SetTrue))
+            .arg(Arg::new("without-clean")
+                .long("without-clean")
+                .help("Don't clear datastore before construction (skip flush_all)")
+                .action(clap::ArgAction::SetTrue)))
+        .subcommand(Command::new("slave")
+            .about("Set nodes as slave")
+            .arg(Arg::new("nodes")
+                .help("Node specs (host:port:balance:partition)")
+                .required(true)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("balance")
+            .about("Set balance for nodes")
+            .arg(Arg::new("nodes")
+                .help("Node specs (host:port:balance)")
+                .required(true)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("down")
+            .about("Set nodes down")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .required(true)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("remove")
+            .about("Remove nodes from cluster")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .required(true)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("dump")
+            .about("Dump data from nodes")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .action(clap::ArgAction::Append))
+            .arg(Arg::new("all")
+                .long("all")
+                .help("Dump from all master nodes")
+                .action(clap::ArgAction::SetTrue))
+            .arg(Arg::new("output")
+                .long("output")
+                .short('o')
+                .value_name("FILE")
+                .help("Output file")))
+        .subcommand(Command::new("dumpkey")
+            .about("Dump keys from nodes")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .action(clap::ArgAction::Append))
+            .arg(Arg::new("all")
+                .long("all")
+                .help("Dump from all master nodes")
+                .action(clap::ArgAction::SetTrue))
+            .arg(Arg::new("output")
+                .long("output")
+                .short('o')
+                .value_name("FILE")
+                .help("Output file")))
+        .subcommand(Command::new("restore")
+            .about("Restore data to nodes")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .required(true)
+                .action(clap::ArgAction::Append))
+            .arg(Arg::new("input")
+                .long("input")
+                .short('i')
+                .value_name("FILE")
+                .help("Input file")
+                .required(true)))
+        .subcommand(Command::new("reconstruct")
+            .about("Reconstruct nodes")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .action(clap::ArgAction::Append))
+            .arg(Arg::new("all")
+                .long("all")
+                .help("Reconstruct all nodes")
+                .action(clap::ArgAction::SetTrue)))
+        .subcommand(Command::new("verify")
+            .about("Verify cluster consistency"))
+        .subcommand(Command::new("index")
+            .about("Generate index XML"))
+        .subcommand(Command::new("threads")
+            .about("Show thread status")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("activate")
+            .about("Activate nodes (change state from ready to active)")
+            .arg(Arg::new("nodes")
+                .help("Node addresses (host:port)")
+                .value_hint(ValueHint::Hostname)
+                .required(true)
+                .action(clap::ArgAction::Append)))
+        .subcommand(Command::new("completion")
+            .about("Generate shell completion scripts")
+            .arg(Arg::new("shell")
+                .help("Shell to generate completion for")
+                .value_parser(clap::value_parser!(Shell))
+                .required(true)))
+}
+
+
+// Helper function to get available nodes for dynamic completion
+fn get_available_nodes() -> Vec<String> {
+    // Try to connect to default index server to get node list
+    let mut nodes = Vec::new();
+    
+    // Add common node patterns for completion
+    nodes.push("localhost:12121".to_string());
+    nodes.push("127.0.0.1:12121".to_string());
+    
+    // Try to get actual nodes from cluster if available
+    if let Ok(mut client) = std::panic::catch_unwind(|| {
+        FlareClient::new("127.0.0.1".to_string(), 12120)
+    }) {
+        if let Ok(cluster_info) = client.get_stats() {
+            for node in cluster_info.nodes {
+                let node_addr = format!("{}:{}", node.host, node.port);
+                if !nodes.contains(&node_addr) {
+                    nodes.push(node_addr);
+                }
+            }
+        }
+    }
+    
+    nodes
 }

@@ -108,6 +108,72 @@ Common options available for all commands:
 - `--force` - Skip confirmation prompts
 - `--help` - Show help message
 
+## Shell Completion
+
+Flare-admin supports shell completion for commands, options, and node names. This makes it easier to use the tool interactively.
+
+### Installing Completion
+
+1. Build the flare-admin binary:
+   ```bash
+   cargo build --bin flare-admin
+   ```
+
+2. Install completion for your shell:
+   ```bash
+   # For bash
+   ./install-completion.sh bash
+   
+   # For zsh
+   ./install-completion.sh zsh
+   
+   # For fish
+   ./install-completion.sh fish
+   
+   # Or generate manually for any supported shell
+   ./target/debug/flare-admin completion bash > /etc/bash_completion.d/flare-admin
+   ```
+
+3. Restart your shell or source the completion file.
+
+### Using Completion
+
+Once installed, you can use tab completion for:
+
+- **Commands**: `flare-admin <TAB>` shows all available commands
+- **Options**: `flare-admin --<TAB>` shows all available options  
+- **Subcommand options**: `flare-admin ping --<TAB>` shows options for ping command
+- **Node names**: Commands that accept node addresses will show actual cluster nodes
+- **Node specifications**: Commands like `master` and `slave` complete with balance:partition formats
+
+### Supported Shells
+
+- Bash
+- Zsh  
+- Fish
+- Elvish
+- PowerShell
+
+### Examples
+
+```bash
+# Command completion
+flare-admin <TAB>
+# Shows: ping stats list master slave balance down remove dump dumpkey restore reconstruct verify index threads activate completion
+
+# Option completion  
+flare-admin --<TAB>
+# Shows: --index-server --index-port --force --dry-run --help --version
+
+# Node name completion
+flare-admin ping <TAB>
+# Shows: localhost:12121 flare-prod-master-1:12121 flare-prod-master-2:12121 flare-prod-slave-1:12121 flare-prod-slave-2:12121
+
+# Node specification completion (for master/slave commands)
+flare-admin master <TAB>
+# Shows: localhost:12121:1:0 localhost:12121:1:1 flare-prod-master-1:12121:1:0 ...
+```
+
 ## Usage Examples
 
 ### Basic Statistics
