@@ -320,7 +320,7 @@ fn configure_node_replication(
     let config_lines = vec![
         format!("cluster-replication = true"),
         format!("cluster-replication-server-name = {}", dest_node.hostname),
-        format!("cluster-replication-server-port = {}", flared_port),
+        format!("cluster-replication-server-port = {}", dest_node.port),
         format!("cluster-replication-concurrency = 8"),
         format!("cluster-replication-mode = {}", mode),
     ];
@@ -443,38 +443,34 @@ fn configure_local_node(
 }
 
 fn get_docker_container_name(node: &Node) -> Result<String, Box<dyn std::error::Error>> {
-    // This is a simplified mapping - you might need to query docker or use a more sophisticated approach
-    // For now, we'll use a pattern-based approach
+    // Query docker to get container names and match by hostname
+    let output = process::Command::new("docker")
+        .args(&["ps", "--format", "{{.Names}}"])
+        .output()
+        .map_err(|e| format!("Failed to query docker containers: {}", e))?;
     
-    let container_map = HashMap::from([
-        ("flare-prod-master-1", "flared1"),
-        ("flare-prod-master-2", "flared2"),
-        ("flare-prod-slave-1", "flared3"),
-        ("flare-prod-slave-2", "flared4"),
-        ("flare-staging-master-1", "flare-staging-flared1"),
-        ("flare-staging-slave-1", "flare-staging-flared2"),
-    ]);
-    
-    if let Some(container) = container_map.get(node.hostname.as_str()) {
-        Ok(container.to_string())
-    } else {
-        // Try to find container by querying docker
-        let output = process::Command::new("docker")
-            .args(&["ps", "--format", "{{.Names}}"])
-            .output()?;
-        
-        if output.status.success() {
-            let containers = String::from_utf8_lossy(&output.stdout);
-            for container in containers.lines() {
-                // Simple heuristic - this might need improvement
-                if container.contains("flared") {
-                    return Ok(container.to_string());
-                }
-            }
-        }
-        
-        Err(format!("Could not find container for node {}", node.hostname).into())
+    if !output.status.success() {
+        return Err("Failed to list docker containers".into());
     }
+    
+    let containers = String::from_utf8_lossy(&output.stdout);
+    
+    // Try to find exact match first (hostname without port)
+    for container in containers.lines() {
+        if container == node.hostname {
+            return Ok(container.to_string());
+        }
+    }
+    
+    // Try to find containers that contain the node hostname
+    for container in containers.lines() {
+        if container.contains(&node.hostname) {
+            return Ok(container.to_string());
+        }
+    }
+    
+    Err(format!("Could not find container for node {}. Available containers:\n{}", 
+        node.hostname, containers.trim()).into())
 }
 
 fn reload_flare_configs(

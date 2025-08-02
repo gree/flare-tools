@@ -452,7 +452,105 @@ impl FlareClient {
             });
         }
 
+        // Now query each node for detailed stats
+        for node in &mut nodes {
+            if let Ok(detailed_stats) = self.get_node_detailed_stats(&node.host, node.port) {
+                node.items = detailed_stats.items;
+                node.conn = detailed_stats.conn;
+                node.behind = detailed_stats.behind;
+                node.hit = detailed_stats.hit;
+                node.size = detailed_stats.size;
+                node.uptime = detailed_stats.uptime;
+                node.version = detailed_stats.version;
+                node.qps = detailed_stats.qps;
+                node.qpsr = detailed_stats.qpsr;
+                node.qpsw = detailed_stats.qpsw;
+            }
+        }
+
         Ok(ClusterInfo { nodes })
+    }
+
+    fn get_node_detailed_stats(&mut self, host: &str, port: u16) -> Result<NodeInfo, ClientError> {
+        // Create a temporary client for this specific node
+        let mut node_client = FlareClient::new(host.to_string(), port);
+        
+        // Query memcached stats from the individual node
+        let stats_cmd = FlareCommand::Memcached(MemcachedCommand::Stats { args: None });
+        let responses = node_client.send_command(&stats_cmd)?;
+        
+        let mut items = 0u64;
+        let mut conn = 0u32;
+        let mut behind = 0u64;
+        let mut hit = 0.0f64;
+        let mut size = 0u64;
+        let mut uptime = String::new();
+        let mut version = String::new();
+        let mut qps = 0.0f64;
+        let mut qpsr = 0.0f64;
+        let mut qpsw = 0.0f64;
+        
+        for response in responses {
+            if let FlareResponse::Memcached(MemcachedResponse::Stat { name, value }) = response {
+                match name.as_str() {
+                    "curr_items" => items = value.parse().unwrap_or(0),
+                    "curr_connections" => conn = value.parse().unwrap_or(0),
+                    "bytes" => size = value.parse().unwrap_or(0),
+                    "uptime" => uptime = value,
+                    "version" => version = value,
+                    "get_hits" => {
+                        if let Ok(hits) = value.parse::<u64>() {
+                            let total_gets = hits + value.parse::<u64>().unwrap_or(0);
+                            if total_gets > 0 {
+                                hit = (hits as f64 / total_gets as f64) * 100.0;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        
+        // Calculate hit ratio properly by getting both hits and misses
+        let mut get_hits = 0u64;
+        let mut get_misses = 0u64;
+        
+        let stats_cmd2 = FlareCommand::Memcached(MemcachedCommand::Stats { args: None });
+        let responses2 = node_client.send_command(&stats_cmd2)?;
+        
+        for response in responses2 {
+            if let FlareResponse::Memcached(MemcachedResponse::Stat { name, value }) = response {
+                match name.as_str() {
+                    "get_hits" => get_hits = value.parse().unwrap_or(0),
+                    "get_misses" => get_misses = value.parse().unwrap_or(0),
+                    _ => {}
+                }
+            }
+        }
+        
+        let total_gets = get_hits + get_misses;
+        if total_gets > 0 {
+            hit = (get_hits as f64 / total_gets as f64) * 100.0;
+        }
+        
+        Ok(NodeInfo {
+            host: host.to_string(),
+            port,
+            role: String::new(), // Will be filled by caller
+            state: String::new(), // Will be filled by caller
+            partition: -1, // Will be filled by caller
+            balance: 0, // Will be filled by caller
+            items,
+            conn,
+            behind,
+            hit,
+            size,
+            uptime,
+            version,
+            qps,
+            qpsr,
+            qpsw,
+        })
     }
 
     pub fn dump_keys(&mut self, partition: Option<u32>, partition_size: Option<u32>) -> Result<Vec<String>, ClientError> {

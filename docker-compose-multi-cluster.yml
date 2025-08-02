@@ -12,9 +12,7 @@ services:
       - "12120:12120"
     volumes:
       - ./cluster-config:/config
-    command: ["bash", "-c", "mkdir -p /tmp/flarei-prod && /usr/bin/flarei -f /config/production/flarei-prod.conf -s"]
-    networks:
-      - flare-prod-network
+    command: ["bash", "-c", "mkdir -p /tmp/flarei-prod && cp /config/production/flarei-prod.conf /etc/flarei.conf && /usr/bin/flarei -f /etc/flarei.conf -s"]
 
   # Production Cluster - Master 1
   flare-prod-master-1:
@@ -27,11 +25,9 @@ services:
       - "12121:12121"
     volumes:
       - ./cluster-config:/config
-    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-master-1 && /usr/bin/flared -f /config/production/flare-prod-master-1.conf -s"]
+    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-master-1 && cp /config/production/flare-prod-master-1.conf /etc/flared.conf && /usr/bin/flared -f /etc/flared.conf -s"]
     depends_on:
       - flarei-prod
-    networks:
-      - flare-prod-network
 
   # Production Cluster - Master 2
   flare-prod-master-2:
@@ -41,14 +37,12 @@ services:
     platform: linux/amd64
     container_name: flare-prod-master-2
     ports:
-      - "12122:12121"
+      - "12122:12122"
     volumes:
       - ./cluster-config:/config
-    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-master-2 && /usr/bin/flared -f /config/production/flare-prod-master-2.conf -s"]
+    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-master-2 && cp /config/production/flare-prod-master-2.conf /etc/flared.conf && /usr/bin/flared -f /etc/flared.conf -s"]
     depends_on:
       - flarei-prod
-    networks:
-      - flare-prod-network
 
   # Production Cluster - Slave 1
   flare-prod-slave-1:
@@ -58,14 +52,12 @@ services:
     platform: linux/amd64
     container_name: flare-prod-slave-1
     ports:
-      - "12123:12121"
+      - "12123:12123"
     volumes:
       - ./cluster-config:/config
-    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-slave-1 && /usr/bin/flared -f /config/production/flare-prod-slave-1.conf -s"]
+    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-slave-1 && cp /config/production/flare-prod-slave-1.conf /etc/flared.conf && /usr/bin/flared -f /etc/flared.conf -s"]
     depends_on:
       - flarei-prod
-    networks:
-      - flare-prod-network
 
   # Production Cluster - Slave 2
   flare-prod-slave-2:
@@ -75,14 +67,12 @@ services:
     platform: linux/amd64
     container_name: flare-prod-slave-2
     ports:
-      - "12124:12121"
+      - "12124:12124"
     volumes:
       - ./cluster-config:/config
-    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-slave-2 && /usr/bin/flared -f /config/production/flare-prod-slave-2.conf -s"]
+    command: ["bash", "-c", "mkdir -p /tmp/flare-prod-slave-2 && cp /config/production/flare-prod-slave-2.conf /etc/flared.conf && /usr/bin/flared -f /etc/flared.conf -s"]
     depends_on:
       - flarei-prod
-    networks:
-      - flare-prod-network
 
   # Staging Cluster - Index Server
   flarei-staging:
@@ -92,12 +82,10 @@ services:
     platform: linux/amd64
     container_name: flarei-staging
     ports:
-      - "12130:12120"
+      - "12130:12130"
     volumes:
       - ./cluster-config:/config
-    command: ["bash", "-c", "mkdir -p /tmp/flarei-staging && /usr/bin/flarei -f /config/staging/flarei-staging.conf -s"]
-    networks:
-      - flare-staging-network
+    command: ["bash", "-c", "mkdir -p /tmp/flarei-staging && cp /config/staging/flarei-staging.conf /etc/flarei.conf && /usr/bin/flarei -f /etc/flarei.conf -s"]
 
   # Staging Cluster - Master 1
   flare-staging-master-1:
@@ -107,14 +95,12 @@ services:
     platform: linux/amd64
     container_name: flare-staging-master-1
     ports:
-      - "12131:12121"
+      - "12131:12131"
     volumes:
       - ./cluster-config:/config
-    command: ["bash", "-c", "mkdir -p /tmp/flare-staging-master-1 && /usr/bin/flared -f /config/staging/flare-staging-master-1.conf -s"]
+    command: ["bash", "-c", "mkdir -p /tmp/flare-staging-master-1 && cp /config/staging/flare-staging-master-1.conf /etc/flared.conf && /usr/bin/flared -f /etc/flared.conf -s"]
     depends_on:
       - flarei-staging
-    networks:
-      - flare-staging-network
 
   # Staging Cluster - Slave 1
   flare-staging-slave-1:
@@ -124,14 +110,12 @@ services:
     platform: linux/amd64
     container_name: flare-staging-slave-1
     ports:
-      - "12132:12121"
+      - "12132:12131"
     volumes:
       - ./cluster-config:/config
-    command: ["bash", "-c", "mkdir -p /tmp/flare-staging-slave-1 && /usr/bin/flared -f /config/staging/flare-staging-slave-1.conf -s"]
+    command: ["bash", "-c", "mkdir -p /tmp/flare-staging-slave-1 && cp /config/staging/flare-staging-slave-1.conf /etc/flared.conf && /usr/bin/flared -f /etc/flared.conf -s"]
     depends_on:
       - flarei-staging
-    networks:
-      - flare-staging-network
 
   # Flare Cluster Replication Tool
   flare-cluster-repl:
@@ -146,15 +130,6 @@ services:
     entrypoint: ["flare-cluster-repl"]
     command: ["--help"]
     user: root  # Need root to access docker socket
-    networks:
-      - flare-prod-network
-      - flare-staging-network
-
-networks:
-  flare-prod-network:
-    driver: bridge
-  flare-staging-network:
-    driver: bridge
 
 volumes:
   logs:
